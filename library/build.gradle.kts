@@ -22,7 +22,7 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    linuxX64()
+//    linuxX64()
 
     compilerOptions {
         languageVersion.set(KotlinVersion.KOTLIN_1_9)
