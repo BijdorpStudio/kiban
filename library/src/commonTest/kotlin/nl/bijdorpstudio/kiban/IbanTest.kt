@@ -210,7 +210,7 @@ class IbanTest {
     }
 
     companion object {
-        private const val VALID_IBAN = "NL03ABNA0143267469"
+        internal const val VALID_IBAN = "NL03ABNA0143267469"
         private const val INVALID_IBAN = "NL13ABNA0143267469"
     }
 }

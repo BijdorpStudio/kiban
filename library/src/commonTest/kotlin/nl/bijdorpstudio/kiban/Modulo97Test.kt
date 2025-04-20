@@ -140,7 +140,7 @@ class Modulo97Test {
 
     @Test
     fun `Should verify correct Iban`() {
-        val verifyResult = Modulo97.verifyCheckDigits(VALID_BBAN)
+        val verifyResult = Modulo97.verifyCheckDigits(IbanTest.VALID_IBAN)
         assertThat(verifyResult).isTrue()
     }
 
