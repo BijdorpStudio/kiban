@@ -4,12 +4,18 @@ agp = "8.9.1"
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
 android-minSdk = "24"
+assertk = "0.28.1"
+bignum = "0.3.10"
 kotlin = "2.1.20"
+kotlinx-datetime = "0.6.2"
 maven-publish-plugin = "0.31.0"
 versions-catalogue-update-plugin = "1.0.0"
 
 [libraries]
+assertk = {module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk"}
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-time = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }

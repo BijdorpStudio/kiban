@@ -30,11 +30,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // one method is exposing LocalDate
+            api(libs.kotlinx.time)
+
+            implementation(libs.bignum)
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.assertk)
         }
     }
 }
