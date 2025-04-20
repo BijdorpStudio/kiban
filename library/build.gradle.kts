@@ -22,7 +22,7 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-//    linuxX64()
+    linuxX64()
 
     compilerOptions {
         languageVersion.set(KotlinVersion.KOTLIN_1_9)
@@ -32,13 +32,12 @@ kotlin {
         commonMain.dependencies {
             // one method is exposing LocalDate
             api(libs.kotlinx.time)
-
             implementation(libs.bignum)
         }
 
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
             implementation(libs.assertk)
+            implementation(libs.kotlin.test)
         }
     }
 }
