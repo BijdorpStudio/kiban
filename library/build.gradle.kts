@@ -1,6 +1,6 @@
 import com.vanniktech.maven.publish.SonatypeHost
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,13 +9,12 @@ plugins {
 }
 
 group = "io.github.kotlin"
-version = "1.0.0"
+version = "0.1.0"
 
 kotlin {
     jvm()
     androidTarget {
         publishLibraryVariants("release")
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -25,16 +24,17 @@ kotlin {
     iosSimulatorArm64()
     linuxX64()
 
+    compilerOptions {
+        languageVersion.set(KotlinVersion.KOTLIN_1_9)
+    }
+
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                //put your multiplatform dependencies here
-            }
+        commonMain.dependencies {
+            //put your multiplatform dependencies here
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
-            }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
         }
     }
 }
