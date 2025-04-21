@@ -1,11 +1,11 @@
 [versions]
 agp = "8.9.1"
 # @keep this version because it is not used in a dependency declaration
-android-minSdk = "24"
-# @keep this version because it is not used in a dependency declaration
 android-compileSdk = "36"
+# @keep this version because it is not used in a dependency declaration
+android-minSdk = "24"
 kotlin = "2.1.20"
-maven-publish-plugin = "0.29.0"
+maven-publish-plugin = "0.31.0"
 versions-catalogue-update-plugin = "1.0.0"
 
 [libraries]
