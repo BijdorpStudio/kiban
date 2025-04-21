@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.maven.publish)
 }
 
-group = "io.github.kotlin"
+group = "nl.bijdorpstudio.kiban"
 version = "0.1.0"
 
 kotlin {
