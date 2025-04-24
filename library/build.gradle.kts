@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.maven.publish)
 }
 
-group = "io.github.kotlin"
+group = "nl.bijdorpstudio.kiban"
 version = "0.1.0"
 
 kotlin {
@@ -30,10 +30,13 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // one method is exposing LocalDate
+            api(libs.kotlinx.time)
+            implementation(libs.bignum)
         }
 
         commonTest.dependencies {
+            implementation(libs.assertk)
             implementation(libs.kotlin.test)
         }
     }
