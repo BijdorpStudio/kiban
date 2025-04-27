@@ -35,7 +35,7 @@ object Modulo97 {
      * length, so it will fail for unreasonably large inputs.
      *
      *
-     * It is expected, but not enforced, that the characters at index 2 and 3 are numeric. If the existing check digits
+     * It is expected but not enforced that the characters at index 2 and 3 are numeric. If the existing check digits
      * are `00` then this method will return the value that, after subtracting it from 98, gives you the check
      * digits for a MOD-97 verifiable string. If the existing check digits are any other value, this method will return
      * `1` if the input checksums correctly.
