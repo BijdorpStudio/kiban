@@ -43,7 +43,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
+    namespace = "nl.bijdorpstudio.kiban"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -59,31 +59,41 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "kiban", version.toString())
 
     pom {
-        name = "My library"
-        description = "A library."
-        inceptionYear = "2024"
-        url = "https://github.com/kotlin/multiplatform-library-template/"
+        name = "Kiban"
+        description = "Kotlin Multiplatform IBAN Library."
+        inceptionYear = "2025"
+        url = "https://github.com/BijdorpStudio/kiban"
         licenses {
             license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
             }
         }
         developers {
             developer {
-                id = "XXX"
-                name = "YYY"
-                url = "ZZZ"
+                id = "barend"
+                name = "Barend Garvelink"
+                url = "https://github.com/barend"
+            }
+            developer {
+                id = "emartynov"
+                name = "Eugen Martynov"
+                url = "https://github.com/emartynov"
+            }
+            developer {
+                id = "bijdorpstudio"
+                name = "Bijdorp Studio"
+                url = "https://bijdorpstudio.nl"
             }
         }
         scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+            url = "https://github.com/BijdorpStudio/kiban"
+            connection = "scm:git:git://github.com/BijdorpStudio/kiban.git"
+            developerConnection = "scm:git:ssh://git@github.com:BijdorpStudio/kiban.git"
         }
     }
 }
