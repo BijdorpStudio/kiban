@@ -1,6 +1,8 @@
 *.iml
 .gradle
-.idea
+.idea/*
+!.idea/.name
+!.idea/icon.svg
 .DS_Store
 build
 captures
