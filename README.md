@@ -1,4 +1,6 @@
+![Kiban](.idea/icon.svg)
 # **K**Iban—Kotlin Multiplatform IBAN Library
+
 
 ## Introduction
 
