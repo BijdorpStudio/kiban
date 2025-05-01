@@ -12,6 +12,7 @@ group = "nl.bijdorpstudio.kiban"
 version = "0.1.0"
 
 kotlin {
+    jvmToolchain(17)
     jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
