@@ -12,7 +12,12 @@ group = "nl.bijdorpstudio.kiban"
 version = "0.1.0"
 
 kotlin {
-    jvm()
+    jvmToolchain(17)
+    jvm {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
     androidTarget {
         publishLibraryVariants("release")
         compilerOptions {
