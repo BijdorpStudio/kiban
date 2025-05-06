@@ -4,7 +4,9 @@ agp = "8.10.0"
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
 android-minSdk = "24"
+androidx-lint-gradle = "1.0.0-alpha04"
 assertk = "0.28.1"
+assertk-lint = "1.5.0"
 # @keep this is library java compatibility version
 java-version = "17"
 kotlin = "2.1.21"
@@ -15,11 +17,14 @@ patrouille-plugin = "0.0.0"
 versions-catalogue-update-plugin = "1.0.0"
 
 [libraries]
+androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "androidx-lint-gradle" }
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
+assertk-lint = { module = "com.jzbrooks:assertk-lint", version.ref = "assertk-lint" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-lint = { id = "com.android.lint", version.ref = "agp" }
 compat-patrouille = { id = "com.gradleup.compat.patrouille", version.ref = "patrouille-plugin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }

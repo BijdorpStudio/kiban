@@ -1,7 +1,6 @@
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
     alias(libs.plugins.compat.patrouille)
     alias(libs.plugins.maven.publish)
@@ -49,6 +48,15 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+}
+
+tasks.withType<ValidatePlugins>().configureEach {
+    enableStricterValidation = true
+}
+
+dependencies {
+    lintChecks(libs.androidx.lint.gradle)
+    lintChecks(libs.assertk.lint)
 }
 
 mavenPublishing {
