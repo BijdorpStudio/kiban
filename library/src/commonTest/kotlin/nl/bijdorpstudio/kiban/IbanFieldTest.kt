@@ -23,7 +23,7 @@ import kotlin.test.Test
 /**
  * Ensures that the [Iban] class accepts IBAN numbers from every participating country (...known at the time the test was last updated).
  */
-class IbanFieldsTest {
+class CountryCodesIbanFieldsTest {
     @Test
     fun `Should extract bank identifier`() {
         CountryCodesParameterizedTest
