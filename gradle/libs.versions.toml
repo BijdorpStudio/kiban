@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.2"
+agp = "8.10.0"
 # @keep this version because it is not used in a dependency declaration
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
