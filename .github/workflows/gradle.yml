@@ -58,6 +58,7 @@ jobs:
         # Only write to the cache for builds on the 'main' and 'release' branches. (Default is 'main' only.)
         # Builds on other branches will only read existing entries from the cache.
         cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
+        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     - name: Build with Gradle
       uses: gradle/gradle-build-action@ce999babab2de1c4b649dc15f0ee67e6246c994f
