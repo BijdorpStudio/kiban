@@ -25,7 +25,7 @@ import kotlin.test.Test
  */
 class IbanFieldsTest {
     @Test
-    fun shouldExtractBankIdentifier() {
+    fun `Should extract bank identifier`() {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
@@ -35,7 +35,7 @@ class IbanFieldsTest {
     }
 
     @Test
-    fun shouldExtractBranchIdentifier() {
+    fun `Should extract branch identifier`() {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
