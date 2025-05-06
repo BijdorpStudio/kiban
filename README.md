@@ -69,9 +69,15 @@ Obtain an `Iban` instance using one of the static factory methods: `valueOf( )` 
     // Get the Bank Identifier and Branch Identifier:
     val bankId: String? = CountryCodes.getBankIdentifier( iban )
     val branchId: String? = CountryCodes.getBranchIdentifier( iban )
+
+    // Get the Bank Identifier and Branch Identifier as Java Optional:
+    val bankId = IbanFields.getBankIdentifier( iban ) // Optional<String>
+    val branchId = IbanFields.getBranchIdentifier( iban ) // Optional<String>
 ```
 
 ## Design choices
+
+### Java IBAN library
 
 I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to follow the same design principles. I'm explicitly targetting Android, which at the time this library started was still on Java 1.6. I'm trying to keep the library as simple as I can.
 * Easy to integrate: don't bring transitive dependencies. **Note:** this is not true for KMP variant since Kotlin Time and Bignum dependencies added to keep orignal functionality.
@@ -83,6 +89,13 @@ I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to
 * There is no class to represent a partially entered IBAN or a potentially-invalid IBAN. I'm sure there are use cases where you want to shift this sort of data around. As far as this library is concerned, if it's not an Iban it's just a string, and there already exist data types for dealing with those.
 * Any feature that's not present in all IBAN's is kept outside the `Iban` class. Currently, that's the support for extracting Bank and Branch identifiers, which lives in the `CountryCode` class.
 * The library originally supported an SDK 14 (Ice Cream Sandwich) era Android app. This is why it relies on bit-packing to reduce bytecode size.
+
+### Kotlin library
+
+Adopted design choices from Java library and going to do next:
+* Kotlinize API so it is idiomatic to Kotlin user
+* Deprecate old API and provide automatic migrate mechanism
+* TBA
 
 ## References
 
