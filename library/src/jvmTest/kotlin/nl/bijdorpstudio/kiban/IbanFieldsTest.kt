@@ -14,7 +14,7 @@ class IbanFieldsTest {
             .countriesTestDataTable
             .forAll { td ->
                 val iban = Iban.parse(td.plain)
-                val bankIdentifier = IbanFields.getBankIdentifier(iban)
+                val bankIdentifier = IBANFields.getBankIdentifier(iban)
                 assertThat(bankIdentifier).isNotNull()
                 if (td.bank == null) {
                     assertThat(bankIdentifier.isPresent).isFalse()
@@ -30,7 +30,7 @@ class IbanFieldsTest {
             .countriesTestDataTable
             .forAll { td ->
                 val iban = Iban.parse(td.plain)
-                val branchIdentifier = IbanFields.getBranchIdentifier(iban)
+                val branchIdentifier = IBANFields.getBranchIdentifier(iban)
                 assertThat(branchIdentifier).isNotNull()
                 if (td.branch == null) {
                     assertThat(branchIdentifier.isPresent).isFalse()
