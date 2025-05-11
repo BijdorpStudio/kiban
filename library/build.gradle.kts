@@ -28,6 +28,12 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     linuxX64()
+    js(IR) {
+        nodejs()
+        compilerOptions {
+            freeCompilerArgs.add("-XXLanguage:+JsAllowInvalidCharsIdentifiersEscaping") // Remove when target Kotlin 2.1+
+        }
+    }
 
     compilerOptions {
         languageVersion.set(KotlinVersion.KOTLIN_1_9)
