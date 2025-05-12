@@ -31,8 +31,11 @@ jobs:
           # Native Linux target
           - target: linuxX64Test
             os: ubuntu-latest
-          # Android target
-          - target: lint testUnitTest
+          # Android target Debug
+          - target: lintDebug testDebugUnitTest
+            os: ubuntu-latest
+          # Android target Release
+          - target: lintRelease testReleaseUnitTest
             os: ubuntu-latest
           # JS target
           - target: jsTest
