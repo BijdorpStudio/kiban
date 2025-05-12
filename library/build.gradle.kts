@@ -43,7 +43,6 @@ kotlin {
         commonMain.dependencies {
             // one method is exposing LocalDate
             api(libs.kotlinx.time)
-            implementation(libs.bignum)
         }
 
         commonTest.dependencies {
