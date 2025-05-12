@@ -95,7 +95,6 @@ I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to
 Adopted design choices from Java library and going to do next:
 * Kotlinize API so it is idiomatic to Kotlin user
 * Deprecate old API and provide automatic migrate mechanism
-* TBA
 
 ## References
 
