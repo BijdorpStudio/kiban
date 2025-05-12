@@ -15,16 +15,10 @@
  */
 package nl.bijdorpstudio.kiban
 
-import com.ionspin.kotlin.bignum.integer.BigInteger
-
 /**
  * Calculates the modulo 97 checksum used in IBAN numbers (and some other entities).
  */
 object Modulo97 {
-    /**
-     * The BigInteger '97', used in the MOD97 division.
-     */
-    private val NINETY_SEVEN = BigInteger.parseString("97")
 
     /**
      * Calculates the raw MOD97 checksum for a given input.
@@ -57,9 +51,17 @@ object Modulo97 {
         val buffer = CharArray(input.length * 2)
         var offset: Int = transform(input, 4, input.length, buffer, 0)
         offset = transform(input, 0, 4, buffer, offset)
-        val sum: BigInteger = BigInteger.parseString(buffer.concatToString(0, offset))
-        val remainder: BigInteger = sum.remainder(NINETY_SEVEN)
-        return remainder.intValue()
+
+        // Using the algorithm from https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN
+        // Process the string of 9 digits at a time as integers
+        val remainder = buffer
+            .concatToString(0, offset)
+            .chunked(9)
+            .fold(0L) {acc, chunk ->
+                (acc.toString() + chunk).toLong() % 97
+            }
+
+        return remainder.toInt()
     }
 
     /**
