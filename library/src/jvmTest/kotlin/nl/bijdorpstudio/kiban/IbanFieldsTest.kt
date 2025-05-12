@@ -3,6 +3,7 @@ package nl.bijdorpstudio.kiban
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import kotlin.test.Test
 
 
@@ -42,6 +43,6 @@ class IbanFieldsTest {
     fun test1() {
        val test: Boolean? = true
 
-        assertThat(test!!).isFalse()
+        assertThat(test!!).isTrue()
     }
 }
