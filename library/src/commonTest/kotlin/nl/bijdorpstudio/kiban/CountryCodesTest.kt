@@ -16,15 +16,10 @@
 package nl.bijdorpstudio.kiban
 
 import assertk.assertThat
-import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -70,14 +65,21 @@ class CountryCodesTest {
         assertThat(CountryCodes.getLengthForCountryCode("XX")).isEqualTo(-1)
     }
 
+// Uncomment when Kotlin 2.1 is target
+//    @OptIn(ExperimentalTime::class)
+//    @Test
+//    fun `lastUpdateDate should not be null`() {
+//        assertThat(CountryCodes.lastUpdateDate)
+//            .isNotNull()
+//            .isBetween(
+//                start = Instant.DISTANT_PAST,
+//                end = Clock.System.now()
+//            )
+//    }
+
     @Test
     fun `lastUpdateDate should not be null`() {
-        assertThat(CountryCodes.lastUpdateDate)
-            .isNotNull()
-            .isBetween(
-                start = LocalDate.fromEpochDays(0),
-                end = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
-            )
+        assertThat(CountryCodes.lastUpdateDate).isNotNull()
     }
 
     @Test

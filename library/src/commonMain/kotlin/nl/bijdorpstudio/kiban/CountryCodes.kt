@@ -15,7 +15,6 @@
  */
 package nl.bijdorpstudio.kiban
 
-import kotlinx.datetime.LocalDate
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_CODE_BRANCH_CODE
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_BEGIN_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_END_MASK
@@ -31,6 +30,8 @@ import nl.bijdorpstudio.kiban.CountryCodesData.LAST_UPDATE_REV
 import nl.bijdorpstudio.kiban.CountryCodesData.REMOVE_METADATA_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.SEPA
 import nl.bijdorpstudio.kiban.CountryCodesData.SWIFT
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * Contains information about IBAN country codes.
@@ -162,17 +163,24 @@ object CountryCodes {
         return indexOf(countryCode.toString()) >= 0
     }
 
-    val lastUpdateDate: LocalDate
-        /**
-         * Returns the date that the IBAN reference data was last updated.
-         * @return the last update date of the reference data in this library.
-         */
-        get() = LocalDate.parse(LAST_UPDATE_DATE)
+    // Uncomment when Kotlin 2.1
+//    @OptIn(ExperimentalTime::class)
+//    val lastUpdateDate: Instant
+//        /**
+//         * Returns the date that the IBAN reference data was last updated.
+//         * @return the last update date of the reference data in this library.
+//         */
+//        get() = Instant.parse(LAST_UPDATE_DATE)
 
-    val lastUpdateRevision: String
-        /**
-         * Returns the version information of the SWIFT IBAN Registry used on [.getLastUpdateDate].
-         * @return revision information of the SWIFT IBAN Registry.
-         */
-        get() = LAST_UPDATE_REV
+    /**
+     * Returns the date that the IBAN reference data was last updated.
+     * @return the last update date of the reference data in this library.
+     */
+    const val lastUpdateDate: String = LAST_UPDATE_DATE
+
+    /**
+     * Returns the version information of the SWIFT IBAN Registry used on [.getLastUpdateDate].
+     * @return revision information of the SWIFT IBAN Registry.
+     */
+    const val lastUpdateRevision: String = LAST_UPDATE_REV
 }

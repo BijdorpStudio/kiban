@@ -41,8 +41,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // one method is exposing LocalDate
-            api(libs.kotlinx.time)
+            // no dependencies
         }
 
         commonTest.dependencies {
