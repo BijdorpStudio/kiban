@@ -30,8 +30,6 @@ import nl.bijdorpstudio.kiban.CountryCodesData.LAST_UPDATE_REV
 import nl.bijdorpstudio.kiban.CountryCodesData.REMOVE_METADATA_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.SEPA
 import nl.bijdorpstudio.kiban.CountryCodesData.SWIFT
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 /**
  * Contains information about IBAN country codes.
