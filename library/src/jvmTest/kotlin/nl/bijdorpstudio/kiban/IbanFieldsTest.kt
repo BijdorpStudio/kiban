@@ -36,4 +36,12 @@ class IbanFieldsTest {
                 }
             }
     }
+
+    // This should fail lint
+    @Test
+    fun test1() {
+       val test: Boolean? = true
+
+        assertThat(test!!).isFalse()
+    }
 }
