@@ -53,10 +53,10 @@ object Modulo97 {
         offset = transform(input, 0, 4, buffer, offset)
 
         // Using the algorithm from https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN
-        // Process the string of 19 digits at a time as integers
+        // Process the string of 9 digits at a time as integers
         val remainder = buffer
             .concatToString(0, offset)
-            .chunked(19)
+            .chunked(9)
             .fold(0L) {acc, chunk ->
                 (acc.toString() + chunk).toLong() % 97
             }
