@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.maven.publish)
 }
 
@@ -61,6 +61,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+tasks.withType<ValidatePlugins>().configureEach {
+    enableStricterValidation = true
+}
+
+dependencies {
+    lintChecks(libs.androidx.lint.gradle)
+    lintChecks(libs.assertk.lint)
 }
 
 mavenPublishing {

@@ -22,25 +22,28 @@ jobs:
     strategy:
       matrix:
         include:
+          # iOS target
           - target: iosSimulatorArm64Test
             os: macos-latest
+          # JVM target
           - target: jvmTest
             os: ubuntu-latest
+          # Native Linux target
           - target: linuxX64Test
             os: ubuntu-latest
-          - target: testDebugUnitTest
+          # Android target Debug
+          - target: lintDebug testDebugUnitTest
             os: ubuntu-latest
-          - target: testReleaseUnitTest
+          # Android target Release
+          - target: lintRelease testReleaseUnitTest
             os: ubuntu-latest
+          # JS target
           - target: jsTest
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
-
-#    - name: Validate Gradle Wrapper
-#      uses: gradle/actions/wrapper-validation@v3
 
     - uses: actions/cache@v3
       with:
