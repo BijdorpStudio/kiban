@@ -1,18 +1,14 @@
 package nl.garvelink.oss.iban
 
-import nl.bijdorpstudio.kiban.IbanFields as KibanIbanFields
-import nl.garvelink.oss.iban.IBAN // Our own compatibility IBAN
+import nl.bijdorpstudio.kiban.CountryCodes
 import java.util.Optional
 
 /**
- * Provides utility methods to extract specific fields from an IBAN, such as bank or branch identifiers,
- * based on country-specific rules.
  * This object provides compatibility with the java-iban library API but is implemented using kiban.
  * Please migrate to nl.bijdorpstudio.kiban.IbanFields.
  */
 @Deprecated(
-    message = "This object provides compatibility with the java-iban library API but is implemented using kiban. Please migrate to nl.bijdorpstudio.kiban.IbanFields.",
-    replaceWith = ReplaceWith("IbanFields", "nl.bijdorpstudio.kiban.IbanFields")
+    message = "This object provides compatibility with the java-iban library API but is implemented using kiban. Please migrate to nl.bijdorpstudio.kiban.CountryCodes but not using java optional.",
 )
 object IBANFields {
 
@@ -24,12 +20,14 @@ object IBANFields {
      */
     @Deprecated(
         message = "Migrate to kiban's IbanFields.getBankIdentifier",
-        replaceWith = ReplaceWith("KibanIbanFields.getBankIdentifier(iban.actualKibanIban)", "nl.bijdorpstudio.kiban.IbanFields as KibanIbanFields")
+        replaceWith = ReplaceWith(
+            "CountryCodes.getBankIdentifier(iban)",
+            "nl.bijdorpstudio.kiban.CountryCodes"
+        )
     )
     @JvmStatic
-    fun getBankIdentifier(iban: IBAN): Optional<String> {
-        return KibanIbanFields.getBankIdentifier(iban.actualKibanIban)
-    }
+    fun getBankIdentifier(iban: IBAN): Optional<String> =
+        Optional.ofNullable(CountryCodes.getBankIdentifier(iban.iban))
 
     /**
      * Extracts the branch identifier from the given IBAN, if defined for the IBAN's country.
@@ -38,11 +36,13 @@ object IBANFields {
      * @return An {@code Optional<String>} containing the branch identifier, or empty if not applicable.
      */
     @Deprecated(
-        message = "Migrate to kiban's IbanFields.getBranchIdentifier",
-        replaceWith = ReplaceWith("KibanIbanFields.getBranchIdentifier(iban.actualKibanIban)", "nl.bijdorpstudio.kiban.IbanFields as KibanIbanFields")
+        message = "Migrate to kiban's CountryCodes.getBranchIdentifier",
+        replaceWith = ReplaceWith(
+            "CountryCodes.getBranchIdentifier(iban)",
+            "nl.bijdorpstudio.kiban.CountryCodes"
+        )
     )
     @JvmStatic
-    fun getBranchIdentifier(iban: IBAN): Optional<String> {
-        return KibanIbanFields.getBranchIdentifier(iban.actualKibanIban)
-    }
+    fun getBranchIdentifier(iban: IBAN): Optional<String> =
+        Optional.ofNullable(CountryCodes.getBranchIdentifier(iban.iban))
 }

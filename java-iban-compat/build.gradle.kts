@@ -6,6 +6,9 @@ plugins {
 
 dependencies {
     implementation(project(":library"))
+
+    testImplementation(libs.assertk)
+    testImplementation(libs.kotlin.test)
 }
 
 kotlin {

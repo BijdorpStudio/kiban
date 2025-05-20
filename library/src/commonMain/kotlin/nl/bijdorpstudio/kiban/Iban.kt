@@ -161,7 +161,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * @return an IBAN object composed from the given parts, if valid.
          * @throws [IllegalArgumentException] if the input is in some way invalid.
          */
-        fun compose(countryCode: CharSequence, bban: CharSequence): Iban? {
+        fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb = StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH).append(countryCode).append("00").append(bban)
             val checkDigits = Modulo97.calculateCheckDigits(sb)
             if (checkDigits < 10) {
