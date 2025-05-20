@@ -3,13 +3,11 @@ package nl.garvelink.oss.iban
 import nl.bijdorpstudio.kiban.Modulo97 as KibanModulo97
 
 /**
- * Provides functions for Modulo-97 calculations, primarily for IBAN check digit verification and calculation.
  * This object provides compatibility with the java-iban library API but is implemented using kiban.
  * Please migrate to nl.bijdorpstudio.kiban.Modulo97.
  */
 @Deprecated(
     message = "This object provides compatibility with the java-iban library API but is implemented using kiban. Please migrate to nl.bijdorpstudio.kiban.Modulo97.",
-    replaceWith = ReplaceWith("Modulo97", "nl.bijdorpstudio.kiban.Modulo97")
 )
 object Modulo97 {
 
@@ -41,7 +39,6 @@ object Modulo97 {
     )
     @JvmStatic
     fun calculateCheckDigits(candidate: CharSequence): Int {
-        // kiban.Modulo97.calculateCheckDigits(value: String): Int takes a string which is countryCode + bban.
         return KibanModulo97.calculateCheckDigits(candidate.toString())
     }
 
