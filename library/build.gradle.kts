@@ -66,7 +66,14 @@ android {
     }
 }
 
-tasks.withType<JavaCompile>().configureEach { options.release.set(JvmTarget.JVM_17.target.toInt()) }
+tasks.withType<JavaCompile>().configureEach {
+    if (project.hasProperty("android")) {
+        sourceCompatibility = JavaVersion.VERSION_17.majorVersion
+        targetCompatibility = JavaVersion.VERSION_17.majorVersion
+    } else {
+        options.release.set(JvmTarget.JVM_17.target.toInt())
+    }
+}
 
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
