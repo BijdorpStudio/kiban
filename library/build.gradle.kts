@@ -11,17 +11,21 @@ plugins {
 group = "nl.bijdorpstudio.kiban"
 version = "0.2.0"
 
+val javaVersion = JavaVersion.VERSION_17
+val jvmTargetVersion = JvmTarget.JVM_17
+val kotlinVersion = KotlinVersion.KOTLIN_1_9
+
 kotlin {
     jvm {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-            freeCompilerArgs.add("-Xjdk-release=${JvmTarget.JVM_17.target}")
+            jvmTarget.set(jvmTargetVersion)
+            freeCompilerArgs.add("-Xjdk-release=${jvmTargetVersion.target}")
         }
     }
     androidTarget {
         publishLibraryVariants("release")
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(jvmTargetVersion)
         }
     }
     iosX64()
@@ -36,11 +40,11 @@ kotlin {
     }
 
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_9)
-        languageVersion.set(KotlinVersion.KOTLIN_1_9)
+        apiVersion.set(kotlinVersion)
+        languageVersion.set(kotlinVersion)
     }
 
-    coreLibrariesVersion = "1.9.0"
+    coreLibrariesVersion = "${kotlinVersion.version}.0" // Kotlin versions have only major and minor without patch
 
     sourceSets {
         commonMain.dependencies {
@@ -61,17 +65,17 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
 }
 
 tasks.withType<JavaCompile>().configureEach {
     if (project.hasProperty("android")) {
-        sourceCompatibility = JavaVersion.VERSION_17.majorVersion
-        targetCompatibility = JavaVersion.VERSION_17.majorVersion
+        sourceCompatibility = javaVersion.majorVersion
+        targetCompatibility = javaVersion.majorVersion
     } else {
-        options.release.set(JvmTarget.JVM_17.target.toInt())
+        options.release.set(jvmTargetVersion.target.toInt())
     }
 }
 
