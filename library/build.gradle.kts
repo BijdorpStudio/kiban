@@ -12,16 +12,16 @@ group = "nl.bijdorpstudio.kiban"
 version = "0.2.0"
 
 kotlin {
-    jvmToolchain(17)
     jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
+            freeCompilerArgs.add("-Xjdk-release=${JvmTarget.JVM_17.target}")
         }
     }
     androidTarget {
         publishLibraryVariants("release")
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
     iosX64()
@@ -36,8 +36,11 @@ kotlin {
     }
 
     compilerOptions {
+        apiVersion.set(KotlinVersion.KOTLIN_1_9)
         languageVersion.set(KotlinVersion.KOTLIN_1_9)
     }
+
+    coreLibrariesVersion = "1.9.0"
 
     sourceSets {
         commonMain.dependencies {
@@ -58,10 +61,12 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
+
+tasks.withType<JavaCompile>().configureEach { options.release.set(JvmTarget.JVM_17.target.toInt()) }
 
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
