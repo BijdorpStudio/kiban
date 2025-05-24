@@ -1,28 +1,24 @@
 import com.vanniktech.maven.publish.SonatypeHost
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.compat.patrouille)
     alias(libs.plugins.maven.publish)
 }
 
 group = "nl.bijdorpstudio.kiban"
 version = "0.2.0"
 
+compatPatrouille {
+    java(libs.versions.java.version.get().toInt())
+    kotlin(libs.versions.kotlin.version.get())
+}
+
 kotlin {
-    jvmToolchain(17)
-    jvm {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
-    }
+    jvm()
     androidTarget {
         publishLibraryVariants("release")
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
     }
     iosX64()
     iosArm64()
@@ -33,10 +29,6 @@ kotlin {
         compilerOptions {
             freeCompilerArgs.add("-XXLanguage:+JsAllowInvalidCharsIdentifiersEscaping") // Remove when target Kotlin 2.1+
         }
-    }
-
-    compilerOptions {
-        languageVersion.set(KotlinVersion.KOTLIN_1_9)
     }
 
     sourceSets {
@@ -56,10 +48,6 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
