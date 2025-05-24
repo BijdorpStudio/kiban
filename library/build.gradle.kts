@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "nl.bijdorpstudio.kiban"
-version = "0.2.0"
+version = "0.3.0"
 
 compatPatrouille {
     java(libs.versions.java.version.get().toInt())
