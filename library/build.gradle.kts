@@ -1,32 +1,24 @@
 import com.vanniktech.maven.publish.SonatypeHost
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.compat.patrouille)
     alias(libs.plugins.maven.publish)
 }
 
 group = "nl.bijdorpstudio.kiban"
 version = "0.2.0"
 
-val javaVersion = JavaVersion.VERSION_17
-val jvmTargetVersion = JvmTarget.JVM_17
-val kotlinVersion = KotlinVersion.KOTLIN_1_9
+compatPatrouille {
+    java(libs.versions.java.version.get().toInt())
+    kotlin(libs.versions.kotlin.version.get())
+}
 
 kotlin {
-    jvm {
-        compilerOptions {
-            jvmTarget.set(jvmTargetVersion)
-            freeCompilerArgs.add("-Xjdk-release=${jvmTargetVersion.target}")
-        }
-    }
+    jvm()
     androidTarget {
         publishLibraryVariants("release")
-        compilerOptions {
-            jvmTarget.set(jvmTargetVersion)
-        }
     }
     iosX64()
     iosArm64()
@@ -38,13 +30,6 @@ kotlin {
             freeCompilerArgs.add("-XXLanguage:+JsAllowInvalidCharsIdentifiersEscaping") // Remove when target Kotlin 2.1+
         }
     }
-
-    compilerOptions {
-        apiVersion.set(kotlinVersion)
-        languageVersion.set(kotlinVersion)
-    }
-
-    coreLibrariesVersion = "${kotlinVersion.version}.0" // Kotlin versions have only major and minor without patch
 
     sourceSets {
         commonMain.dependencies {
@@ -63,19 +48,6 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
-    }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    if (project.hasProperty("android")) {
-        sourceCompatibility = javaVersion.majorVersion
-        targetCompatibility = javaVersion.majorVersion
-    } else {
-        options.release.set(jvmTargetVersion.target.toInt())
     }
 }
 
