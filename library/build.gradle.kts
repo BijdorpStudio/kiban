@@ -51,6 +51,15 @@ android {
     }
 }
 
+tasks.withType<ValidatePlugins>().configureEach {
+    enableStricterValidation = true
+}
+
+dependencies {
+    lintChecks(libs.androidx.lint.gradle)
+    lintChecks(libs.assertk.lint)
+}
+
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 

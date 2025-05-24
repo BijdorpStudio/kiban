@@ -3,7 +3,7 @@ package nl.bijdorpstudio.kiban
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isNotNull
+import assertk.assertions.isTrue
 import kotlin.test.Test
 
 
@@ -15,7 +15,6 @@ class IbanFieldsTest {
             .forAll { td ->
                 val iban = Iban.parse(td.plain)
                 val bankIdentifier = IBANFields.getBankIdentifier(iban)
-                assertThat(bankIdentifier).isNotNull()
                 if (td.bank == null) {
                     assertThat(bankIdentifier.isPresent).isFalse()
                 } else {
@@ -31,12 +30,19 @@ class IbanFieldsTest {
             .forAll { td ->
                 val iban = Iban.parse(td.plain)
                 val branchIdentifier = IBANFields.getBranchIdentifier(iban)
-                assertThat(branchIdentifier).isNotNull()
                 if (td.branch == null) {
                     assertThat(branchIdentifier.isPresent).isFalse()
                 } else {
                     assertThat(branchIdentifier.get()).isEqualTo(td.branch)
                 }
             }
+    }
+
+    // This should fail lint
+    @Test
+    fun test1() {
+       val test: Boolean? = true
+
+        assertThat(test!!).isTrue()
     }
 }
