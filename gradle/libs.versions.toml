@@ -21,6 +21,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
 compat-patrouille = { id = "com.gradleup.compat.patrouille", version.ref = "patrouille-plugin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 versions-catalogue-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versions-catalogue-update-plugin" }
