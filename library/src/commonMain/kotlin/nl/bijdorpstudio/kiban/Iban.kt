@@ -148,20 +148,20 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         /**
          * Parses the given string into an IBAN object and confirms the check digits, but returns null for null.
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted ("CC11 ABCD 123. ..").
-         * @return the parsed and validated IBAN object, or null.
+         * @return the parsed and validated IBAN object.
          * @throws [IllegalArgumentException] if the input is in some way invalid.
          * @see [parse]
          */
-        fun valueOf(input: CharSequence): Iban? = parse(input)
+        fun valueOf(input: CharSequence): Iban = parse(input)
 
         /**
          * Composes an IBAN from the given country code and basic bank account number.
          * @param countryCode the country code.
          * @param bban the BBAN.
-         * @return an IBAN object composed from the given parts, if valid.
+         * @return an IBAN object composed of the given parts, if valid.
          * @throws [IllegalArgumentException] if the input is in some way invalid.
          */
-        fun compose(countryCode: CharSequence, bban: CharSequence): Iban? {
+        fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb = StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH).append(countryCode).append("00").append(bban)
             val checkDigits = Modulo97.calculateCheckDigits(sb)
             if (checkDigits < 10) {
