@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.0"
+agp = "8.13.0"
 # @keep this version because it is not used in a dependency declaration
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
@@ -7,10 +7,10 @@ android-minSdk = "24"
 assertk = "0.28.1"
 # @keep this is library java compatibility version
 java-version = "17"
-kotlin = "2.1.21"
+kotlin = "2.2.21"
 # @keep this is library kotlin compatibility version
 kotlin-version = "2.0.0"
-maven-publish-plugin = "0.32.0"
+maven-publish-plugin = "0.34.0"
 patrouille-plugin = "0.0.0"
 versions-catalogue-update-plugin = "1.0.0"
 
