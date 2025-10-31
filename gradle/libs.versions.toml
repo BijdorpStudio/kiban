@@ -9,7 +9,7 @@ assertk = "0.28.1"
 java-version = "17"
 kotlin = "2.2.21"
 # @keep this is library kotlin compatibility version
-kotlin-version = "2.0.0"
+kotlin-version = "2.2.0"
 maven-publish-plugin = "0.34.0"
 patrouille-plugin = "0.0.0"
 versions-catalogue-update-plugin = "1.0.0"

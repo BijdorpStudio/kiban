@@ -24,9 +24,6 @@ kotlin {
     linuxX64()
     js(IR) {
         nodejs()
-        compilerOptions {
-            freeCompilerArgs.add("-XXLanguage:+JsAllowInvalidCharsIdentifiersEscaping") // Remove when target Kotlin 2.1+
-        }
     }
 
     sourceSets {
