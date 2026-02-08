@@ -101,14 +101,14 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
      * @return the bank ID, or `null` if unknown for this country code.
      */
     val bankIdentifier: String?
-        get() = CountryCodes.getBankIdentifier(this)
+        get() = CountryCodes.getBankIdentifierInternal(this)
 
     /**
      * Returns the branch identifier embedded in the IBAN, if available.
      * @return the branch ID, or `null` if unknown for this country code.
      */
     val branchIdentifier: String?
-        get() = CountryCodes.getBranchIdentifier(this)
+        get() = CountryCodes.getBranchIdentifierInternal(this)
 
     /**
      * Returns the IBAN without formatting.

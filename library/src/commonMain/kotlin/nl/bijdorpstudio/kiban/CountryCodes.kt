@@ -15,6 +15,7 @@
  */
 package nl.bijdorpstudio.kiban
 
+import kotlinx.datetime.Instant
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_CODE_BRANCH_CODE
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_BEGIN_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_END_MASK
@@ -77,7 +78,9 @@ object CountryCodes {
      * @return the bank ID for this IBAN, or `null` if unknown.
      */
     @Deprecated("Use Iban.bankIdentifier instead", ReplaceWith("iban.bankIdentifier"))
-    fun getBankIdentifier(iban: Iban): String? {
+    fun getBankIdentifier(iban: Iban): String? = getBankIdentifierInternal(iban)
+
+    internal fun getBankIdentifierInternal(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
@@ -94,7 +97,9 @@ object CountryCodes {
      * @return the branch ID for this IBAN, or `null` if unknown.
      */
     @Deprecated("Use Iban.branchIdentifier instead", ReplaceWith("iban.branchIdentifier"))
-    fun getBranchIdentifier(iban: Iban): String? {
+    fun getBranchIdentifier(iban: Iban): String? = getBranchIdentifierInternal(iban)
+
+    internal fun getBranchIdentifierInternal(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
@@ -171,23 +176,22 @@ object CountryCodes {
         return indexOf(countryCode.toString()) >= 0
     }
 
-    // Uncomment when Kotlin 2.1
-//    @OptIn(ExperimentalTime::class)
-//    val lastUpdateDate: Instant
-//        /**
-//         * Returns the date that the IBAN reference data was last updated.
-//         * @return the last update date of the reference data in this library.
-//         */
-//        get() = Instant.parse(LAST_UPDATE_DATE)
+    /**
+     * Returns the date that the IBAN reference data was last updated.
+     * @return the last update date of the reference data in this library.
+     */
+    val lastUpdateDate: Instant
+        get() = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
     /**
      * Returns the date that the IBAN reference data was last updated.
      * @return the last update date of the reference data in this library.
      */
-    const val lastUpdateDate: String = LAST_UPDATE_DATE
+    @Deprecated("Use lastUpdateDate property instead", ReplaceWith("lastUpdateDate"))
+    const val lastUpdateDateString: String = LAST_UPDATE_DATE
 
     /**
-     * Returns the version information of the SWIFT IBAN Registry used on [.getLastUpdateDate].
+     * Returns the version information of the SWIFT IBAN Registry used on [.lastUpdateDateString].
      * @return revision information of the SWIFT IBAN Registry.
      */
     const val lastUpdateRevision: String = LAST_UPDATE_REV
