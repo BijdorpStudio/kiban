@@ -6,6 +6,7 @@ public final class nl/bijdorpstudio/kiban/CountryCodes {
 	public final fun getBranchIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/lang/String;
 	public final fun getKnownCountryCodes ()Ljava/util/Collection;
 	public final fun getLONGEST_IBAN_LENGTH ()I
+	public final fun getLength (Ljava/lang/CharSequence;)Ljava/lang/Integer;
 	public final fun getLengthForCountryCode (Ljava/lang/CharSequence;)I
 	public final fun getSHORTEST_IBAN_LENGTH ()I
 	public final fun isInSwiftRegistry (Ljava/lang/CharSequence;)Z
@@ -25,8 +26,12 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public fun compareTo (Lnl/bijdorpstudio/kiban/Iban;)I
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBankIdentifier ()Ljava/lang/String;
+	public final fun getBranchIdentifier ()Ljava/lang/String;
 	public final fun getCheckDigits ()Ljava/lang/String;
 	public final fun getCountryCode ()Ljava/lang/String;
+	public final fun getPlain ()Ljava/lang/String;
+	public final fun getPretty ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun isInSwiftRegistry ()Z
 	public final fun isSEPA ()Z
@@ -36,10 +41,17 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 
 public final class nl/bijdorpstudio/kiban/Iban$Companion {
 	public final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun format (Ljava/lang/CharSequence;)Ljava/lang/String;
+	public final fun invoke (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public final fun toPlain (Ljava/lang/CharSequence;)Ljava/lang/String;
 	public final fun toPretty (Ljava/lang/CharSequence;)Ljava/lang/String;
 	public final fun valueOf (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanKt {
+	public static final fun isValidIban (Ljava/lang/String;)Z
+	public static final fun toIban (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
 }
 
 public final class nl/bijdorpstudio/kiban/Modulo97 {

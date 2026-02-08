@@ -17,8 +17,10 @@ package nl.bijdorpstudio.kiban
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEqualTo
+import assertk.assertions.isTrue
 import assertk.assertions.prop
 import assertk.tableOf
 import kotlin.test.Test
@@ -30,6 +32,28 @@ import kotlin.test.assertFailsWith
  * Miscellaneous tests for the [Iban] class.
  */
 class IbanTest {
+    @Test
+    fun `Operator invoke should parse IBAN`() {
+        val iban = Iban(VALID_IBAN)
+        assertThat(iban.plain).isEqualTo(VALID_IBAN)
+    }
+
+    @Test
+    fun `toIban extension should parse IBAN`() {
+        val iban = VALID_IBAN.toIban()
+        assertThat(iban.plain).isEqualTo(VALID_IBAN)
+    }
+
+    @Test
+    fun `isValidIban extension should return true for valid IBAN`() {
+        assertThat(VALID_IBAN.isValidIban()).isTrue()
+    }
+
+    @Test
+    fun `isValidIban extension should return false for invalid IBAN`() {
+        assertThat(INVALID_IBAN.isValidIban()).isFalse()
+    }
+
     @Test
     fun `Valid IBAN should return country code`() {
         assertThat(Iban.parse(VALID_IBAN).countryCode).isEqualTo("NL")

@@ -76,13 +76,14 @@ object CountryCodes {
      * @param iban an iban to evaluate. Cannot be null.
      * @return the bank ID for this IBAN, or `null` if unknown.
      */
+    @Deprecated("Use Iban.bankIdentifier instead", ReplaceWith("iban.bankIdentifier"))
     fun getBankIdentifier(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
             val bankIdBegin = data and BANK_IDENTIFIER_BEGIN_MASK
             val bankIdEnd = (data and BANK_IDENTIFIER_END_MASK) ushr BANK_IDENTIFIER_END_SHIFT
-            return if (bankIdBegin != 0) iban.toPlainString().substring(bankIdBegin, bankIdEnd) else null
+            return if (bankIdBegin != 0) iban.plain.substring(bankIdBegin, bankIdEnd) else null
         }
         return null
     }
@@ -92,13 +93,27 @@ object CountryCodes {
      * @param iban an iban to evaluate. Cannot be null.
      * @return the branch ID for this IBAN, or `null` if unknown.
      */
+    @Deprecated("Use Iban.branchIdentifier instead", ReplaceWith("iban.branchIdentifier"))
     fun getBranchIdentifier(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
             val branchIdBegin = (data and BRANCH_IDENTIFIER_BEGIN_MASK) ushr BRANCH_IDENTIFIER_BEGIN_SHIFT
             val branchIdEnd = (data and BRANCH_IDENTIFIER_END_MASK) ushr BRANCH_IDENTIFIER_END_SHIFT
-            return if (branchIdBegin != 0) iban.toPlainString().substring(branchIdBegin, branchIdEnd) else null
+            return if (branchIdBegin != 0) iban.plain.substring(branchIdBegin, branchIdEnd) else null
+        }
+        return null
+    }
+
+    /**
+     * Returns the IBAN length for a given country code.
+     * @param countryCode a non-null, uppercase, two-character country code.
+     * @return the IBAN length for the given country, or null if the input is not a known, two-character country code.
+     */
+    fun getLength(countryCode: CharSequence): Int? {
+        val index = indexOf(countryCode.toString())
+        if (index > -1) {
+            return COUNTRY_IBAN_LENGTHS[index] and REMOVE_METADATA_MASK
         }
         return null
     }
@@ -108,13 +123,8 @@ object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return the IBAN length for the given country, or -1 if the input is not a known, two-character country code.
      */
-    fun getLengthForCountryCode(countryCode: CharSequence): Int {
-        val index = indexOf(countryCode.toString())
-        if (index > -1) {
-            return COUNTRY_IBAN_LENGTHS[index] and REMOVE_METADATA_MASK
-        }
-        return -1
-    }
+    @Deprecated("Use getLength instead", ReplaceWith("getLength(countryCode) ?: -1"))
+    fun getLengthForCountryCode(countryCode: CharSequence): Int = getLength(countryCode) ?: -1
 
     /**
      * Returns whether the given country code is in SEPA.

@@ -7,6 +7,10 @@
 
 // Library unique name: <nl.bijdorpstudio.kiban:library>
 final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kiban/Iban> { // nl.bijdorpstudio.kiban/Iban|null[0]
+    final val bankIdentifier // nl.bijdorpstudio.kiban/Iban.bankIdentifier|{}bankIdentifier[0]
+        final fun <get-bankIdentifier>(): kotlin/String? // nl.bijdorpstudio.kiban/Iban.bankIdentifier.<get-bankIdentifier>|<get-bankIdentifier>(){}[0]
+    final val branchIdentifier // nl.bijdorpstudio.kiban/Iban.branchIdentifier|{}branchIdentifier[0]
+        final fun <get-branchIdentifier>(): kotlin/String? // nl.bijdorpstudio.kiban/Iban.branchIdentifier.<get-branchIdentifier>|<get-branchIdentifier>(){}[0]
     final val checkDigits // nl.bijdorpstudio.kiban/Iban.checkDigits|{}checkDigits[0]
         final fun <get-checkDigits>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.checkDigits.<get-checkDigits>|<get-checkDigits>(){}[0]
     final val countryCode // nl.bijdorpstudio.kiban/Iban.countryCode|{}countryCode[0]
@@ -15,6 +19,10 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
         final fun <get-isInSwiftRegistry>(): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.isInSwiftRegistry.<get-isInSwiftRegistry>|<get-isInSwiftRegistry>(){}[0]
     final val isSEPA // nl.bijdorpstudio.kiban/Iban.isSEPA|{}isSEPA[0]
         final fun <get-isSEPA>(): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.isSEPA.<get-isSEPA>|<get-isSEPA>(){}[0]
+    final val plain // nl.bijdorpstudio.kiban/Iban.plain|{}plain[0]
+        final fun <get-plain>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.plain.<get-plain>|<get-plain>(){}[0]
+    final val pretty // nl.bijdorpstudio.kiban/Iban.pretty|{}pretty[0]
+        final fun <get-pretty>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.pretty.<get-pretty>|<get-pretty>(){}[0]
 
     final fun compareTo(nl.bijdorpstudio.kiban/Iban): kotlin/Int // nl.bijdorpstudio.kiban/Iban.compareTo|compareTo(nl.bijdorpstudio.kiban.Iban){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.equals|equals(kotlin.Any?){}[0]
@@ -27,6 +35,8 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
             final fun <get-SHORTEST_POSSIBLE_IBAN>(): kotlin/Int // nl.bijdorpstudio.kiban/Iban.Companion.SHORTEST_POSSIBLE_IBAN.<get-SHORTEST_POSSIBLE_IBAN>|<get-SHORTEST_POSSIBLE_IBAN>(){}[0]
 
         final fun compose(kotlin/CharSequence, kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.compose|compose(kotlin.CharSequence;kotlin.CharSequence){}[0]
+        final fun format(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.format|format(kotlin.CharSequence){}[0]
+        final fun invoke(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.invoke|invoke(kotlin.CharSequence){}[0]
         final fun parse(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.parse|parse(kotlin.CharSequence){}[0]
         final fun toPlain(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.toPlain|toPlain(kotlin.CharSequence){}[0]
         final fun toPretty(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.toPretty|toPretty(kotlin.CharSequence){}[0]
@@ -49,6 +59,7 @@ final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/Cou
 
     final fun getBankIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBankIdentifier|getBankIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
     final fun getBranchIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBranchIdentifier|getBranchIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
+    final fun getLength(kotlin/CharSequence): kotlin/Int? // nl.bijdorpstudio.kiban/CountryCodes.getLength|getLength(kotlin.CharSequence){}[0]
     final fun getLengthForCountryCode(kotlin/CharSequence): kotlin/Int // nl.bijdorpstudio.kiban/CountryCodes.getLengthForCountryCode|getLengthForCountryCode(kotlin.CharSequence){}[0]
     final fun isInSwiftRegistry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isInSwiftRegistry|isInSwiftRegistry(kotlin.CharSequence){}[0]
     final fun isKnownCountryCode(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isKnownCountryCode|isKnownCountryCode(kotlin.CharSequence){}[0]
@@ -61,3 +72,6 @@ final object nl.bijdorpstudio.kiban/Modulo97 { // nl.bijdorpstudio.kiban/Modulo9
     final fun checksum(kotlin/CharSequence): kotlin/Int // nl.bijdorpstudio.kiban/Modulo97.checksum|checksum(kotlin.CharSequence){}[0]
     final fun verifyCheckDigits(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/Modulo97.verifyCheckDigits|verifyCheckDigits(kotlin.CharSequence){}[0]
 }
+
+final fun (kotlin/String).nl.bijdorpstudio.kiban/isValidIban(): kotlin/Boolean // nl.bijdorpstudio.kiban/isValidIban|isValidIban@kotlin.String(){}[0]
+final fun (kotlin/String).nl.bijdorpstudio.kiban/toIban(): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/toIban|toIban@kotlin.String(){}[0]
