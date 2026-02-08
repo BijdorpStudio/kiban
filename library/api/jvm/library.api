@@ -1,0 +1,52 @@
+public final class nl/bijdorpstudio/kiban/CountryCodes {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/CountryCodes;
+	public static final field lastUpdateDate Ljava/lang/String;
+	public static final field lastUpdateRevision Ljava/lang/String;
+	public final fun getBankIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/lang/String;
+	public final fun getBranchIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/lang/String;
+	public final fun getKnownCountryCodes ()Ljava/util/Collection;
+	public final fun getLONGEST_IBAN_LENGTH ()I
+	public final fun getLengthForCountryCode (Ljava/lang/CharSequence;)I
+	public final fun getSHORTEST_IBAN_LENGTH ()I
+	public final fun isInSwiftRegistry (Ljava/lang/CharSequence;)Z
+	public final fun isKnownCountryCode (Ljava/lang/CharSequence;)Z
+	public final fun isSEPACountry (Ljava/lang/CharSequence;)Z
+}
+
+public final class nl/bijdorpstudio/kiban/IBANFields {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IBANFields;
+	public final fun getBankIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/util/Optional;
+	public final fun getBranchIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/util/Optional;
+}
+
+public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
+	public static final field Companion Lnl/bijdorpstudio/kiban/Iban$Companion;
+	public static final field SHORTEST_POSSIBLE_IBAN I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public fun compareTo (Lnl/bijdorpstudio/kiban/Iban;)I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCheckDigits ()Ljava/lang/String;
+	public final fun getCountryCode ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isInSwiftRegistry ()Z
+	public final fun isSEPA ()Z
+	public final fun toPlainString ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/Iban$Companion {
+	public final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun toPlain (Ljava/lang/CharSequence;)Ljava/lang/String;
+	public final fun toPretty (Ljava/lang/CharSequence;)Ljava/lang/String;
+	public final fun valueOf (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+}
+
+public final class nl/bijdorpstudio/kiban/Modulo97 {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/Modulo97;
+	public final fun calculateCheckDigits (Ljava/lang/CharSequence;)I
+	public final fun calculateCheckDigits (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)I
+	public final fun checksum (Ljava/lang/CharSequence;)I
+	public final fun verifyCheckDigits (Ljava/lang/CharSequence;)Z
+}
+

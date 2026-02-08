@@ -25,6 +25,8 @@ jobs:
             os: ubuntu-latest
           - target: jsTest
             os: ubuntu-latest
+          - target: apiCheck
+            os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
