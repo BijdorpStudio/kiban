@@ -1,24 +1,24 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.compat.patrouille)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.compat.tapmoc)
     alias(libs.plugins.maven.publish)
 }
 
 group = "nl.bijdorpstudio.kiban"
 version = "0.3.0"
 
-compatPatrouille {
+tapmoc {
     java(libs.versions.java.version.get().toInt())
     kotlin(libs.versions.kotlin.version.get())
 }
 
 kotlin {
     jvm()
-    androidTarget {
-        publishLibraryVariants("release")
+    androidLibrary {
+        namespace = "nl.bijdorpstudio.kiban"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
     iosX64()
     iosArm64()
@@ -26,9 +26,6 @@ kotlin {
     linuxX64()
     js(IR) {
         nodejs()
-        compilerOptions {
-            freeCompilerArgs.add("-XXLanguage:+JsAllowInvalidCharsIdentifiersEscaping") // Remove when target Kotlin 2.1+
-        }
     }
 
     sourceSets {
@@ -43,16 +40,9 @@ kotlin {
     }
 }
 
-android {
-    namespace = "nl.bijdorpstudio.kiban"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     signAllPublications()
 

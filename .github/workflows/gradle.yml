@@ -23,11 +23,9 @@ jobs:
             os: ubuntu-latest
           - target: linuxX64Test
             os: ubuntu-latest
-          - target: testDebugUnitTest
-            os: ubuntu-latest
-          - target: testReleaseUnitTest
-            os: ubuntu-latest
           - target: jsTest
+            os: ubuntu-latest
+          - target: assembleAndroidMain androidCompileLintChecks
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
