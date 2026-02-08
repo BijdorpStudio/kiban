@@ -30,7 +30,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // no dependencies
+            implementation(libs.kotlinx.datetime)
         }
 
         commonTest.dependencies {

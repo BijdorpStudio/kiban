@@ -45,8 +45,8 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
 }
 
 final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/CountryCodes|null[0]
-    final const val lastUpdateDate // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate|{}lastUpdateDate[0]
-        final fun <get-lastUpdateDate>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate.<get-lastUpdateDate>|<get-lastUpdateDate>(){}[0]
+    final const val lastUpdateDateString // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDateString|{}lastUpdateDateString[0]
+        final fun <get-lastUpdateDateString>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDateString.<get-lastUpdateDateString>|<get-lastUpdateDateString>(){}[0]
     final const val lastUpdateRevision // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision|{}lastUpdateRevision[0]
         final fun <get-lastUpdateRevision>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision.<get-lastUpdateRevision>|<get-lastUpdateRevision>(){}[0]
 
@@ -56,6 +56,8 @@ final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/Cou
         final fun <get-SHORTEST_IBAN_LENGTH>(): kotlin/Int // nl.bijdorpstudio.kiban/CountryCodes.SHORTEST_IBAN_LENGTH.<get-SHORTEST_IBAN_LENGTH>|<get-SHORTEST_IBAN_LENGTH>(){}[0]
     final val knownCountryCodes // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes|{}knownCountryCodes[0]
         final fun <get-knownCountryCodes>(): kotlin.collections/Collection<kotlin/String> // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes.<get-knownCountryCodes>|<get-knownCountryCodes>(){}[0]
+    final val lastUpdateDate // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate|{}lastUpdateDate[0]
+        final fun <get-lastUpdateDate>(): kotlinx.datetime/Instant // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate.<get-lastUpdateDate>|<get-lastUpdateDate>(){}[0]
 
     final fun getBankIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBankIdentifier|getBankIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
     final fun getBranchIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBranchIdentifier|getBranchIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
