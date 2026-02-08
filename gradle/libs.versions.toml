@@ -8,6 +8,7 @@ assertk = "0.28.1"
 # @keep this is library java compatibility version
 java-version = "17"
 kotlin = "2.3.10"
+kotlinx-binary-compatibility-validator = "0.17.0"
 # @keep this is library kotlin compatibility version
 kotlin-version = "2.3.0"
 maven-publish-plugin = "0.36.0"
@@ -22,5 +23,6 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 compat-tapmoc = { id = "com.gradleup.tapmoc", version.ref = "tapmoc-plugin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binary-compatibility-validator" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 versions-catalogue-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versions-catalogue-update-plugin" }

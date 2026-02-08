@@ -5,7 +5,16 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.versions.catalogue.update)
+    alias(libs.plugins.kotlinx.api.validator)
     alias(libs.plugins.compat.tapmoc) apply false
+}
+
+//noinspection DSL_SCOPE_VIOLATION
+@OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+apiValidation {
+    klib {
+        enabled = true
+    }
 }
 
 versionCatalogUpdate {

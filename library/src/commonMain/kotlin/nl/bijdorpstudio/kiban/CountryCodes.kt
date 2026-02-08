@@ -66,7 +66,7 @@ object CountryCodes {
      * @param countryCode a country code.
      * @return the array index, or -1.
      */
-    fun indexOf(countryCode: String): Int =
+    internal fun indexOf(countryCode: String): Int =
         COUNTRY_CODES
             .asList()
             .binarySearch(countryCode)

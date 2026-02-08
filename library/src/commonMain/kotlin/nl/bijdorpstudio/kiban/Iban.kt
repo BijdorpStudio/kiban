@@ -34,7 +34,7 @@ import nl.bijdorpstudio.kiban.Iban.Companion.valueOf
  *
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia: International Bank Account Number</a>
  */
-class Iban private constructor(internal val value: String) : Comparable<Iban> {
+class Iban internal constructor(internal val value: String) : Comparable<Iban> {
     /**
      * Whether or not this IBAN data is from the SWIFT IBAN Registry.
      *
