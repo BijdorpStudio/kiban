@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.compat.tapmoc) apply false
 }
 
-//noinspection DSL_SCOPE_VIOLATION
 @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
 apiValidation {
     klib {
