@@ -20,12 +20,13 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
 import assertk.tableOf
 import kotlin.test.Test
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
+import kotlin.test.fail
 
 
 /**
@@ -34,14 +35,31 @@ import kotlin.test.assertFailsWith
 class IbanTest {
     @Test
     fun `Operator invoke should parse IBAN`() {
-        val iban = Iban(VALID_IBAN)
+        // Called through the companion explicitly: inside the library module the internal constructor would win.
+        val iban = Iban.Companion.invoke(VALID_IBAN).getOrThrow()
         assertThat(iban.plain).isEqualTo(VALID_IBAN)
     }
 
     @Test
     fun `toIban extension should parse IBAN`() {
-        val iban = VALID_IBAN.toIban()
+        val iban = VALID_IBAN.toIban().getOrThrow()
         assertThat(iban.plain).isEqualTo(VALID_IBAN)
+    }
+
+    @Test
+    fun `toIban extension should return failure for invalid IBAN`() {
+        assertThat(INVALID_IBAN.toIban().failure())
+            .isInstanceOf<IbanParseException.WrongChecksum>()
+    }
+
+    @Test
+    fun `toIbanOrNull extension should parse IBAN`() {
+        assertThat(VALID_IBAN.toIbanOrNull()?.plain).isEqualTo(VALID_IBAN)
+    }
+
+    @Test
+    fun `toIbanOrNull extension should return null for invalid IBAN`() {
+        assertThat(INVALID_IBAN.toIbanOrNull()).isNull()
     }
 
     @Test
@@ -56,64 +74,106 @@ class IbanTest {
 
     @Test
     fun `Valid IBAN should return country code`() {
-        assertThat(Iban.parse(VALID_IBAN).countryCode).isEqualTo("NL")
+        assertThat(Iban.parse(VALID_IBAN).getOrThrow().countryCode).isEqualTo("NL")
     }
 
     @Test
     fun `Valid IBAN should return check digits`() {
-        assertThat(Iban.parse(VALID_IBAN).checkDigits).isEqualTo("03")
+        assertThat(Iban.parse(VALID_IBAN).getOrThrow().checkDigits).isEqualTo("03")
     }
 
     @Test
     fun `valueOf should accept toString output of valid IBAN`() {
-        val original = Iban.parse(VALID_IBAN)
+        val original = Iban.parse(VALID_IBAN).getOrThrow()
         val copy = Iban.valueOf(original.toString())
         assertThat(copy).isEqualTo(original)
     }
 
     @Test
-    fun `Parse should reject invalid input`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.parse("Shenanigans!")
+    fun `valueOf should throw for invalid input`() {
+        assertFailsWith<IbanParseException.WrongChecksum> {
+            Iban.valueOf(INVALID_IBAN)
         }
+    }
+
+    @Test
+    fun `Parse should reject empty input`() {
+        assertThat(Iban.parse("").malformedKind()).isEqualTo(IbanParseException.Malformed.Kind.EMPTY)
+    }
+
+    @Test
+    fun `Parse should reject invalid input`() {
+        assertThat(Iban.parse("Shenanigans!").malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
     }
 
     @Test
     fun `Parse should reject leading whitespace`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.parse(" $VALID_IBAN")
-        }
+        assertThat(Iban.parse(" $VALID_IBAN").malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
     }
 
     @Test
     fun `Parse should reject trailing whitespace`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.parse("$VALID_IBAN ")
-        }
+        assertThat(Iban.parse("$VALID_IBAN ").malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+    }
+
+    @Test
+    fun `Parse should reject too short input`() {
+        assertThat(Iban.parse("NL03").malformedKind()).isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+    }
+
+    @Test
+    fun `Parse should reject non numeric check digits`() {
+        assertThat(Iban.parse("NLAB0143267469").malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
+    }
+
+    @Test
+    fun `Parse should reject unsupported characters`() {
+        val invalidCharacter = VALID_IBAN.replaceRange(6, 7, "_")
+
+        assertThat(Iban.parse(invalidCharacter).malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
     }
 
     @Test
     fun `Parse should reject unknown country code`() {
-        val exception = assertFails {
-            Iban.parse("UU345678345543234")
-        }
+        val failure = Iban.parse("UU345678345543234").failure()
 
-        assertThat(exception)
-            .isInstanceOf<IllegalArgumentException>()
-            .prop(IllegalArgumentException::message)
-            .isEqualTo("Unknown country code: UU")
+        assertThat(failure)
+            .isInstanceOf<IbanParseException.UnknownCountryCode>()
+            .prop(IbanParseException.UnknownCountryCode::countryCode)
+            .isEqualTo("UU")
+        assertThat(failure.message).isEqualTo("Unknown country code: UU")
+    }
+
+    @Test
+    fun `Parse should reject wrong length`() {
+        val tooLong = VALID_IBAN + "0"
+
+        assertThat(Iban.parse(tooLong).failure())
+            .isInstanceOf<IbanParseException.WrongLength>()
+            .prop(IbanParseException.WrongLength::expectedLength)
+            .isEqualTo(18)
     }
 
     @Test
     fun `Parse should reject checksum failure`() {
-        val exception = assertFails {
-            Iban.parse(INVALID_IBAN)
-        }
+        val failure = Iban.parse(INVALID_IBAN).failure()
 
-        assertThat(exception)
+        assertThat(failure)
+            .isInstanceOf<IbanParseException.WrongChecksum>()
+            .prop(IbanParseException.WrongChecksum::input)
+            .isEqualTo(INVALID_IBAN)
+        assertThat(failure.message).isEqualTo("Wrong check sum for $INVALID_IBAN")
+    }
+
+    @Test
+    fun `Parse failure should be an IllegalArgumentException`() {
+        assertThat(Iban.parse(INVALID_IBAN).failure())
             .isInstanceOf<IllegalArgumentException>()
-            .prop(IllegalArgumentException::message)
-            .isEqualTo("Wrong check sum for $INVALID_IBAN")
     }
 
     @Test
@@ -122,54 +182,45 @@ class IbanTest {
             countryCode = VALID_IBAN.substring(0, 2),
             bban = VALID_IBAN.substring(4)
         )
-        assertThat(composed).isEqualTo(Iban.parse(VALID_IBAN))
+        assertThat(composed.getOrThrow()).isEqualTo(Iban.parse(VALID_IBAN).getOrThrow())
+    }
+
+    @Test
+    fun `Compose should handle check digits of ten and higher`() {
+        val composed = Iban.compose(countryCode = "BI", bban = "10000100010000332045181")
+
+        assertThat(composed.getOrThrow().plain).isEqualTo("BI4210000100010000332045181")
     }
 
     @Test
     fun `Compose should reject blank country code`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.compose(
-                countryCode = "  ",
-                bban = VALID_IBAN.substring(4)
-            )
-        }
+        assertThat(Iban.compose(countryCode = "  ", bban = VALID_IBAN.substring(4)).failure())
+            .isInstanceOf<IbanParseException>()
     }
 
     @Test
     fun `Compose should reject malformed country code`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.compose(
-                countryCode = "potato",
-                bban = VALID_IBAN.substring(4)
-            )
-        }
+        assertThat(Iban.compose(countryCode = "potato", bban = VALID_IBAN.substring(4)).malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
     }
 
     @Test
     fun `Compose should reject unknown country code`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.compose(
-                countryCode = "XX",
-                bban = VALID_IBAN.substring(4)
-            )
-        }
+        assertThat(Iban.compose(countryCode = "XX", bban = VALID_IBAN.substring(4)).failure())
+            .isInstanceOf<IbanParseException.UnknownCountryCode>()
     }
 
     @Test
     fun `Compose should reject wrong length BBAN`() {
-        assertFailsWith<IllegalArgumentException> {
-            Iban.compose(
-                countryCode = VALID_IBAN.substring(0, 2),
-                bban = VALID_IBAN.substring(5)
-            )
-        }
+        assertThat(Iban.compose(countryCode = VALID_IBAN.substring(0, 2), bban = VALID_IBAN.substring(5)).failure())
+            .isInstanceOf<IbanParseException.WrongLength>()
     }
 
     @Test
     fun `Equals contract should be satisfied`() {
-        val x = Iban.parse(VALID_IBAN)
-        val y = Iban.parse(VALID_IBAN)
-        val z = Iban.parse(VALID_IBAN)
+        val x = Iban.parse(VALID_IBAN).getOrThrow()
+        val y = Iban.parse(VALID_IBAN).getOrThrow()
+        val z = Iban.parse(VALID_IBAN).getOrThrow()
 
         assertThat(x, "An object is not equal to nul").isNotEqualTo(null)
         assertThat(x, "An object equals itself").isEqualTo(x)
@@ -220,14 +271,14 @@ class IbanTest {
     @Test
     fun `Lexical sort should order IBANs correctly`() {
         val expected = listOf(
-            Iban.parse("DK3400000000000003"),
-            Iban.parse("NL41BANK0000000002"),
-            Iban.parse("NL68BANK0000000001")
+            Iban.parse("DK3400000000000003").getOrThrow(),
+            Iban.parse("NL41BANK0000000002").getOrThrow(),
+            Iban.parse("NL68BANK0000000001").getOrThrow()
         )
         val actual = listOf(
-            Iban.parse("NL68BANK0000000001"),
-            Iban.parse("DK3400000000000003"),
-            Iban.parse("NL41BANK0000000002")
+            Iban.parse("NL68BANK0000000001").getOrThrow(),
+            Iban.parse("DK3400000000000003").getOrThrow(),
+            Iban.parse("NL41BANK0000000002").getOrThrow()
         )
 
         assertThat(actual.sorted()).isEqualTo(expected)
@@ -236,5 +287,11 @@ class IbanTest {
     companion object {
         internal const val VALID_IBAN = "NL03ABNA0143267469"
         private const val INVALID_IBAN = "NL13ABNA0143267469"
+
+        private fun Result<Iban>.failure(): Throwable =
+            exceptionOrNull() ?: fail("Expected a failure, but was $this")
+
+        private fun Result<Iban>.malformedKind(): IbanParseException.Malformed.Kind? =
+            (exceptionOrNull() as? IbanParseException.Malformed)?.kind
     }
 }

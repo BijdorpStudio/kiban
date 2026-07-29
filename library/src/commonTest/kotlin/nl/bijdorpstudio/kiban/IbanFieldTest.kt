@@ -29,7 +29,7 @@ class CountryCodesIbanFieldsTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
-                val iban = Iban.parse(td.plain)
+                val iban = Iban.parse(td.plain).getOrThrow()
                 assertThat(CountryCodes.getBankIdentifier(iban)).isEqualTo(td.bank)
             }
     }
@@ -39,7 +39,7 @@ class CountryCodesIbanFieldsTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
-                val iban = Iban.parse(td.plain)
+                val iban = Iban.parse(td.plain).getOrThrow()
                 assertThat(CountryCodes.getBranchIdentifier(iban)).isEqualTo(td.branch)
             }
     }
