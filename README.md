@@ -98,7 +98,9 @@ Adopted design choices from Java library and going to do next:
 
 ## References
 
-* [SWIFT IBAN Registry](https://www.swift.com/sites/default/files/resources/iban_registry.pdf)
+* [SWIFT IBAN page](https://www.swift.com/standards/data-standards/iban) — official ISO 13616 registry page
+  * [IBAN Registry (PDF)](https://www.swift.com/swift-resource/9606/download)
+  * [IBAN Registry (TXT, machine-readable)](https://www.swift.com/swift-resource/11971/download) — note: downloads only work from a real browser; plain HTTP clients are blocked
 * [SEPA Participants](https://www.europeanpaymentscouncil.eu/document-library/other/epc-list-sepa-scheme-countries)
 * [Experimental IBANs](https://www.iban.com/structure)
 * [General Information](http://en.wikipedia.org/wiki/IBAN)
