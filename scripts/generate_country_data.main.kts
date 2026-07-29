@@ -39,6 +39,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.buildCodeBlock
+import com.squareup.kotlinpoet.joinToCode
 import java.io.File
 import java.time.LocalDate
 
@@ -282,43 +283,57 @@ val regenerateNote =
 fun generatedKdoc(what: String) =
     "$what This is a generated file, do not edit manually.\n$regenerateNote\nUpdated to SWIFT IBAN Registry version $rev on $date.\n"
 
-fun constInt(name: String, expression: String, kdoc: String? = null): PropertySpec =
+fun constInt(name: String, format: String, vararg args: Any): PropertySpec =
     PropertySpec.builder(name, INT, KModifier.CONST)
-        .apply { kdoc?.let(::addKdoc) }
-        .initializer(expression)
+        .initializer(format, *args)
         .build()
 
 fun dataFileSpec(countries: List<Country>): FileSpec {
+    val sepa = constInt("SEPA", "1 shl 8")
+    val swift = constInt("SWIFT", "1 shl 9")
+    val bankEndShift = constInt("BANK_IDENTIFIER_END_SHIFT", "8")
+    val branchBeginShift = constInt("BRANCH_IDENTIFIER_BEGIN_SHIFT", "16")
+    val branchEndShift = constInt("BRANCH_IDENTIFIER_END_SHIFT", "24")
+
     val codesInitializer = buildCodeBlock {
         add("arrayOf(\n")
         indent()
-        countries.forEach { add("%S,\n", it.code) }
+        add(countries.map { CodeBlock.of("%S", it.code) }.joinToCode(",\n", suffix = ",\n"))
         unindent()
         add(")")
     }
     val lengthsInitializer = buildCodeBlock {
         add("intArrayOf(\n")
         indent()
-        countries.forEach { c ->
-            val flags = (if (c.swift) " or SWIFT" else "") + (if (c.sepa) " or SEPA" else "")
-            add("/* %L */ %L%L,\n", c.code, c.length, flags)
-        }
+        add(
+            countries.map { c ->
+                buildCodeBlock {
+                    add("/* %L */ %L", c.code, c.length)
+                    if (c.swift) add(" or %N", swift)
+                    if (c.sepa) add(" or %N", sepa)
+                }
+            }.joinToCode(",\n", suffix = ",\n")
+        )
         unindent()
         add(")")
     }
     val bankBranchInitializer = buildCodeBlock {
         add("intArrayOf(\n")
         indent()
-        countries.forEach { c ->
-            add("/* %L */ %L\n", c.code, c.bank.begin)
-            indent()
-            indent()
-            add("or ((%L + %L) shl BANK_IDENTIFIER_END_SHIFT)\n", c.bank.begin, c.bank.length)
-            add("or (%L shl BRANCH_IDENTIFIER_BEGIN_SHIFT)\n", c.branch.begin)
-            add("or ((%L + %L) shl BRANCH_IDENTIFIER_END_SHIFT),\n", c.branch.begin, c.branch.length)
-            unindent()
-            unindent()
-        }
+        add(
+            countries.map { c ->
+                buildCodeBlock {
+                    add("/* %L */ %L\n", c.code, c.bank.begin)
+                    indent()
+                    indent()
+                    add("or ((%L + %L) shl %N)\n", c.bank.begin, c.bank.length, bankEndShift)
+                    add("or (%L shl %N)\n", c.branch.begin, branchBeginShift)
+                    add("or ((%L + %L) shl %N)", c.branch.begin, c.branch.length, branchEndShift)
+                    unindent()
+                    unindent()
+                }
+            }.joinToCode(",\n", suffix = ",\n")
+        )
         unindent()
         add(")")
     }
@@ -338,16 +353,16 @@ fun dataFileSpec(countries: List<Country>): FileSpec {
                 .initializer("%S", rev)
                 .build()
         )
-        .addProperty(constInt("SEPA", "1 shl 8"))
-        .addProperty(constInt("SWIFT", "1 shl 9"))
+        .addProperty(sepa)
+        .addProperty(swift)
         .addProperty(constInt("REMOVE_METADATA_MASK", "0xFF"))
         .addProperty(constInt("BANK_IDENTIFIER_BEGIN_MASK", "0xFF"))
-        .addProperty(constInt("BANK_IDENTIFIER_END_SHIFT", "8"))
-        .addProperty(constInt("BANK_IDENTIFIER_END_MASK", "0xFF shl BANK_IDENTIFIER_END_SHIFT"))
-        .addProperty(constInt("BRANCH_IDENTIFIER_BEGIN_SHIFT", "16"))
-        .addProperty(constInt("BRANCH_IDENTIFIER_BEGIN_MASK", "0xFF shl BRANCH_IDENTIFIER_BEGIN_SHIFT"))
-        .addProperty(constInt("BRANCH_IDENTIFIER_END_SHIFT", "24"))
-        .addProperty(constInt("BRANCH_IDENTIFIER_END_MASK", "0xFF shl BRANCH_IDENTIFIER_END_SHIFT"))
+        .addProperty(bankEndShift)
+        .addProperty(constInt("BANK_IDENTIFIER_END_MASK", "0xFF shl %N", bankEndShift))
+        .addProperty(branchBeginShift)
+        .addProperty(constInt("BRANCH_IDENTIFIER_BEGIN_MASK", "0xFF shl %N", branchBeginShift))
+        .addProperty(branchEndShift)
+        .addProperty(constInt("BRANCH_IDENTIFIER_END_MASK", "0xFF shl %N", branchEndShift))
         .addProperty(
             PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING))
                 .addKdoc(
@@ -395,21 +410,25 @@ fun testFileSpec(countries: List<Country>): FileSpec {
     val entriesInitializer = buildCodeBlock {
         add("listOf(\n")
         indent()
-        countries
-            .sortedWith(compareBy({ !it.swift }, { if (it.swift) it.code else it.name }))
-            .forEach { c ->
-                add("%T(\n", testDataType)
-                indent()
-                add("name = %S,\n", c.name)
-                add("swift = %L,\n", c.swift)
-                add("sepa = %L,\n", c.sepa)
-                add("plain = %S,\n", c.example)
-                add("bank = %L,\n", c.bank.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
-                add("branch = %L,\n", c.branch.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
-                add("pretty = %S,\n", pretty(c.example))
-                unindent()
-                add("),\n")
-            }
+        add(
+            countries
+                .sortedWith(compareBy({ !it.swift }, { if (it.swift) it.code else it.name }))
+                .map { c ->
+                    buildCodeBlock {
+                        add("%T(\n", testDataType)
+                        indent()
+                        add("name = %S,\n", c.name)
+                        add("swift = %L,\n", c.swift)
+                        add("sepa = %L,\n", c.sepa)
+                        add("plain = %S,\n", c.example)
+                        add("bank = %L,\n", c.bank.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
+                        add("branch = %L,\n", c.branch.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
+                        add("pretty = %S,\n", pretty(c.example))
+                        unindent()
+                        add(")")
+                    }
+                }.joinToCode(",\n", suffix = ",\n")
+        )
         unindent()
         add(")")
     }
