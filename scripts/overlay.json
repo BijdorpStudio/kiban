@@ -1,0 +1,31 @@
+{
+  "_comment": "Curated overlay applied on top of the SWIFT IBAN Registry TXT. Sources: IBAN.com Experimental List (https://www.iban.com/structure) via java-iban (Apache-2.0, https://github.com/barend/java-iban), and EPC SEPA scheme participation (https://www.europeanpaymentscouncil.eu/document-library/other/epc-list-sepa-scheme-countries).",
+  "sepa_overrides": {
+    "_comment": "Countries participating in SEPA per EPC that the SWIFT registry does not (yet) flag as SEPA.",
+    "codes": ["AL", "MD", "ME", "MK", "RS"]
+  },
+  "experimental": [
+    { "code": "AO", "name": "Angola", "example": "AO06004400006729503010102" },
+    { "code": "BF", "name": "Burkina Faso", "example": "BF42BF0840101300463574000390" },
+    { "code": "BJ", "name": "Benin", "example": "BJ66BJ0610100100144390000769" },
+    { "code": "CF", "name": "Central African Republic", "example": "CF4220001000010120069700160" },
+    { "code": "CG", "name": "Congo", "example": "CG3930011000101013451300019" },
+    { "code": "CI", "name": "Ivory Coast", "example": "CI93CI0080111301134291200589" },
+    { "code": "CM", "name": "Cameroon", "example": "CM2110002000300277976315008" },
+    { "code": "CV", "name": "Cape Verde", "example": "CV64000500000020108215144" },
+    { "code": "DZ", "name": "Algeria", "example": "DZ580002100001113000000570" },
+    { "code": "GA", "name": "Gabon", "example": "GA2140021010032001890020126" },
+    { "code": "GQ", "name": "Equatorial Guinea", "example": "GQ7050002001003715228190196" },
+    { "code": "GW", "name": "Guinea-Bissau", "example": "GW04GW1430010181800637601" },
+    { "code": "IR", "name": "Iran", "example": "IR710570029971601460641001" },
+    { "code": "KM", "name": "Comoros", "example": "KM4600005000010010904400137" },
+    { "code": "MA", "name": "Morocco", "example": "MA64011519000001205000534921" },
+    { "code": "MG", "name": "Madagascar", "example": "MG4600005030071289421016045" },
+    { "code": "ML", "name": "Mali", "example": "ML13ML0160120102600100668497" },
+    { "code": "MZ", "name": "Mozambique", "example": "MZ59000301080016367102371" },
+    { "code": "NE", "name": "Niger", "example": "NE58NE0380100100130305000268" },
+    { "code": "SN", "name": "Senegal", "example": "SN08SN0100152000048500003035" },
+    { "code": "TD", "name": "Chad", "example": "TD8960002000010271091600153" },
+    { "code": "TG", "name": "Togo", "example": "TG53TG0090604310346500400070" }
+  ]
+}

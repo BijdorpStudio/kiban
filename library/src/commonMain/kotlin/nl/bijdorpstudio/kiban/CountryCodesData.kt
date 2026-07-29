@@ -1,5 +1,5 @@
 /*
-   Copyright 2021 Barend Garvelink, Eugen Martynov
+   Copyright 2026 Barend Garvelink, Eugen Martynov
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,19 +16,20 @@
 package nl.bijdorpstudio.kiban
 
 /**
- * Contains information about IBAN country codes. This is a generated file.
- * Updated to SWIFT IBAN Registry version 97 on 2024-05-25.
+ * Contains information about IBAN country codes. This is a generated file, do not edit manually.
+ * Regenerate with: python3 scripts/generate_country_data.py (see scripts/generate_country_data.py --help).
+ * Updated to SWIFT IBAN Registry version 102 on 2026-07-29.
  */
 internal object CountryCodesData {
     /**
      * The "yyyy-MM-dd" datestamp that the embedded IBAN data was updated.
      */
-    const val LAST_UPDATE_DATE = "2024-05-25"
+    const val LAST_UPDATE_DATE = "2026-07-29"
 
     /**
      * The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.
      */
-    const val LAST_UPDATE_REV = "97"
+    const val LAST_UPDATE_REV = "102"
 
     const val SEPA = 1 shl 8
     const val SWIFT = 1 shl 9
@@ -155,7 +156,8 @@ internal object CountryCodesData {
         "UA",
         "VA",
         "VG",
-        "XK"
+        "XK",
+        "YE",
     )
 
     /**
@@ -166,7 +168,7 @@ internal object CountryCodesData {
     val COUNTRY_IBAN_LENGTHS: IntArray = intArrayOf(
         /* AD */ 24 or SWIFT or SEPA,
         /* AE */ 23 or SWIFT,
-        /* AL */ 28 or SWIFT,
+        /* AL */ 28 or SWIFT or SEPA,
         /* AO */ 25,
         /* AT */ 20 or SWIFT or SEPA,
         /* AZ */ 28 or SWIFT,
@@ -209,7 +211,7 @@ internal object CountryCodesData {
         /* GR */ 27 or SWIFT or SEPA,
         /* GT */ 28 or SWIFT,
         /* GW */ 25,
-        /* HN */ 28,
+        /* HN */ 28 or SWIFT,
         /* HR */ 21 or SWIFT or SEPA,
         /* HU */ 28 or SWIFT or SEPA,
         /* IE */ 22 or SWIFT or SEPA,
@@ -231,10 +233,10 @@ internal object CountryCodesData {
         /* LY */ 25 or SWIFT,
         /* MA */ 28,
         /* MC */ 27 or SWIFT or SEPA,
-        /* MD */ 24 or SWIFT,
-        /* ME */ 22 or SWIFT,
+        /* MD */ 24 or SWIFT or SEPA,
+        /* ME */ 22 or SWIFT or SEPA,
         /* MG */ 27,
-        /* MK */ 19 or SWIFT,
+        /* MK */ 19 or SWIFT or SEPA,
         /* ML */ 28,
         /* MN */ 20 or SWIFT,
         /* MR */ 27 or SWIFT,
@@ -252,7 +254,7 @@ internal object CountryCodesData {
         /* PT */ 25 or SWIFT or SEPA,
         /* QA */ 29 or SWIFT,
         /* RO */ 24 or SWIFT or SEPA,
-        /* RS */ 22 or SWIFT,
+        /* RS */ 22 or SWIFT or SEPA,
         /* RU */ 33 or SWIFT,
         /* SA */ 24 or SWIFT,
         /* SC */ 31 or SWIFT,
@@ -273,7 +275,8 @@ internal object CountryCodesData {
         /* UA */ 29 or SWIFT,
         /* VA */ 22 or SWIFT or SEPA,
         /* VG */ 24 or SWIFT,
-        /* XK */ 20 or SWIFT
+        /* XK */ 20 or SWIFT,
+        /* YE */ 30 or SWIFT,
     )
 
     /**
@@ -287,7 +290,7 @@ internal object CountryCodesData {
     </pre> *
      */
     val BANK_CODE_BRANCH_CODE: IntArray = intArrayOf(
-        /* AD */4
+        /* AD */ 4
                 or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
                 or (8 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
                 or ((8 + 4) shl BRANCH_IDENTIFIER_END_SHIFT),
@@ -296,9 +299,9 @@ internal object CountryCodesData {
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
                 or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* AL */ 4
-                or ((4 + 8) shl BANK_IDENTIFIER_END_SHIFT)
+                or ((4 + 3) shl BANK_IDENTIFIER_END_SHIFT)
                 or (7 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-                or ((7 + 4) shl BRANCH_IDENTIFIER_END_SHIFT),
+                or ((7 + 5) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* AO */ 0
                 or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
@@ -429,8 +432,8 @@ internal object CountryCodesData {
                 or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* FR */ 4
                 or ((4 + 5) shl BANK_IDENTIFIER_END_SHIFT)
-                or (9 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-                or ((9 + 5) shl BRANCH_IDENTIFIER_END_SHIFT),
+                or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
+                or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* GA */ 0
                 or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
@@ -467,8 +470,8 @@ internal object CountryCodesData {
                 or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
                 or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
-        /* HN */ 0
-                or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
+        /* HN */ 4
+                or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
                 or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* HR */ 4
@@ -505,8 +508,8 @@ internal object CountryCodesData {
                 or ((10 + 5) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* JO */ 4
                 or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
-                or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-                or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
+                or (8 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
+                or ((8 + 4) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* KM */ 0
                 or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
@@ -619,10 +622,10 @@ internal object CountryCodesData {
                 or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
                 or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
-        /* PL */ 0
-                or ((0 + 0) shl BANK_IDENTIFIER_END_SHIFT)
-                or (4 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-                or ((4 + 8) shl BRANCH_IDENTIFIER_END_SHIFT),
+        /* PL */ 4
+                or ((4 + 8) shl BANK_IDENTIFIER_END_SHIFT)
+                or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
+                or ((0 + 0) shl BRANCH_IDENTIFIER_END_SHIFT),
         /* PS */ 4
                 or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
                 or (0 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
@@ -726,6 +729,10 @@ internal object CountryCodesData {
         /* XK */ 4
                 or ((4 + 2) shl BANK_IDENTIFIER_END_SHIFT)
                 or (6 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-                or ((6 + 2) shl BRANCH_IDENTIFIER_END_SHIFT)
+                or ((6 + 2) shl BRANCH_IDENTIFIER_END_SHIFT),
+        /* YE */ 4
+                or ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT)
+                or (8 shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
+                or ((8 + 4) shl BRANCH_IDENTIFIER_END_SHIFT),
     )
 }
