@@ -80,7 +80,7 @@ Obtain an `Iban` instance using one of the static factory methods: `valueOf( )` 
 ### Java IBAN library
 
 I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to follow the same design principles. I'm explicitly targetting Android, which at the time this library started was still on Java 1.6. I'm trying to keep the library as simple as I can.
-* Easy to integrate: don't bring transitive dependencies. **Note:** this is not true for KMP variant since Kotlin Time and Bignum dependencies added to keep orignal functionality.
+* Easy to integrate: don't bring transitive dependencies. The KMP variant follows this too: it depends only on the Kotlin standard library.
 * The `Iban` objects are immutable, and the Iban therein is non-empty and valid. There is no support for partial or invalid IBANs. Note that "valid" isn't as strict as it could be:
   * It checks that the length is correct (varies per country) and that the check digits are correct.
   * The national format mask (such as `QA2!n4!a21!c`) is not enforced. This seems to me like more work than necessary. The modulo-97 checksum catches most input errors anyway, and I don't want to force a memory-hungry regex check onto Android users. Speaking of Android, this mask could be used for keyboard switching on an Iban EditText, but that's for a different open-source project.

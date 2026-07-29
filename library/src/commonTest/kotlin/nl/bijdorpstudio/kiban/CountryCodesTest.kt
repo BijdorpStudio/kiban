@@ -21,8 +21,8 @@ import assertk.assertions.isBetween
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFailsWith

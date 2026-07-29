@@ -15,7 +15,7 @@
  */
 package nl.bijdorpstudio.kiban
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_CODE_BRANCH_CODE
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_BEGIN_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.BANK_IDENTIFIER_END_MASK
