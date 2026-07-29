@@ -22,9 +22,23 @@
  */
 
 @file:DependsOn("com.jsoizo:kotlin-csv-jvm:1.10.0")
+@file:DependsOn("com.squareup:kotlinpoet-jvm:2.2.0")
 
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.github.doyaaaaaken.kotlincsv.dsl.context.InsufficientFieldsRowBehaviour
+import com.squareup.kotlinpoet.ARRAY
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.INT_ARRAY
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LIST
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.buildCodeBlock
 import java.io.File
 import java.time.LocalDate
 
@@ -70,17 +84,36 @@ val experimentalCountries = listOf(
 // Model and argument handling
 // ---------------------------------------------------------------------------
 
+/**
+ * Location of an embedded identifier as String.substring indices within the full IBAN.
+ * [ABSENT] when the country does not embed the identifier.
+ */
+data class IdentifierPosition(val begin: Int, val end: Int) {
+    val present: Boolean get() = begin > 0
+    val length: Int get() = end - begin
+
+    fun cutFrom(iban: String): String? = if (present) iban.substring(begin, end) else null
+
+    companion object {
+        val ABSENT = IdentifierPosition(0, 0)
+
+        /** Parses a "1-4" position within the BBAN, as used by the registry TXT. */
+        fun ofBban(cell: String): IdentifierPosition {
+            val match = Regex("""^(\d+)-(\d+)$""").find(cell.trim()) ?: return ABSENT
+            val (start, end) = match.destructured
+            return IdentifierPosition(4 + start.toInt() - 1, 4 + end.toInt())
+        }
+    }
+}
+
 data class Country(
     val code: String,
     val name: String,
     val swift: Boolean,
     val sepa: Boolean,
     val length: Int,
-    /** String.substring indices within the full IBAN, or 0..0 when absent. */
-    val bankBegin: Int,
-    val bankEnd: Int,
-    val branchBegin: Int,
-    val branchEnd: Int,
+    val bank: IdentifierPosition,
+    val branch: IdentifierPosition,
     val example: String,
     /** The registry's own identifier examples, used for cross-validation. Empty for overlay entries. */
     val bankExample: String = "",
@@ -110,13 +143,6 @@ fun parseTsv(file: File): List<List<String>> =
         insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.EMPTY_STRING
     }.readAll(file)
 
-/** Parses a "1-4" position within the BBAN into String.substring indices within the IBAN. */
-fun parsePosition(cell: String): Pair<Int, Int> {
-    val match = Regex("""^(\d+)-(\d+)$""").find(cell.trim()) ?: return 0 to 0
-    val (start, end) = match.destructured
-    return (4 + start.toInt() - 1) to (4 + end.toInt())
-}
-
 fun parseRegistry(file: File): List<Country> {
     val rows = parseTsv(file)
         .filter { it.isNotEmpty() }
@@ -139,18 +165,14 @@ fun parseRegistry(file: File): List<Country> {
     val examples = field("IBAN electronic format example")
 
     return (0 until count).map { i ->
-        val (bankBegin, bankEnd) = parsePosition(bankPositions[i])
-        val (branchBegin, branchEnd) = parsePosition(branchPositions[i])
         Country(
             code = codes[i],
             name = names[i],
             swift = true,
             sepa = sepa[i] == "Yes",
             length = lengths[i].toInt(),
-            bankBegin = bankBegin,
-            bankEnd = bankEnd,
-            branchBegin = branchBegin,
-            branchEnd = branchEnd,
+            bank = IdentifierPosition.ofBban(bankPositions[i]),
+            branch = IdentifierPosition.ofBban(branchPositions[i]),
             example = examples[i].replace(" ", ""),
             bankExample = bankExamples[i].replace(" ", ""),
             branchExample = branchExamples[i].replace(" ", ""),
@@ -175,7 +197,8 @@ fun merge(registry: List<Country>): List<Country> {
             swift = false,
             sepa = false,
             length = it.example.length,
-            bankBegin = 0, bankEnd = 0, branchBegin = 0, branchEnd = 0,
+            bank = IdentifierPosition.ABSENT,
+            branch = IdentifierPosition.ABSENT,
             example = it.example,
         )
     }
@@ -203,18 +226,18 @@ fun validate(countries: List<Country>) {
         if (!c.example.startsWith(c.code)) problems += "${c.code}: example ${c.example} has wrong prefix"
         if (c.example.length != c.length) problems += "${c.code}: example length ${c.example.length} != declared ${c.length}"
         if (mod97(c.example) != 1) problems += "${c.code}: example ${c.example} fails mod-97 check"
-        if (c.bankBegin > c.bankEnd || c.bankEnd > c.length || c.branchBegin > c.branchEnd || c.branchEnd > c.length) {
+        if (c.bank.begin > c.bank.end || c.bank.end > c.length || c.branch.begin > c.branch.end || c.branch.end > c.length) {
             problems += "${c.code}: identifier positions out of range"
         }
         // Cross-check: identifiers cut by position from the example IBAN must equal the
         // registry's independently stated identifier examples.
         val mismatches = mutableListOf<String>()
-        if (c.bankBegin > 0 && c.bankExample.isNotEmpty()) {
-            val cut = c.example.substring(c.bankBegin, c.bankEnd)
+        if (c.bank.present && c.bankExample.isNotEmpty()) {
+            val cut = c.bank.cutFrom(c.example)
             if (cut != c.bankExample) mismatches += "${c.code}: bank id by position '$cut' != registry example '${c.bankExample}'"
         }
-        if (c.branchBegin > 0 && c.branchExample.isNotEmpty() && c.branchExample != "N/A") {
-            val cut = c.example.substring(c.branchBegin, c.branchEnd)
+        if (c.branch.present && c.branchExample.isNotEmpty() && c.branchExample != "N/A") {
+            val cut = c.branch.cutFrom(c.example)
             if (cut != c.branchExample) mismatches += "${c.code}: branch id by position '$cut' != registry example '${c.branchExample}'"
         }
         when {
@@ -229,8 +252,10 @@ fun validate(countries: List<Country>) {
 }
 
 // ---------------------------------------------------------------------------
-// Code generation
+// Code generation (KotlinPoet)
 // ---------------------------------------------------------------------------
+
+val pkg = "nl.bijdorpstudio.kiban"
 
 fun licenseHeader(year: String) = """
     /*
@@ -248,130 +273,164 @@ fun licenseHeader(year: String) = """
        See the License for the specific language governing permissions and
        limitations under the License.
      */
-    package nl.bijdorpstudio.kiban
+
 """.trimIndent()
 
 val regenerateNote =
     "Regenerate with: kotlin scripts/generate_country_data.main.kts --registry <registry.txt> --rev <NN>"
 
-fun generateDataKt(countries: List<Country>): String {
-    val codes = countries.joinToString("\n") { "        \"${it.code}\"," }
-    val lengths = countries.joinToString("\n") { c ->
-        val flags = (if (c.swift) " or SWIFT" else "") + (if (c.sepa) " or SEPA" else "")
-        "        /* ${c.code} */ ${c.length}$flags,"
+fun generatedKdoc(what: String) =
+    "$what This is a generated file, do not edit manually.\n$regenerateNote\nUpdated to SWIFT IBAN Registry version $rev on $date.\n"
+
+fun constInt(name: String, expression: String, kdoc: String? = null): PropertySpec =
+    PropertySpec.builder(name, INT, KModifier.CONST)
+        .apply { kdoc?.let(::addKdoc) }
+        .initializer(expression)
+        .build()
+
+fun dataFileSpec(countries: List<Country>): FileSpec {
+    val codesInitializer = buildCodeBlock {
+        add("arrayOf(\n")
+        indent()
+        countries.forEach { add("%S,\n", it.code) }
+        unindent()
+        add(")")
     }
-    val bankBranch = countries.joinToString("\n") { c ->
-        """
-        |        /* ${c.code} */ ${c.bankBegin}
-        |                or ((${c.bankBegin} + ${c.bankEnd - c.bankBegin}) shl BANK_IDENTIFIER_END_SHIFT)
-        |                or (${c.branchBegin} shl BRANCH_IDENTIFIER_BEGIN_SHIFT)
-        |                or ((${c.branchBegin} + ${c.branchEnd - c.branchBegin}) shl BRANCH_IDENTIFIER_END_SHIFT),
-        """.trimMargin()
+    val lengthsInitializer = buildCodeBlock {
+        add("intArrayOf(\n")
+        indent()
+        countries.forEach { c ->
+            val flags = (if (c.swift) " or SWIFT" else "") + (if (c.sepa) " or SEPA" else "")
+            add("/* %L */ %L%L,\n", c.code, c.length, flags)
+        }
+        unindent()
+        add(")")
     }
-    return """
-${licenseHeader(date.substring(0, 4))}
+    val bankBranchInitializer = buildCodeBlock {
+        add("intArrayOf(\n")
+        indent()
+        countries.forEach { c ->
+            add("/* %L */ %L\n", c.code, c.bank.begin)
+            indent()
+            indent()
+            add("or ((%L + %L) shl BANK_IDENTIFIER_END_SHIFT)\n", c.bank.begin, c.bank.length)
+            add("or (%L shl BRANCH_IDENTIFIER_BEGIN_SHIFT)\n", c.branch.begin)
+            add("or ((%L + %L) shl BRANCH_IDENTIFIER_END_SHIFT),\n", c.branch.begin, c.branch.length)
+            unindent()
+            unindent()
+        }
+        unindent()
+        add(")")
+    }
 
-/**
- * Contains information about IBAN country codes. This is a generated file, do not edit manually.
- * $regenerateNote
- * Updated to SWIFT IBAN Registry version $rev on $date.
- */
-internal object CountryCodesData {
-    /**
-     * The "yyyy-MM-dd" datestamp that the embedded IBAN data was updated.
-     */
-    const val LAST_UPDATE_DATE = "$date"
+    val dataObject = TypeSpec.objectBuilder("CountryCodesData")
+        .addModifiers(KModifier.INTERNAL)
+        .addKdoc(generatedKdoc("Contains information about IBAN country codes."))
+        .addProperty(
+            PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.CONST)
+                .addKdoc("The \"yyyy-MM-dd\" datestamp that the embedded IBAN data was updated.\n")
+                .initializer("%S", date)
+                .build()
+        )
+        .addProperty(
+            PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.CONST)
+                .addKdoc("The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.\n")
+                .initializer("%S", rev)
+                .build()
+        )
+        .addProperty(constInt("SEPA", "1 shl 8"))
+        .addProperty(constInt("SWIFT", "1 shl 9"))
+        .addProperty(constInt("REMOVE_METADATA_MASK", "0xFF"))
+        .addProperty(constInt("BANK_IDENTIFIER_BEGIN_MASK", "0xFF"))
+        .addProperty(constInt("BANK_IDENTIFIER_END_SHIFT", "8"))
+        .addProperty(constInt("BANK_IDENTIFIER_END_MASK", "0xFF shl BANK_IDENTIFIER_END_SHIFT"))
+        .addProperty(constInt("BRANCH_IDENTIFIER_BEGIN_SHIFT", "16"))
+        .addProperty(constInt("BRANCH_IDENTIFIER_BEGIN_MASK", "0xFF shl BRANCH_IDENTIFIER_BEGIN_SHIFT"))
+        .addProperty(constInt("BRANCH_IDENTIFIER_END_SHIFT", "24"))
+        .addProperty(constInt("BRANCH_IDENTIFIER_END_MASK", "0xFF shl BRANCH_IDENTIFIER_END_SHIFT"))
+        .addProperty(
+            PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING))
+                .addKdoc(
+                    "Known country codes, this list must be sorted to allow binary search. " +
+                        "All other lists in this file must use the\nsame indices for the same countries.\n"
+                )
+                .initializer(codesInitializer)
+                .build()
+        )
+        .addProperty(
+            PropertySpec.builder("COUNTRY_IBAN_LENGTHS", INT_ARRAY)
+                .addKdoc(
+                    "Lengths for each country's IBAN. The indices match the indices of [COUNTRY_CODES], " +
+                        "the values are the\nexpected length. Values may embed the [SEPA] and [SWIFT] flags " +
+                        "to indicate the SEPA membership and\nwhether the record is listed in the SWIFT IBAN Registry.\n"
+                )
+                .initializer(lengthsInitializer)
+                .build()
+        )
+        .addProperty(
+            PropertySpec.builder("BANK_CODE_BRANCH_CODE", INT_ARRAY)
+                .addKdoc(
+                    "Contains the start- and end-index (as per [String.substring]) of the bank code " +
+                        "and branch code\nwithin a country's IBAN format. Mask:\n```\n" +
+                        "0x000000FF <- begin offset bank id\n" +
+                        "0x0000FF00 <- end offset bank id\n" +
+                        "0x00FF0000 <- begin offset branch id\n" +
+                        "0xFF000000 <- end offset branch id\n```\n"
+                )
+                .initializer(bankBranchInitializer)
+                .build()
+        )
+        .build()
 
-    /**
-     * The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.
-     */
-    const val LAST_UPDATE_REV = "$rev"
-
-    const val SEPA = 1 shl 8
-    const val SWIFT = 1 shl 9
-    const val REMOVE_METADATA_MASK = 0xFF
-    const val BANK_IDENTIFIER_BEGIN_MASK = 0xFF
-    const val BANK_IDENTIFIER_END_SHIFT = 8
-    const val BANK_IDENTIFIER_END_MASK = 0xFF shl BANK_IDENTIFIER_END_SHIFT
-    const val BRANCH_IDENTIFIER_BEGIN_SHIFT = 16
-    const val BRANCH_IDENTIFIER_BEGIN_MASK = 0xFF shl BRANCH_IDENTIFIER_BEGIN_SHIFT
-    const val BRANCH_IDENTIFIER_END_SHIFT = 24
-    const val BRANCH_IDENTIFIER_END_MASK = 0xFF shl BRANCH_IDENTIFIER_END_SHIFT
-
-    /**
-     * Known country codes, this list must be sorted to allow binary search. All other lists in this file must use the
-     * same indices for the same countries.
-     */
-    val COUNTRY_CODES: Array<String> = arrayOf(
-$codes
-    )
-
-    /**
-     * Lengths for each country's IBAN. The indices match the indices of [.COUNTRY_CODES], the values are the
-     * expected length. Values may embed the [.SEPA] and [.SWIFT] flags to indicate the SEPA membership and
-     * whether the record is listed in the SWIFT IBAN Registry.
-     */
-    val COUNTRY_IBAN_LENGTHS: IntArray = intArrayOf(
-$lengths
-    )
-
-    /**
-     * Contains the start- and end-index (as per [String.substring]) of the bank code and branch code
-     * within a country's IBAN format. Mask:
-     * <pre>
-     * 0x000000FF <- begin offset bank id
-     * 0x0000FF00 <- end offset bank id
-     * 0x00FF0000 <- begin offset branch id
-     * 0xFF000000 <- end offset branch id
-    </pre> *
-     */
-    val BANK_CODE_BRANCH_CODE: IntArray = intArrayOf(
-$bankBranch
-    )
-}
-""".trimStart()
+    return FileSpec.builder(pkg, "CountryCodesData")
+        .indent("    ")
+        .addType(dataObject)
+        .build()
 }
 
 fun pretty(plain: String): String = plain.chunked(4).joinToString(" ")
 
-fun generateTestKt(countries: List<Country>): String {
-    val entries = countries
-        .sortedWith(compareBy({ !it.swift }, { if (it.swift) it.code else it.name }))
-        .joinToString("\n") { c ->
-            val bank = if (c.bankBegin > 0) "\"${c.example.substring(c.bankBegin, c.bankEnd)}\"" else "null"
-            val branch = if (c.branchBegin > 0) "\"${c.example.substring(c.branchBegin, c.branchEnd)}\"" else "null"
-            """
-            |    IbanCountryTestData(
-            |        name = "${c.name.replace("\"", "\\\"")}",
-            |        swift = ${c.swift},
-            |        sepa = ${c.sepa},
-            |        plain = "${c.example}",
-            |        bank = $bank,
-            |        branch = $branch,
-            |        pretty = "${pretty(c.example)}"
-            |    ),
-            """.trimMargin()
-        }
-    return """
-${licenseHeader(date.substring(0, 4))}
+fun testFileSpec(countries: List<Country>): FileSpec {
+    val testDataType = ClassName(pkg, "IbanCountryTestData")
+    val entriesInitializer = buildCodeBlock {
+        add("listOf(\n")
+        indent()
+        countries
+            .sortedWith(compareBy({ !it.swift }, { if (it.swift) it.code else it.name }))
+            .forEach { c ->
+                add("%T(\n", testDataType)
+                indent()
+                add("name = %S,\n", c.name)
+                add("swift = %L,\n", c.swift)
+                add("sepa = %L,\n", c.sepa)
+                add("plain = %S,\n", c.example)
+                add("bank = %L,\n", c.bank.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
+                add("branch = %L,\n", c.branch.cutFrom(c.example)?.let { CodeBlock.of("%S", it) } ?: "null")
+                add("pretty = %S,\n", pretty(c.example))
+                unindent()
+                add("),\n")
+            }
+        unindent()
+        add(")")
+    }
 
-/**
- * Valid example IBANs for every known country. This is a generated file, do not edit manually.
- * $regenerateNote
- * Updated to SWIFT IBAN Registry version $rev on $date.
- *
- * Bank and branch identifier expectations are cross-validated at generation time against the
- * registry's own "Bank identifier example" and "Branch identifier example" fields, which are
- * independent of the position data embedded in CountryCodesData.
- *
- * References:
- * - SWIFT IBAN Registry: https://www.swift.com/standards/data-standards/iban
- * - IBAN.com Experimental List: https://www.iban.com/structure
- */
-internal val countryTestData = listOf(
-$entries
-)
-""".trimStart()
+    val property = PropertySpec.builder("countryTestData", LIST.parameterizedBy(testDataType), KModifier.INTERNAL)
+        .addKdoc(
+            generatedKdoc("Valid example IBANs for every known country.") +
+                "\nBank and branch identifier expectations are cross-validated at generation time against the\n" +
+                "registry's own \"Bank identifier example\" and \"Branch identifier example\" fields, which are\n" +
+                "independent of the position data embedded in CountryCodesData.\n" +
+                "\nReferences:\n" +
+                "- SWIFT IBAN Registry: https://www.swift.com/standards/data-standards/iban\n" +
+                "- IBAN.com Experimental List: https://www.iban.com/structure\n"
+        )
+        .initializer(entriesInitializer)
+        .build()
+
+    return FileSpec.builder(pkg, "CountryTestData")
+        .indent("    ")
+        .addProperty(property)
+        .build()
 }
 
 // ---------------------------------------------------------------------------
@@ -380,8 +439,8 @@ $entries
 
 val countries = merge(parseRegistry(File(registryPath)))
 validate(countries)
-dataFile.writeText(generateDataKt(countries))
-testFile.writeText(generateTestKt(countries))
+dataFile.writeText(licenseHeader(date.substring(0, 4)) + dataFileSpec(countries))
+testFile.writeText(licenseHeader(date.substring(0, 4)) + testFileSpec(countries))
 val swiftCount = countries.count(Country::swift)
 println("Generated data for ${countries.size} countries ($swiftCount SWIFT, ${countries.size - swiftCount} experimental) at registry rev $rev.")
 println("Wrote ${dataFile.relativeTo(repoRoot)} and ${testFile.relativeTo(repoRoot)}.")
