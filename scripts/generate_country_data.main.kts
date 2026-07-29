@@ -21,6 +21,10 @@
  *    position encoding is cross-checked against data it was not derived from.
  */
 
+@file:DependsOn("com.jsoizo:kotlin-csv-jvm:1.10.0")
+
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.context.InsufficientFieldsRowBehaviour
 import java.io.File
 import java.time.LocalDate
 
@@ -97,36 +101,14 @@ val dataFile = repoRoot.resolve("library/src/commonMain/kotlin/nl/bijdorpstudio/
 val testFile = repoRoot.resolve("library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt")
 
 // ---------------------------------------------------------------------------
-// Registry TXT parsing (quote-aware TSV; quoted cells may contain newlines)
+// Registry TXT parsing (tab-separated; quoted cells may contain newlines)
 // ---------------------------------------------------------------------------
 
-fun parseTsv(text: String): List<List<String>> {
-    val rows = mutableListOf<List<String>>()
-    val row = mutableListOf<String>()
-    val cell = StringBuilder()
-    var inQuotes = false
-    var i = 0
-    while (i < text.length) {
-        val c = text[i]
-        when {
-            inQuotes -> when {
-                c == '"' && text.getOrNull(i + 1) == '"' -> { cell.append('"'); i++ }
-                c == '"' -> inQuotes = false
-                else -> cell.append(c)
-            }
-            c == '"' && cell.isEmpty() -> inQuotes = true
-            c == '\t' -> { row.add(cell.toString()); cell.clear() }
-            c == '\n' -> { row.add(cell.toString()); cell.clear(); rows.add(row.toList()); row.clear() }
-            c != '\r' -> cell.append(c)
-        }
-        i++
-    }
-    if (cell.isNotEmpty() || row.isNotEmpty()) {
-        row.add(cell.toString())
-        rows.add(row.toList())
-    }
-    return rows
-}
+fun parseTsv(file: File): List<List<String>> =
+    csvReader {
+        delimiter = '\t'
+        insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.EMPTY_STRING
+    }.readAll(file)
 
 /** Parses a "1-4" position within the BBAN into String.substring indices within the IBAN. */
 fun parsePosition(cell: String): Pair<Int, Int> {
@@ -136,7 +118,7 @@ fun parsePosition(cell: String): Pair<Int, Int> {
 }
 
 fun parseRegistry(file: File): List<Country> {
-    val rows = parseTsv(file.readText())
+    val rows = parseTsv(file)
         .filter { it.isNotEmpty() }
         .associate { it.first().trim() to it.drop(1).map(String::trim) }
 
