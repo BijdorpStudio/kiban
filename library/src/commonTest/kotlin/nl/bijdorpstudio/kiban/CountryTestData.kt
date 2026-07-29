@@ -17,23 +17,18 @@ package nl.bijdorpstudio.kiban
 
 /**
  * Valid example IBANs for every known country. This is a generated file, do not edit manually.
- * Regenerate with: python3 scripts/generate_country_data.py (see scripts/generate_country_data.py --help).
+ * Regenerate with: kotlin scripts/generate_country_data.main.kts --registry <registry.txt> --rev <NN>
  * Updated to SWIFT IBAN Registry version 102 on 2026-07-29.
+ *
+ * Bank and branch identifier expectations are cross-validated at generation time against the
+ * registry's own "Bank identifier example" and "Branch identifier example" fields, which are
+ * independent of the position data embedded in CountryCodesData.
  *
  * References:
  * - SWIFT IBAN Registry: https://www.swift.com/standards/data-standards/iban
  * - IBAN.com Experimental List: https://www.iban.com/structure
  */
 internal val countryTestData = listOf(
-    IbanCountryTestData(
-        name = "Albania",
-        swift = true,
-        sepa = true,
-        plain = "AL47212110090000000235698741",
-        bank = "212",
-        branch = "11009",
-        pretty = "AL47 2121 1009 0000 0002 3569 8741"
-    ),
     IbanCountryTestData(
         name = "Andorra",
         swift = true,
@@ -42,6 +37,24 @@ internal val countryTestData = listOf(
         bank = "0001",
         branch = "2030",
         pretty = "AD12 0001 2030 2003 5910 0100"
+    ),
+    IbanCountryTestData(
+        name = "United Arab Emirates (The)",
+        swift = true,
+        sepa = false,
+        plain = "AE070331234567890123456",
+        bank = "033",
+        branch = null,
+        pretty = "AE07 0331 2345 6789 0123 456"
+    ),
+    IbanCountryTestData(
+        name = "Albania",
+        swift = true,
+        sepa = true,
+        plain = "AL47212110090000000235698741",
+        bank = "212",
+        branch = "11009",
+        pretty = "AL47 2121 1009 0000 0002 3569 8741"
     ),
     IbanCountryTestData(
         name = "Austria",
@@ -62,22 +75,13 @@ internal val countryTestData = listOf(
         pretty = "AZ21 NABZ 0000 0000 1370 1000 1944"
     ),
     IbanCountryTestData(
-        name = "Bahrain",
+        name = "Bosnia and Herzegovina",
         swift = true,
         sepa = false,
-        plain = "BH67BMAG00001299123456",
-        bank = "BMAG",
-        branch = null,
-        pretty = "BH67 BMAG 0000 1299 1234 56"
-    ),
-    IbanCountryTestData(
-        name = "Belarus",
-        swift = true,
-        sepa = false,
-        plain = "BY13NBRB3600900000002Z00AB00",
-        bank = "NBRB",
-        branch = null,
-        pretty = "BY13 NBRB 3600 9000 0000 2Z00 AB00"
+        plain = "BA391290079401028494",
+        bank = "129",
+        branch = "007",
+        pretty = "BA39 1290 0794 0102 8494"
     ),
     IbanCountryTestData(
         name = "Belgium",
@@ -89,24 +93,6 @@ internal val countryTestData = listOf(
         pretty = "BE68 5390 0754 7034"
     ),
     IbanCountryTestData(
-        name = "Bosnia and Herzegovina",
-        swift = true,
-        sepa = false,
-        plain = "BA391290079401028494",
-        bank = "129",
-        branch = "007",
-        pretty = "BA39 1290 0794 0102 8494"
-    ),
-    IbanCountryTestData(
-        name = "Brazil",
-        swift = true,
-        sepa = false,
-        plain = "BR1800360305000010009795493C1",
-        bank = "00360305",
-        branch = "00001",
-        pretty = "BR18 0036 0305 0000 1000 9795 493C 1"
-    ),
-    IbanCountryTestData(
         name = "Bulgaria",
         swift = true,
         sepa = true,
@@ -114,6 +100,15 @@ internal val countryTestData = listOf(
         bank = "BNBG",
         branch = "9661",
         pretty = "BG80 BNBG 9661 1020 3456 78"
+    ),
+    IbanCountryTestData(
+        name = "Bahrain",
+        swift = true,
+        sepa = false,
+        plain = "BH67BMAG00001299123456",
+        bank = "BMAG",
+        branch = null,
+        pretty = "BH67 BMAG 0000 1299 1234 56"
     ),
     IbanCountryTestData(
         name = "Burundi",
@@ -125,6 +120,33 @@ internal val countryTestData = listOf(
         pretty = "BI42 1000 0100 0100 0033 2045 181"
     ),
     IbanCountryTestData(
+        name = "Brazil",
+        swift = true,
+        sepa = false,
+        plain = "BR1800360305000010009795493C1",
+        bank = "00360305",
+        branch = "00001",
+        pretty = "BR18 0036 0305 0000 1000 9795 493C 1"
+    ),
+    IbanCountryTestData(
+        name = "Belarus",
+        swift = true,
+        sepa = false,
+        plain = "BY13NBRB3600900000002Z00AB00",
+        bank = "NBRB",
+        branch = null,
+        pretty = "BY13 NBRB 3600 9000 0000 2Z00 AB00"
+    ),
+    IbanCountryTestData(
+        name = "Switzerland",
+        swift = true,
+        sepa = true,
+        plain = "CH9300762011623852957",
+        bank = "00762",
+        branch = null,
+        pretty = "CH93 0076 2011 6238 5295 7"
+    ),
+    IbanCountryTestData(
         name = "Costa Rica",
         swift = true,
         sepa = false,
@@ -132,15 +154,6 @@ internal val countryTestData = listOf(
         bank = "0152",
         branch = null,
         pretty = "CR05 0152 0200 1026 2840 66"
-    ),
-    IbanCountryTestData(
-        name = "Croatia",
-        swift = true,
-        sepa = true,
-        plain = "HR1210010051863000160",
-        bank = "1001005",
-        branch = null,
-        pretty = "HR12 1001 0051 8630 0016 0"
     ),
     IbanCountryTestData(
         name = "Cyprus",
@@ -161,13 +174,13 @@ internal val countryTestData = listOf(
         pretty = "CZ65 0800 0000 1920 0014 5399"
     ),
     IbanCountryTestData(
-        name = "Denmark",
+        name = "Germany",
         swift = true,
         sepa = true,
-        plain = "DK5000400440116243",
-        bank = "0040",
+        plain = "DE89370400440532013000",
+        bank = "37040044",
         branch = null,
-        pretty = "DK50 0040 0440 1162 43"
+        pretty = "DE89 3704 0044 0532 0130 00"
     ),
     IbanCountryTestData(
         name = "Djibouti",
@@ -179,6 +192,15 @@ internal val countryTestData = listOf(
         pretty = "DJ21 0001 0000 0001 5400 0100 186"
     ),
     IbanCountryTestData(
+        name = "Denmark",
+        swift = true,
+        sepa = true,
+        plain = "DK5000400440116243",
+        bank = "0040",
+        branch = null,
+        pretty = "DK50 0040 0440 1162 43"
+    ),
+    IbanCountryTestData(
         name = "Dominican Republic",
         swift = true,
         sepa = false,
@@ -186,6 +208,15 @@ internal val countryTestData = listOf(
         bank = "BAGR",
         branch = null,
         pretty = "DO28 BAGR 0000 0001 2124 5361 1324"
+    ),
+    IbanCountryTestData(
+        name = "Estonia",
+        swift = true,
+        sepa = true,
+        plain = "EE382200221020145685",
+        bank = "22",
+        branch = null,
+        pretty = "EE38 2200 2210 2014 5685"
     ),
     IbanCountryTestData(
         name = "Egypt",
@@ -197,22 +228,22 @@ internal val countryTestData = listOf(
         pretty = "EG38 0019 0005 0000 0000 2631 8000 2"
     ),
     IbanCountryTestData(
-        name = "El Salvador",
-        swift = true,
-        sepa = false,
-        plain = "SV62CENR00000000000000700025",
-        bank = "CENR",
-        branch = null,
-        pretty = "SV62 CENR 0000 0000 0000 0070 0025"
-    ),
-    IbanCountryTestData(
-        name = "Estonia",
+        name = "Spain",
         swift = true,
         sepa = true,
-        plain = "EE382200221020145685",
-        bank = "22",
+        plain = "ES9121000418450200051332",
+        bank = "2100",
+        branch = "0418",
+        pretty = "ES91 2100 0418 4502 0005 1332"
+    ),
+    IbanCountryTestData(
+        name = "Finland",
+        swift = true,
+        sepa = true,
+        plain = "FI2112345600000785",
+        bank = "123",
         branch = null,
-        pretty = "EE38 2200 2210 2014 5685"
+        pretty = "FI21 1234 5600 0007 85"
     ),
     IbanCountryTestData(
         name = "Falkland Islands (Malvinas)",
@@ -233,15 +264,6 @@ internal val countryTestData = listOf(
         pretty = "FO62 6460 0001 6316 34"
     ),
     IbanCountryTestData(
-        name = "Finland",
-        swift = true,
-        sepa = true,
-        plain = "FI2112345600000785",
-        bank = "123",
-        branch = null,
-        pretty = "FI21 1234 5600 0007 85"
-    ),
-    IbanCountryTestData(
         name = "France",
         swift = true,
         sepa = true,
@@ -249,6 +271,15 @@ internal val countryTestData = listOf(
         bank = "20041",
         branch = null,
         pretty = "FR14 2004 1010 0505 0001 3M02 606"
+    ),
+    IbanCountryTestData(
+        name = "United Kingdom",
+        swift = true,
+        sepa = true,
+        plain = "GB29NWBK60161331926819",
+        bank = "NWBK",
+        branch = "601613",
+        pretty = "GB29 NWBK 6016 1331 9268 19"
     ),
     IbanCountryTestData(
         name = "Georgia",
@@ -260,15 +291,6 @@ internal val countryTestData = listOf(
         pretty = "GE29 NB00 0000 0101 9049 17"
     ),
     IbanCountryTestData(
-        name = "Germany",
-        swift = true,
-        sepa = true,
-        plain = "DE89370400440532013000",
-        bank = "37040044",
-        branch = null,
-        pretty = "DE89 3704 0044 0532 0130 00"
-    ),
-    IbanCountryTestData(
         name = "Gibraltar",
         swift = true,
         sepa = true,
@@ -276,15 +298,6 @@ internal val countryTestData = listOf(
         bank = "NWBK",
         branch = null,
         pretty = "GI75 NWBK 0000 0000 7099 453"
-    ),
-    IbanCountryTestData(
-        name = "Greece",
-        swift = true,
-        sepa = true,
-        plain = "GR1601101250000000012300695",
-        bank = "011",
-        branch = "0125",
-        pretty = "GR16 0110 1250 0000 0001 2300 695"
     ),
     IbanCountryTestData(
         name = "Greenland",
@@ -296,6 +309,15 @@ internal val countryTestData = listOf(
         pretty = "GL89 6471 0001 0002 06"
     ),
     IbanCountryTestData(
+        name = "Greece",
+        swift = true,
+        sepa = true,
+        plain = "GR1601101250000000012300695",
+        bank = "011",
+        branch = "0125",
+        pretty = "GR16 0110 1250 0000 0001 2300 695"
+    ),
+    IbanCountryTestData(
         name = "Guatemala",
         swift = true,
         sepa = false,
@@ -303,15 +325,6 @@ internal val countryTestData = listOf(
         bank = "TRAJ",
         branch = null,
         pretty = "GT82 TRAJ 0102 0000 0012 1002 9690"
-    ),
-    IbanCountryTestData(
-        name = "Holy See",
-        swift = true,
-        sepa = true,
-        plain = "VA59001123000012345678",
-        bank = "001",
-        branch = null,
-        pretty = "VA59 0011 2300 0012 3456 78"
     ),
     IbanCountryTestData(
         name = "Honduras",
@@ -323,6 +336,15 @@ internal val countryTestData = listOf(
         pretty = "HN88 CABF 0000 0000 0002 5000 5469"
     ),
     IbanCountryTestData(
+        name = "Croatia",
+        swift = true,
+        sepa = true,
+        plain = "HR1210010051863000160",
+        bank = "1001005",
+        branch = null,
+        pretty = "HR12 1001 0051 8630 0016 0"
+    ),
+    IbanCountryTestData(
         name = "Hungary",
         swift = true,
         sepa = true,
@@ -330,24 +352,6 @@ internal val countryTestData = listOf(
         bank = "117",
         branch = "7301",
         pretty = "HU42 1177 3016 1111 1018 0000 0000"
-    ),
-    IbanCountryTestData(
-        name = "Iceland",
-        swift = true,
-        sepa = true,
-        plain = "IS140159260076545510730339",
-        bank = "01",
-        branch = "59",
-        pretty = "IS14 0159 2600 7654 5510 7303 39"
-    ),
-    IbanCountryTestData(
-        name = "Iraq",
-        swift = true,
-        sepa = false,
-        plain = "IQ98NBIQ850123456789012",
-        bank = "NBIQ",
-        branch = "850",
-        pretty = "IQ98 NBIQ 8501 2345 6789 012"
     ),
     IbanCountryTestData(
         name = "Ireland",
@@ -368,6 +372,24 @@ internal val countryTestData = listOf(
         pretty = "IL62 0108 0000 0009 9999 999"
     ),
     IbanCountryTestData(
+        name = "Iraq",
+        swift = true,
+        sepa = false,
+        plain = "IQ98NBIQ850123456789012",
+        bank = "NBIQ",
+        branch = "850",
+        pretty = "IQ98 NBIQ 8501 2345 6789 012"
+    ),
+    IbanCountryTestData(
+        name = "Iceland",
+        swift = true,
+        sepa = true,
+        plain = "IS140159260076545510730339",
+        bank = "01",
+        branch = "59",
+        pretty = "IS14 0159 2600 7654 5510 7303 39"
+    ),
+    IbanCountryTestData(
         name = "Italy",
         swift = true,
         sepa = true,
@@ -386,24 +408,6 @@ internal val countryTestData = listOf(
         pretty = "JO94 CBJO 0010 0000 0000 0131 0003 02"
     ),
     IbanCountryTestData(
-        name = "Kazakhstan",
-        swift = true,
-        sepa = false,
-        plain = "KZ86125KZT5004100100",
-        bank = "125",
-        branch = null,
-        pretty = "KZ86 125K ZT50 0410 0100"
-    ),
-    IbanCountryTestData(
-        name = "Kosovo",
-        swift = true,
-        sepa = false,
-        plain = "XK051212012345678906",
-        bank = "12",
-        branch = "12",
-        pretty = "XK05 1212 0123 4567 8906"
-    ),
-    IbanCountryTestData(
         name = "Kuwait",
         swift = true,
         sepa = false,
@@ -413,13 +417,13 @@ internal val countryTestData = listOf(
         pretty = "KW81 CBKU 0000 0000 0000 1234 5601 01"
     ),
     IbanCountryTestData(
-        name = "Latvia",
+        name = "Kazakhstan",
         swift = true,
-        sepa = true,
-        plain = "LV80BANK0000435195001",
-        bank = "BANK",
+        sepa = false,
+        plain = "KZ86125KZT5004100100",
+        bank = "125",
         branch = null,
-        pretty = "LV80 BANK 0000 4351 9500 1"
+        pretty = "KZ86 125K ZT50 0410 0100"
     ),
     IbanCountryTestData(
         name = "Lebanon",
@@ -431,13 +435,13 @@ internal val countryTestData = listOf(
         pretty = "LB62 0999 0000 0001 0019 0122 9114"
     ),
     IbanCountryTestData(
-        name = "Libya",
+        name = "Saint Lucia",
         swift = true,
         sepa = false,
-        plain = "LY83002048000020100120361",
-        bank = "002",
-        branch = "048",
-        pretty = "LY83 0020 4800 0020 1001 2036 1"
+        plain = "LC55HEMM000100010012001200023015",
+        bank = "HEMM",
+        branch = null,
+        pretty = "LC55 HEMM 0001 0001 0012 0012 0002 3015"
     ),
     IbanCountryTestData(
         name = "Liechtenstein",
@@ -467,40 +471,22 @@ internal val countryTestData = listOf(
         pretty = "LU28 0019 4006 4475 0000"
     ),
     IbanCountryTestData(
-        name = "Malta",
+        name = "Latvia",
         swift = true,
         sepa = true,
-        plain = "MT84MALT011000012345MTLCAST001S",
-        bank = "MALT",
-        branch = "01100",
-        pretty = "MT84 MALT 0110 0001 2345 MTLC AST0 01S"
-    ),
-    IbanCountryTestData(
-        name = "Mauritania",
-        swift = true,
-        sepa = false,
-        plain = "MR1300020001010000123456753",
-        bank = "00020",
-        branch = "00101",
-        pretty = "MR13 0002 0001 0100 0012 3456 753"
-    ),
-    IbanCountryTestData(
-        name = "Mauritius",
-        swift = true,
-        sepa = false,
-        plain = "MU17BOMM0101101030300200000MUR",
-        bank = "BOMM01",
-        branch = "01",
-        pretty = "MU17 BOMM 0101 1010 3030 0200 000M UR"
-    ),
-    IbanCountryTestData(
-        name = "Moldova, Republic of",
-        swift = true,
-        sepa = true,
-        plain = "MD24AG000225100013104168",
-        bank = "AG",
+        plain = "LV80BANK0000435195001",
+        bank = "BANK",
         branch = null,
-        pretty = "MD24 AG00 0225 1000 1310 4168"
+        pretty = "LV80 BANK 0000 4351 9500 1"
+    ),
+    IbanCountryTestData(
+        name = "Libya",
+        swift = true,
+        sepa = false,
+        plain = "LY83002048000020100120361",
+        bank = "002",
+        branch = "048",
+        pretty = "LY83 0020 4800 0020 1001 2036 1"
     ),
     IbanCountryTestData(
         name = "Monaco",
@@ -512,13 +498,13 @@ internal val countryTestData = listOf(
         pretty = "MC58 1122 2000 0101 2345 6789 030"
     ),
     IbanCountryTestData(
-        name = "Mongolia",
+        name = "Moldova, Republic of",
         swift = true,
-        sepa = false,
-        plain = "MN121234123456789123",
-        bank = "1234",
+        sepa = true,
+        plain = "MD24AG000225100013104168",
+        bank = "AG",
         branch = null,
-        pretty = "MN12 1234 1234 5678 9123"
+        pretty = "MD24 AG00 0225 1000 1310 4168"
     ),
     IbanCountryTestData(
         name = "Montenegro",
@@ -530,13 +516,49 @@ internal val countryTestData = listOf(
         pretty = "ME25 5050 0001 2345 6789 51"
     ),
     IbanCountryTestData(
-        name = "Netherlands (The)",
+        name = "North Macedonia",
         swift = true,
         sepa = true,
-        plain = "NL91ABNA0417164300",
-        bank = "ABNA",
+        plain = "MK07250120000058984",
+        bank = "250",
         branch = null,
-        pretty = "NL91 ABNA 0417 1643 00"
+        pretty = "MK07 2501 2000 0058 984"
+    ),
+    IbanCountryTestData(
+        name = "Mongolia",
+        swift = true,
+        sepa = false,
+        plain = "MN121234123456789123",
+        bank = "1234",
+        branch = null,
+        pretty = "MN12 1234 1234 5678 9123"
+    ),
+    IbanCountryTestData(
+        name = "Mauritania",
+        swift = true,
+        sepa = false,
+        plain = "MR1300020001010000123456753",
+        bank = "00020",
+        branch = "00101",
+        pretty = "MR13 0002 0001 0100 0012 3456 753"
+    ),
+    IbanCountryTestData(
+        name = "Malta",
+        swift = true,
+        sepa = true,
+        plain = "MT84MALT011000012345MTLCAST001S",
+        bank = "MALT",
+        branch = "01100",
+        pretty = "MT84 MALT 0110 0001 2345 MTLC AST0 01S"
+    ),
+    IbanCountryTestData(
+        name = "Mauritius",
+        swift = true,
+        sepa = false,
+        plain = "MU17BOMM0101101030300200000MUR",
+        bank = "BOMM01",
+        branch = "01",
+        pretty = "MU17 BOMM 0101 1010 3030 0200 000M UR"
     ),
     IbanCountryTestData(
         name = "Nicaragua",
@@ -548,13 +570,13 @@ internal val countryTestData = listOf(
         pretty = "NI45 BAPR 0000 0013 0000 0355 8124"
     ),
     IbanCountryTestData(
-        name = "North Macedonia",
+        name = "Netherlands (The)",
         swift = true,
         sepa = true,
-        plain = "MK07250120000058984",
-        bank = "250",
+        plain = "NL91ABNA0417164300",
+        bank = "ABNA",
         branch = null,
-        pretty = "MK07 2501 2000 0058 984"
+        pretty = "NL91 ABNA 0417 1643 00"
     ),
     IbanCountryTestData(
         name = "Norway",
@@ -584,15 +606,6 @@ internal val countryTestData = listOf(
         pretty = "PK36 SCBL 0000 0011 2345 6702"
     ),
     IbanCountryTestData(
-        name = "Palestine, State of",
-        swift = true,
-        sepa = false,
-        plain = "PS92PALS000000000400123456702",
-        bank = "PALS",
-        branch = null,
-        pretty = "PS92 PALS 0000 0000 0400 1234 5670 2"
-    ),
-    IbanCountryTestData(
         name = "Poland",
         swift = true,
         sepa = true,
@@ -600,6 +613,15 @@ internal val countryTestData = listOf(
         bank = "10901014",
         branch = null,
         pretty = "PL61 1090 1014 0000 0712 1981 2874"
+    ),
+    IbanCountryTestData(
+        name = "Palestine, State of",
+        swift = true,
+        sepa = false,
+        plain = "PS92PALS000000000400123456702",
+        bank = "PALS",
+        branch = null,
+        pretty = "PS92 PALS 0000 0000 0400 1234 5670 2"
     ),
     IbanCountryTestData(
         name = "Portugal",
@@ -629,6 +651,15 @@ internal val countryTestData = listOf(
         pretty = "RO49 AAAA 1B31 0075 9384 0000"
     ),
     IbanCountryTestData(
+        name = "Serbia",
+        swift = true,
+        sepa = true,
+        plain = "RS35260005601001611379",
+        bank = "260",
+        branch = null,
+        pretty = "RS35 2600 0560 1001 6113 79"
+    ),
+    IbanCountryTestData(
         name = "Russian Federation",
         swift = true,
         sepa = false,
@@ -636,33 +667,6 @@ internal val countryTestData = listOf(
         bank = "044525225",
         branch = "40817",
         pretty = "RU03 0445 2522 5408 1781 0538 0913 1041 9"
-    ),
-    IbanCountryTestData(
-        name = "Saint Lucia",
-        swift = true,
-        sepa = false,
-        plain = "LC55HEMM000100010012001200023015",
-        bank = "HEMM",
-        branch = null,
-        pretty = "LC55 HEMM 0001 0001 0012 0012 0002 3015"
-    ),
-    IbanCountryTestData(
-        name = "San Marino",
-        swift = true,
-        sepa = true,
-        plain = "SM86U0322509800000000270100",
-        bank = "03225",
-        branch = "09800",
-        pretty = "SM86 U032 2509 8000 0000 0270 100"
-    ),
-    IbanCountryTestData(
-        name = "Sao Tome and Principe",
-        swift = true,
-        sepa = false,
-        plain = "ST23000100010051845310146",
-        bank = "0001",
-        branch = "0001",
-        pretty = "ST23 0001 0001 0051 8453 1014 6"
     ),
     IbanCountryTestData(
         name = "Saudi Arabia",
@@ -674,15 +678,6 @@ internal val countryTestData = listOf(
         pretty = "SA03 8000 0000 6080 1016 7519"
     ),
     IbanCountryTestData(
-        name = "Serbia",
-        swift = true,
-        sepa = true,
-        plain = "RS35260005601001611379",
-        bank = "260",
-        branch = null,
-        pretty = "RS35 2600 0560 1001 6113 79"
-    ),
-    IbanCountryTestData(
         name = "Seychelles",
         swift = true,
         sepa = false,
@@ -690,42 +685,6 @@ internal val countryTestData = listOf(
         bank = "SSCB11",
         branch = "01",
         pretty = "SC18 SSCB 1101 0000 0000 0000 1497 USD"
-    ),
-    IbanCountryTestData(
-        name = "Slovakia",
-        swift = true,
-        sepa = true,
-        plain = "SK3112000000198742637541",
-        bank = "1200",
-        branch = null,
-        pretty = "SK31 1200 0000 1987 4263 7541"
-    ),
-    IbanCountryTestData(
-        name = "Slovenia",
-        swift = true,
-        sepa = true,
-        plain = "SI56263300012039086",
-        bank = "26330",
-        branch = null,
-        pretty = "SI56 2633 0001 2039 086"
-    ),
-    IbanCountryTestData(
-        name = "Somalia",
-        swift = true,
-        sepa = false,
-        plain = "SO211000001001000100141",
-        bank = "1000",
-        branch = "001",
-        pretty = "SO21 1000 0010 0100 0100 141"
-    ),
-    IbanCountryTestData(
-        name = "Spain",
-        swift = true,
-        sepa = true,
-        plain = "ES9121000418450200051332",
-        bank = "2100",
-        branch = "0418",
-        pretty = "ES91 2100 0418 4502 0005 1332"
     ),
     IbanCountryTestData(
         name = "Sudan",
@@ -746,13 +705,58 @@ internal val countryTestData = listOf(
         pretty = "SE45 5000 0000 0583 9825 7466"
     ),
     IbanCountryTestData(
-        name = "Switzerland",
+        name = "Slovenia",
         swift = true,
         sepa = true,
-        plain = "CH9300762011623852957",
-        bank = "00762",
+        plain = "SI56263300012039086",
+        bank = "26330",
         branch = null,
-        pretty = "CH93 0076 2011 6238 5295 7"
+        pretty = "SI56 2633 0001 2039 086"
+    ),
+    IbanCountryTestData(
+        name = "Slovakia",
+        swift = true,
+        sepa = true,
+        plain = "SK3112000000198742637541",
+        bank = "1200",
+        branch = null,
+        pretty = "SK31 1200 0000 1987 4263 7541"
+    ),
+    IbanCountryTestData(
+        name = "San Marino",
+        swift = true,
+        sepa = true,
+        plain = "SM86U0322509800000000270100",
+        bank = "03225",
+        branch = "09800",
+        pretty = "SM86 U032 2509 8000 0000 0270 100"
+    ),
+    IbanCountryTestData(
+        name = "Somalia",
+        swift = true,
+        sepa = false,
+        plain = "SO211000001001000100141",
+        bank = "1000",
+        branch = "001",
+        pretty = "SO21 1000 0010 0100 0100 141"
+    ),
+    IbanCountryTestData(
+        name = "Sao Tome and Principe",
+        swift = true,
+        sepa = false,
+        plain = "ST23000100010051845310146",
+        bank = "0001",
+        branch = "0001",
+        pretty = "ST23 0001 0001 0051 8453 1014 6"
+    ),
+    IbanCountryTestData(
+        name = "El Salvador",
+        swift = true,
+        sepa = false,
+        plain = "SV62CENR00000000000000700025",
+        bank = "CENR",
+        branch = null,
+        pretty = "SV62 CENR 0000 0000 0000 0070 0025"
     ),
     IbanCountryTestData(
         name = "Timor-Leste",
@@ -791,22 +795,13 @@ internal val countryTestData = listOf(
         pretty = "UA21 3223 1300 0002 6007 2335 6600 1"
     ),
     IbanCountryTestData(
-        name = "United Arab Emirates (The)",
-        swift = true,
-        sepa = false,
-        plain = "AE070331234567890123456",
-        bank = "033",
-        branch = null,
-        pretty = "AE07 0331 2345 6789 0123 456"
-    ),
-    IbanCountryTestData(
-        name = "United Kingdom",
+        name = "Holy See",
         swift = true,
         sepa = true,
-        plain = "GB29NWBK60161331926819",
-        bank = "NWBK",
-        branch = "601613",
-        pretty = "GB29 NWBK 6016 1331 9268 19"
+        plain = "VA59001123000012345678",
+        bank = "001",
+        branch = null,
+        pretty = "VA59 0011 2300 0012 3456 78"
     ),
     IbanCountryTestData(
         name = "Virgin Islands (British)",
@@ -816,6 +811,15 @@ internal val countryTestData = listOf(
         bank = "VPVG",
         branch = null,
         pretty = "VG96 VPVG 0000 0123 4567 8901"
+    ),
+    IbanCountryTestData(
+        name = "Kosovo",
+        swift = true,
+        sepa = false,
+        plain = "XK051212012345678906",
+        bank = "12",
+        branch = "12",
+        pretty = "XK05 1212 0123 4567 8906"
     ),
     IbanCountryTestData(
         name = "Yemen",

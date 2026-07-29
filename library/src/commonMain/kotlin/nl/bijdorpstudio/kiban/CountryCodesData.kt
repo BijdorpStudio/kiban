@@ -17,7 +17,7 @@ package nl.bijdorpstudio.kiban
 
 /**
  * Contains information about IBAN country codes. This is a generated file, do not edit manually.
- * Regenerate with: python3 scripts/generate_country_data.py (see scripts/generate_country_data.py --help).
+ * Regenerate with: kotlin scripts/generate_country_data.main.kts --registry <registry.txt> --rev <NN>
  * Updated to SWIFT IBAN Registry version 102 on 2026-07-29.
  */
 internal object CountryCodesData {
