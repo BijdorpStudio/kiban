@@ -1,5 +1,53 @@
 # Version History
 
+## 0.4.0 (unreleased)
+
+**Breaking changes.** The API was reshaped while there are no external consumers.
+
+* `Iban.parse`, `Iban.compose` and `Iban(...)` now return `Result<Iban>` instead of throwing. Failures carry a
+  sealed `IbanParseException` — `Malformed` (with a `kind`), `UnknownCountryCode`, `WrongLength`,
+  `WrongChecksum` — which extends `IllegalArgumentException`, so `getOrThrow()` matches the old behaviour.
+* `String.toIban()` returns `Result<Iban>`; added `String.toIbanOrNull()`.
+* Removed `IBANFields`; use `Iban.bankIdentifier` and `Iban.branchIdentifier`.
+* `CountryCodes.lastUpdateDate` is a `kotlin.time.Instant` from the standard library, and the kotlinx-datetime
+  dependency is gone. The library now has no dependencies beyond the Kotlin standard library.
+
+**Fixes**
+
+* `Iban.compose` produced an invalid IBAN for every country whose check digits are 10 or higher: the computed
+  digits were discarded and `00` was left in place, so the result failed its own checksum validation.
+
+**Data**
+
+* SWIFT IBAN Registry updated from rev 97 (2024-05-25) to rev 102. Yemen added; Honduras promoted into the
+  registry; Poland's 8-digit routing code reclassified from branch to bank identifier; Jordan gained a branch
+  identifier; AL, MD, ME, MK and RS flagged as SEPA.
+* Added `scripts/generate_country_data.main.kts`, which regenerates the country data and its test table from the
+  registry TXT with cross-validation against the registry's own identifier examples.
+
+**Targets**
+
+* Added `wasmJs`, `macosX64`, `macosArm64`, `tvosX64`, `tvosArm64`, `tvosSimulatorArm64`, `watchosX64`,
+  `watchosArm64`, `watchosDeviceArm64`, `watchosSimulatorArm64`, `linuxArm64` and `mingwX64`, and the browser
+  environment for `js`.
+
+**Documentation**
+
+* Added installation instructions, `MIGRATION.md`, and a changelog entry for 0.3.0.
+
+## 0.3.0
+
+First release published to Maven Central, as `nl.bijdorpstudio.kiban:kiban`.
+
+* Kotlin-idiomatic API alongside the java-iban one: `plain` and `pretty` properties, `bankIdentifier` and
+  `branchIdentifier` on `Iban`, `Iban(...)` as an operator, and the `String.toIban()` / `String.isValidIban()`
+  extensions.
+* `CountryCodes.getLength` returns `Int?` instead of `-1` for unknown country codes; `lastUpdateDate` became a
+  date type rather than a string; `IBAN.toPretty` became `Iban.format`.
+* The java-iban API is kept as a deprecated compat layer with `ReplaceWith` migrations: the `IBAN` typealias,
+  `valueOf`, `toPlainString`, `toPretty`, `getLengthForCountryCode` and `lastUpdateDateString`.
+* Binary compatibility validation (`apiCheck`) added for the JVM and klib targets.
+
 ## 0.2.0
 * Parity of API with java library complete (except from the ancient Java version)
 
