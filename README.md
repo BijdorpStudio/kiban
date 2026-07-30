@@ -28,7 +28,7 @@ Artifacts are published to Maven Central.
 
 ``` kotlin
 dependencies {
-    implementation("nl.bijdorpstudio.kiban:kiban:0.3.0")
+    implementation("nl.bijdorpstudio.kiban:kiban:0.4.0")
 }
 ```
 
@@ -38,7 +38,7 @@ In a multiplatform project, add it to `commonMain`:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("nl.bijdorpstudio.kiban:kiban:0.3.0")
+            implementation("nl.bijdorpstudio.kiban:kiban:0.4.0")
         }
     }
 }

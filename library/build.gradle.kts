@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "nl.bijdorpstudio.kiban"
-version = "0.3.0"
+version = "0.4.0"
 
 tapmoc {
     java(libs.versions.java.version.get().toInt())

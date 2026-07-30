@@ -1,6 +1,6 @@
 # Version History
 
-## 0.4.0 (unreleased)
+## 0.4.0
 
 **Breaking changes.** The API was reshaped while there are no external consumers.
 
