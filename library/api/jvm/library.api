@@ -41,10 +41,10 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 }
 
 public final class nl/bijdorpstudio/kiban/Iban$Companion {
-	public final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun compose-gIAlu-s (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/Object;
 	public final fun format (Ljava/lang/CharSequence;)Ljava/lang/String;
-	public final fun invoke (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
-	public final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun invoke-IoAF18A (Ljava/lang/CharSequence;)Ljava/lang/Object;
+	public final fun parse-IoAF18A (Ljava/lang/CharSequence;)Ljava/lang/Object;
 	public final fun toPlain (Ljava/lang/CharSequence;)Ljava/lang/String;
 	public final fun toPretty (Ljava/lang/CharSequence;)Ljava/lang/String;
 	public final fun valueOf (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
@@ -52,7 +52,45 @@ public final class nl/bijdorpstudio/kiban/Iban$Companion {
 
 public final class nl/bijdorpstudio/kiban/IbanKt {
 	public static final fun isValidIban (Ljava/lang/String;)Z
-	public static final fun toIban (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
+	public static final fun toIban (Ljava/lang/String;)Ljava/lang/Object;
+	public static final fun toIbanOrNull (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
+}
+
+public abstract class nl/bijdorpstudio/kiban/IbanParseException : java/lang/IllegalArgumentException {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInput ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed : nl/bijdorpstudio/kiban/IbanParseException {
+	public fun <init> (Ljava/lang/String;Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;Ljava/lang/String;)V
+	public final fun getKind ()Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind : java/lang/Enum {
+	public static final field EMPTY Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field INVALID_BOUNDARY_CHARACTER Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field INVALID_CHARACTER Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field INVALID_STRUCTURE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field NON_NUMERIC_CHECK_DIGITS Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field TOO_SHORT Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static fun values ()[Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$UnknownCountryCode : nl/bijdorpstudio/kiban/IbanParseException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getCountryCode ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$WrongChecksum : nl/bijdorpstudio/kiban/IbanParseException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$WrongLength : nl/bijdorpstudio/kiban/IbanParseException {
+	public fun <init> (Ljava/lang/String;II)V
+	public final fun getActualLength ()I
+	public final fun getExpectedLength ()I
 }
 
 public final class nl/bijdorpstudio/kiban/Modulo97 {

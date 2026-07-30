@@ -15,8 +15,9 @@
  */
 package nl.bijdorpstudio.kiban
 
+import kotlin.Result.Companion.failure
 import nl.bijdorpstudio.kiban.Iban.Companion.parse
-import nl.bijdorpstudio.kiban.Iban.Companion.valueOf
+import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 
 /**
  * An immutable value type representing an International Bank Account Number. Instances of this class have correct
@@ -25,11 +26,13 @@ import nl.bijdorpstudio.kiban.Iban.Companion.valueOf
  *
  * @author Barend Garvelink https://github.com/barend
  *
+ * Instances can only be obtained through [Iban.parse] or [Iban.compose], which validate the input and report failures
+ * as a [Result] carrying an [IbanParseException]. Construction itself never fails.
+ *
  * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
  * @property isSEPA whether or not this IBAN is of a SEPA participating country.
  * @property plain the IBAN value, without any white space.
  * @property pretty the IBAN value, with spaces every four characters.
- * @throws [IllegalArgumentException] if the input is null, malformed or otherwise fails validation.
  * @since 1.0.0
  *
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia: International Bank Account Number</a>
@@ -55,29 +58,11 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
     val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
 
     /**
-     * Initializing constructor.
-     * @param value the IBAN value, without any white space.
-     * @throws [IllegalArgumentException] if the input is null, malformed or otherwise fails validation.
+     * Initializing constructor. Validation happens in [parse], so this constructor cannot fail.
+     * @param value the IBAN value, without any white space, already validated by [parse].
      */
     init {
-        if (value.length < SHORTEST_POSSIBLE_IBAN) {
-            throw IllegalArgumentException("Length is too short to be an IBAN: $value")
-        }
-        if (!(value[2].isDigit() && value[3].isDigit())) {
-            throw IllegalArgumentException("Characters at index 2 and 3 not both numeric. $value")
-        }
         val countryCode: String = value.substring(0, 2)
-        val expectedLength: Int? = CountryCodes.getLength(countryCode)
-        if (expectedLength == null) {
-            throw IllegalArgumentException("Unknown country code: $countryCode")
-        }
-        if (expectedLength != value.length) {
-            throw IllegalArgumentException("Wrong length ${value.length} for $value expected: $expectedLength")
-        }
-        val calculatedChecksum: Int = Modulo97.checksum(value)
-        if (calculatedChecksum != 1) {
-            throw IllegalArgumentException("Wrong check sum for $value")
-        }
         this.isInSwiftRegistry = CountryCodes.isInSwiftRegistry(countryCode)
         this.isSEPA = CountryCodes.isSEPACountry(countryCode)
     }
@@ -147,10 +132,10 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
         /**
          * Parses the given string into an IBAN object and confirms the check digits.
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
-         * @return the parsed and validated IBAN object
-         * @throws [IllegalArgumentException] if the input is in some way invalid.
+         * @return a [Result] holding the parsed and validated IBAN object, or an [IbanParseException] describing why the input was rejected.
+         * @see [parse]
          */
-        operator fun invoke(input: CharSequence): Iban = parse(input)
+        operator fun invoke(input: CharSequence): Result<Iban> = parse(input)
 
         /**
          * The technically shortest possible IBAN. See [CountryCodes.SHORTEST_IBAN_LENGTH] for the shortest valid length.
@@ -159,47 +144,101 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
 
         /**
          * Parses the given string into an IBAN object and confirms the check digits.
+         *
+         * This is the primary entry point of the library. It never throws for invalid user input; failures are returned
+         * as a [Result.failure] carrying an [IbanParseException]. Use [Result.getOrThrow] for the semantics of the
+         * deprecated throwing API.
+         *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
-         * @return the parsed and validated IBAN object
-         * @throws [IllegalArgumentException] if the input is in some way invalid.
-         * @see [valueOf]
+         * @return a [Result] holding the parsed and validated IBAN object, or an [IbanParseException] describing why the input was rejected.
+         * @see [IbanParseException]
          */
-        fun parse(input: CharSequence): Iban {
+        fun parse(input: CharSequence): Result<Iban> {
             if (input.isEmpty()) {
-                throw IllegalArgumentException("Input is empty")
+                return failure(IbanParseException.Malformed("", Kind.EMPTY, "Input is empty"))
             }
             if (!input.first().isLetterOrDigit() || !input.last().isLetterOrDigit()) {
-                throw IllegalArgumentException("Input begins or ends in an invalid character: $input")
+                return failure(
+                    IbanParseException.Malformed(
+                        toPlain(input),
+                        Kind.INVALID_BOUNDARY_CHARACTER,
+                        "Input begins or ends in an invalid character: $input"
+                    )
+                )
             }
-            return Iban(toPlain(input))
+            val value = toPlain(input)
+            if (value.length < SHORTEST_POSSIBLE_IBAN) {
+                return failure(
+                    IbanParseException.Malformed(
+                        value,
+                        Kind.TOO_SHORT,
+                        "Length is too short to be an IBAN: $value"
+                    )
+                )
+            }
+            if (!(value[2].isDigit() && value[3].isDigit())) {
+                return failure(
+                    IbanParseException.Malformed(
+                        value,
+                        Kind.NON_NUMERIC_CHECK_DIGITS,
+                        "Characters at index 2 and 3 not both numeric. $value"
+                    )
+                )
+            }
+            val countryCode: String = value.substring(0, 2)
+            val expectedLength: Int = CountryCodes.getLength(countryCode)
+                ?: return failure(IbanParseException.UnknownCountryCode(value, countryCode))
+            if (expectedLength != value.length) {
+                return failure(IbanParseException.WrongLength(value, expectedLength, value.length))
+            }
+            val calculatedChecksum: Int = try {
+                Modulo97.checksum(value)
+            } catch (e: IllegalArgumentException) {
+                return failure(
+                    IbanParseException.Malformed(
+                        value,
+                        Kind.INVALID_CHARACTER,
+                        e.message ?: "Invalid character in $value"
+                    )
+                )
+            }
+            if (calculatedChecksum != 1) {
+                return failure(IbanParseException.WrongChecksum(value))
+            }
+            return Result.success(Iban(value))
         }
 
         /**
-         * Parses the given string into an IBAN object and confirms the check digits, but returns null for null.
+         * Parses the given string into an IBAN object and confirms the check digits, throwing on invalid input.
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted ("CC11 ABCD 123. ..").
          * @return the parsed and validated IBAN object.
          * @throws [IllegalArgumentException] if the input is in some way invalid.
          * @see [parse]
          */
         @Deprecated("Use parse() instead", ReplaceWith("parse(input)"))
-        fun valueOf(input: CharSequence): Iban = parse(input)
+        fun valueOf(input: CharSequence): Iban = parse(input).getOrThrow()
 
         /**
-         * Composes an IBAN from the given country code and basic bank account number.
+         * Composes an IBAN from the given country code and basic bank account number, calculating the check digits.
          * @param countryCode the country code.
          * @param bban the BBAN.
-         * @return an IBAN object composed of the given parts, if valid.
-         * @throws [IllegalArgumentException] if the input is in some way invalid.
+         * @return a [Result] holding the IBAN object composed of the given parts, or an [IbanParseException] describing why the parts were rejected.
          */
-        fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
+        fun compose(countryCode: CharSequence, bban: CharSequence): Result<Iban> {
             val sb = StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH).append(countryCode).append("00").append(bban)
-            val checkDigits = Modulo97.calculateCheckDigits(sb)
-            if (checkDigits < 10) {
-                sb[3] = ('0'.code + checkDigits).toChar()
-            } else {
-                sb.replaceRange(2..3, checkDigits.toString())
+            val checkDigits = try {
+                Modulo97.calculateCheckDigits(sb)
+            } catch (e: IllegalArgumentException) {
+                return failure(
+                    IbanParseException.Malformed(
+                        toPlain(sb),
+                        Kind.INVALID_STRUCTURE,
+                        e.message ?: "Cannot calculate check digits for $sb"
+                    )
+                )
             }
-            return parse(sb.toString())
+            sb.setRange(2, 4, checkDigits.toString().padStart(2, '0'))
+            return parse(sb)
         }
 
         /**
@@ -252,19 +291,19 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
 
 /**
  * Parses the given string into an IBAN object and confirms the check digits.
- * @return the parsed and validated IBAN object
- * @throws [IllegalArgumentException] if the input is in some way invalid.
+ * @return a [Result] holding the parsed and validated IBAN object, or an [IbanParseException] describing why the input was rejected.
  * @see Iban.parse
  */
-fun String.toIban(): Iban = Iban.parse(this)
+fun String.toIban(): Result<Iban> = Iban.parse(this)
+
+/**
+ * Parses the given string into an IBAN object and confirms the check digits, discarding the failure detail.
+ * @return the parsed and validated IBAN object, or `null` if the input is in some way invalid.
+ * @see Iban.parse
+ */
+fun String.toIbanOrNull(): Iban? = Iban.parse(this).getOrNull()
 
 /**
  * Returns whether the given string is a valid IBAN.
  */
-fun String.isValidIban(): Boolean =
-    try {
-        Iban.parse(this)
-        true
-    } catch (e: IllegalArgumentException) {
-        false
-    }
+fun String.isValidIban(): Boolean = Iban.parse(this).isSuccess

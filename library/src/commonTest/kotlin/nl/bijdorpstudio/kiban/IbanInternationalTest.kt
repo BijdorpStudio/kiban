@@ -28,7 +28,7 @@ class IbanInternationalTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { testData ->
-                val iban = Iban.parse(testData.plain)
+                val iban = Iban.parse(testData.plain).getOrThrow()
                 assertThat(iban.toPlainString()).isEqualTo(testData.plain)
                 assertThat(iban.toString()).isEqualTo(testData.pretty)
             }
@@ -39,9 +39,22 @@ class IbanInternationalTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
-                val iban = Iban.parse(td.pretty)
+                val iban = Iban.parse(td.pretty).getOrThrow()
                 assertThat(iban.toPlainString()).isEqualTo(td.plain)
                 assertThat(iban.toString()).isEqualTo(td.pretty)
+            }
+    }
+
+    @Test
+    fun `Compose should round trip every country`() {
+        CountryCodesParameterizedTest
+            .countriesTestDataTable
+            .forAll { td ->
+                val composed = Iban.compose(
+                    countryCode = td.plain.substring(0, 2),
+                    bban = td.plain.substring(4)
+                )
+                assertThat(composed.getOrThrow()).isEqualTo(Iban.parse(td.plain).getOrThrow())
             }
     }
 
@@ -50,7 +63,7 @@ class IbanInternationalTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
-                assertThat(Iban.parse(td.plain).isInSwiftRegistry).isEqualTo(td.swift)
+                assertThat(Iban.parse(td.plain).getOrThrow().isInSwiftRegistry).isEqualTo(td.swift)
             }
     }
 
@@ -59,7 +72,7 @@ class IbanInternationalTest {
         CountryCodesParameterizedTest
             .countriesTestDataTable
             .forAll { td ->
-                assertThat(Iban.parse(td.plain).isSEPA).isEqualTo(td.sepa)
+                assertThat(Iban.parse(td.plain).getOrThrow().isSEPA).isEqualTo(td.sepa)
             }
     }
 
