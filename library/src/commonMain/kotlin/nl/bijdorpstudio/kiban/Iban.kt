@@ -215,7 +215,7 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
          * @throws [IllegalArgumentException] if the input is in some way invalid.
          * @see [parse]
          */
-        @Deprecated("Use parse() instead", ReplaceWith("parse(input)"))
+        @Deprecated("Use parse() instead", ReplaceWith("parse(input).getOrThrow()"))
         fun valueOf(input: CharSequence): Iban = parse(input).getOrThrow()
 
         /**

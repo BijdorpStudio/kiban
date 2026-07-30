@@ -15,12 +15,6 @@ public final class nl/bijdorpstudio/kiban/CountryCodes {
 	public final fun isSEPACountry (Ljava/lang/CharSequence;)Z
 }
 
-public final class nl/bijdorpstudio/kiban/IBANFields {
-	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IBANFields;
-	public final fun getBankIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/util/Optional;
-	public final fun getBranchIdentifier (Lnl/bijdorpstudio/kiban/Iban;)Ljava/util/Optional;
-}
-
 public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public static final field Companion Lnl/bijdorpstudio/kiban/Iban$Companion;
 	public static final field SHORTEST_POSSIBLE_IBAN I
