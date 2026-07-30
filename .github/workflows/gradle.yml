@@ -19,12 +19,25 @@ jobs:
         include:
           - target: iosSimulatorArm64Test
             os: macos-latest
+          - target: macosArm64Test
+            os: macos-latest
+          - target: tvosSimulatorArm64Test
+            os: macos-latest
+          - target: watchosSimulatorArm64Test
+            os: macos-latest
           - target: jvmTest
             os: ubuntu-latest
           - target: linuxX64Test
             os: ubuntu-latest
           - target: jsTest
             os: ubuntu-latest
+          - target: wasmJsTest
+            os: ubuntu-latest
+          # Targets with no runner to execute on: cross-compile only.
+          - target: compileKotlinLinuxArm64 compileKotlinMingwX64
+            os: ubuntu-latest
+          # apiCheck builds a klib for every target the host supports, so it
+          # doubles as the compile check for the Apple targets.
           - target: apiCheck
             os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks
