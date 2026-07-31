@@ -5,6 +5,7 @@ android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
 android-minSdk = "24"
 assertk = "0.28.1"
+dokka = "2.2.0"
 # @keep this is library java compatibility version
 java-version = "17"
 kotlin = "2.4.10"
@@ -22,6 +23,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 [plugins]
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 compat-tapmoc = { id = "com.gradleup.tapmoc", version.ref = "tapmoc-plugin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binary-compatibility-validator" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }

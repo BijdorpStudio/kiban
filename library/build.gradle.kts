@@ -5,10 +5,15 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compat.tapmoc)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
 }
 
 group = "nl.bijdorpstudio.kiban"
 version = "0.5.0"
+
+dokka {
+    moduleName.set("kiban")
+}
 
 tapmoc {
     java(libs.versions.java.version.get().toInt())

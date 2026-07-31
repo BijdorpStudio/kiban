@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.versions.catalogue.update)
     alias(libs.plugins.kotlinx.api.validator)
     alias(libs.plugins.compat.tapmoc) apply false
+    alias(libs.plugins.dokka) apply false
 }
 
 @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
