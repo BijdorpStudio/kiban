@@ -1,0 +1,61 @@
+# Dependency updates for the two ecosystems this repository actually uses:
+# the Gradle version catalog and the actions the workflows depend on.
+#
+# This does not replace the `nl.littlerobots.version-catalog-update` plugin
+# configured in the root build script. The two solve the same problem from
+# opposite directions and both are wanted: Dependabot keeps the catalog from
+# drifting between releases, one PR at a time, while `./gradlew
+# versionCatalogUpdate` stays the bulk sweep run deliberately at the start of
+# a development cycle.
+version: 2
+
+updates:
+  # Dependabot reads `gradle/libs.versions.toml` directly, so every catalog
+  # entry that resolves to a real module is covered without extra
+  # configuration. The `# @keep` versions (`android-compileSdk`,
+  # `android-minSdk`, `java-version`, `kotlin-version`) are not dependency
+  # declarations and are left alone.
+  #
+  # Two things to know about the PRs this produces:
+  #
+  #   * A Kotlin bump can change klib ABI rendering, so such a PR may fail
+  #     `apiCheck` until someone runs `./gradlew apiDump` on the branch.
+  #     Dependabot cannot finish those on its own.
+  #   * AGP (`com.android.kotlin.multiplatform.library`) is published only to
+  #     Google's Maven repository — it is not on Maven Central, and the
+  #     Gradle Plugin Portal just redirects there. So AGP coverage depends
+  #     entirely on Dependabot honouring the `google()` declarations in
+  #     `settings.gradle.kts`. That is expected to work but has not been
+  #     observed on this repository yet. If AGP is still sitting at an old
+  #     version after a few runs while other entries move, this comment
+  #     should be replaced by an explicit note that AGP stays manual, rather
+  #     than leaving a false sense of coverage.
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Every PR runs the full check matrix — eleven jobs, four of them on
+    # macOS runners. Batching patch and minor bumps into a single PR keeps
+    # the noise down; major bumps still arrive one per PR, where they get the
+    # individual review they need.
+    groups:
+      gradle-minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
