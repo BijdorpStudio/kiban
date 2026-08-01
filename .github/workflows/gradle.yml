@@ -42,6 +42,10 @@ jobs:
             os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks
             os: ubuntu-latest
+          # Generation only, no deploy: catches broken KDoc/sourceLink before a
+          # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
+          - target: :library:dokkaGeneratePublicationHtml
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
