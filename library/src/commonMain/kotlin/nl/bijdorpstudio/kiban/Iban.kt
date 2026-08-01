@@ -153,59 +153,57 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
          * @return a [Result] holding the parsed and validated IBAN object, or an [IbanParseException] describing why the input was rejected.
          * @see [IbanParseException]
          */
-        fun parse(input: CharSequence): Result<Iban> {
+        fun parse(input: CharSequence): Result<Iban> =
+            when (val rejection = validate(input)) {
+                null -> Result.success(Iban(toPlain(input)))
+                else -> failure(rejection.toException())
+            }
+
+        /**
+         * Validates the given input without constructing an [IbanParseException], so that [String.isValidIban] and
+         * [String.toIbanOrNull] can reject invalid input without paying for a captured stack trace. [parse] builds on
+         * this and constructs the exception only when a caller actually needs one.
+         *
+         * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
+         * @return `null` if the input is a valid IBAN, or a [Rejection] describing why it was rejected.
+         */
+        internal fun validate(input: CharSequence): Rejection? {
             if (input.isEmpty()) {
-                return failure(IbanParseException.Malformed("", Kind.EMPTY, "Input is empty"))
+                return Rejection.Malformed("", Kind.EMPTY)
             }
             if (!input.first().isLetterOrDigit() || !input.last().isLetterOrDigit()) {
-                return failure(
-                    IbanParseException.Malformed(
-                        toPlain(input),
-                        Kind.INVALID_BOUNDARY_CHARACTER,
-                        "Input begins or ends in an invalid character: $input"
-                    )
+                return Rejection.Malformed(
+                    toPlain(input),
+                    Kind.INVALID_BOUNDARY_CHARACTER,
+                    "Input begins or ends in an invalid character: $input"
                 )
             }
             val value = toPlain(input)
             if (value.length < SHORTEST_POSSIBLE_IBAN) {
-                return failure(
-                    IbanParseException.Malformed(
-                        value,
-                        Kind.TOO_SHORT,
-                        "Length is too short to be an IBAN: $value"
-                    )
-                )
+                return Rejection.Malformed(value, Kind.TOO_SHORT)
             }
             if (!(value[2].isDigit() && value[3].isDigit())) {
-                return failure(
-                    IbanParseException.Malformed(
-                        value,
-                        Kind.NON_NUMERIC_CHECK_DIGITS,
-                        "Characters at index 2 and 3 not both numeric. $value"
-                    )
-                )
+                return Rejection.Malformed(value, Kind.NON_NUMERIC_CHECK_DIGITS)
             }
             val countryCode: String = value.substring(0, 2)
             val expectedLength: Int = CountryCodes.getLength(countryCode)
-                ?: return failure(IbanParseException.UnknownCountryCode(value, countryCode))
+                ?: return Rejection.UnknownCountryCode(value, countryCode)
             if (expectedLength != value.length) {
-                return failure(IbanParseException.WrongLength(value, expectedLength, value.length))
+                return Rejection.WrongLength(value, expectedLength, value.length)
             }
             val calculatedChecksum: Int = try {
                 Modulo97.checksum(value)
             } catch (e: IllegalArgumentException) {
-                return failure(
-                    IbanParseException.Malformed(
-                        value,
-                        Kind.INVALID_CHARACTER,
-                        e.message ?: "Invalid character in $value"
-                    )
+                return Rejection.Malformed(
+                    value,
+                    Kind.INVALID_CHARACTER,
+                    e.message ?: "Invalid character in $value"
                 )
             }
             if (calculatedChecksum != 1) {
-                return failure(IbanParseException.WrongChecksum(value))
+                return Rejection.WrongChecksum(value)
             }
-            return Result.success(Iban(value))
+            return null
         }
 
         /**
@@ -301,9 +299,9 @@ fun String.toIban(): Result<Iban> = Iban.parse(this)
  * @return the parsed and validated IBAN object, or `null` if the input is in some way invalid.
  * @see Iban.parse
  */
-fun String.toIbanOrNull(): Iban? = Iban.parse(this).getOrNull()
+fun String.toIbanOrNull(): Iban? = if (Iban.validate(this) == null) Iban(Iban.toPlain(this)) else null
 
 /**
  * Returns whether the given string is a valid IBAN.
  */
-fun String.isValidIban(): Boolean = Iban.parse(this).isSuccess
+fun String.isValidIban(): Boolean = Iban.validate(this) == null
