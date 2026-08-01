@@ -13,6 +13,13 @@ version = "0.5.0"
 
 dokka {
     moduleName.set("kiban")
+    dokkaSourceSets.configureEach {
+        sourceLink {
+            localDirectory.set(rootDir)
+            remoteUrl("https://github.com/BijdorpStudio/kiban/tree/main")
+            remoteLineSuffix.set("#L")
+        }
+    }
 }
 
 tapmoc {
