@@ -73,6 +73,28 @@ class IbanTest {
     }
 
     @Test
+    fun `isValidIban and toIbanOrNull should agree with parse for every rejection kind`() {
+        listOf(
+            "",
+            "Shenanigans!",
+            " $VALID_IBAN",
+            "$VALID_IBAN ",
+            "NL03",
+            "NLAB0143267469",
+            VALID_IBAN.replaceRange(6, 7, "_"),
+            "UU345678345543234",
+            VALID_IBAN + "0",
+            INVALID_IBAN,
+            VALID_IBAN
+        ).forEach { input ->
+            val expectedSuccess = Iban.parse(input).isSuccess
+
+            assertThat(input.isValidIban(), "isValidIban for '$input'").isEqualTo(expectedSuccess)
+            assertThat(input.toIbanOrNull() != null, "toIbanOrNull for '$input'").isEqualTo(expectedSuccess)
+        }
+    }
+
+    @Test
     fun `Valid IBAN should return country code`() {
         assertThat(Iban.parse(VALID_IBAN).getOrThrow().countryCode).isEqualTo("NL")
     }
@@ -103,31 +125,46 @@ class IbanTest {
 
     @Test
     fun `Parse should reject invalid input`() {
-        assertThat(Iban.parse("Shenanigans!").malformedKind())
+        val failure = Iban.parse("Shenanigans!").failure()
+
+        assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character: Shenanigans!")
     }
 
     @Test
     fun `Parse should reject leading whitespace`() {
-        assertThat(Iban.parse(" $VALID_IBAN").malformedKind())
+        val failure = Iban.parse(" $VALID_IBAN").failure()
+
+        assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character:  $VALID_IBAN")
     }
 
     @Test
     fun `Parse should reject trailing whitespace`() {
-        assertThat(Iban.parse("$VALID_IBAN ").malformedKind())
+        val failure = Iban.parse("$VALID_IBAN ").failure()
+
+        assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character: $VALID_IBAN ")
     }
 
     @Test
     fun `Parse should reject too short input`() {
-        assertThat(Iban.parse("NL03").malformedKind()).isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+        val failure = Iban.parse("NL03").failure()
+
+        assertThat((failure as? IbanParseException.Malformed)?.kind).isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+        assertThat(failure.message).isEqualTo("Length is too short to be an IBAN: NL03")
     }
 
     @Test
     fun `Parse should reject non numeric check digits`() {
-        assertThat(Iban.parse("NLAB0143267469").malformedKind())
+        val failure = Iban.parse("NLAB0143267469").failure()
+
+        assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
+        assertThat(failure.message).isEqualTo("Characters at index 2 and 3 not both numeric. NLAB0143267469")
     }
 
     @Test

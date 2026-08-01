@@ -97,3 +97,43 @@ sealed class IbanParseException(
         input: String
     ) : IbanParseException(input, "Wrong check sum for $input")
 }
+
+/**
+ * A lightweight, non-throwing description of why an input was rejected by [Iban.validate].
+ *
+ * Carries the same information as [IbanParseException] without paying for a captured stack trace, so that the
+ * non-throwing validation paths ([String.isValidIban] and [String.toIbanOrNull]) can reject input without allocating
+ * a [Throwable]. [toException] builds the actual [IbanParseException] for callers that need it, such as [Iban.parse].
+ */
+internal sealed class Rejection(val input: String) {
+
+    class Malformed(
+        input: String,
+        val kind: IbanParseException.Malformed.Kind,
+        val detail: String? = null
+    ) : Rejection(input)
+
+    class UnknownCountryCode(input: String, val countryCode: String) : Rejection(input)
+
+    class WrongLength(input: String, val expectedLength: Int, val actualLength: Int) : Rejection(input)
+
+    class WrongChecksum(input: String) : Rejection(input)
+
+    fun toException(): IbanParseException = when (this) {
+        is Malformed -> IbanParseException.Malformed(input, kind, detail ?: defaultMessage(kind))
+        is UnknownCountryCode -> IbanParseException.UnknownCountryCode(input, countryCode)
+        is WrongLength -> IbanParseException.WrongLength(input, expectedLength, actualLength)
+        is WrongChecksum -> IbanParseException.WrongChecksum(input)
+    }
+
+    private fun defaultMessage(kind: IbanParseException.Malformed.Kind): String = when (kind) {
+        IbanParseException.Malformed.Kind.EMPTY -> "Input is empty"
+        IbanParseException.Malformed.Kind.TOO_SHORT -> "Length is too short to be an IBAN: $input"
+        IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS ->
+            "Characters at index 2 and 3 not both numeric. $input"
+        IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
+        IbanParseException.Malformed.Kind.INVALID_CHARACTER,
+        IbanParseException.Malformed.Kind.INVALID_STRUCTURE ->
+            error("$kind rejections must supply a detail message")
+    }
+}
