@@ -3,6 +3,7 @@
 .idea/*
 !.idea/.name
 !.idea/icon.svg
+!.idea/icon_dark.svg
 .DS_Store
 build
 captures

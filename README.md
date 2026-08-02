@@ -1,4 +1,8 @@
-![Kiban](.idea/icon.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+  <img src="assets/logo-light.png" alt="kiban" width="420">
+</picture>
+
 # **K**Iban—Kotlin Multiplatform IBAN Library
 
 [![Maven Central](https://img.shields.io/maven-central/v/nl.bijdorpstudio.kiban/kiban.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban)
