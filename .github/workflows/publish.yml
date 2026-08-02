@@ -34,7 +34,10 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Publish to MavenCentral
-        run: ./gradlew publishToMavenCentral --no-configuration-cache
+        # kotlin.native.ignoreDisabledTargets stays "true" in gradle.properties for local dev and
+        # PR CI, where no single host builds every target. Forced "false" here so a target this
+        # runner can't build fails the build instead of silently shipping a partial artifact set.
+        run: ./gradlew publishToMavenCentral --no-configuration-cache -Pkotlin.native.ignoreDisabledTargets=false
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}

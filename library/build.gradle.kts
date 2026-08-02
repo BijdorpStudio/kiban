@@ -123,3 +123,32 @@ mavenPublishing {
         }
     }
 }
+
+// Guards against a publish that silently ships a partial artifact set: if a declared
+// Kotlin target's toolchain is missing on the publish host, kotlin.native.ignoreDisabledTargets
+// (needed for local dev and PR CI, where no single host can build every target) would otherwise
+// skip it without failing the build. This diffs the declared targets against the publications
+// the maven-publish plugin actually registered and fails before any upload happens.
+val verifyPublicationTargets = tasks.register("verifyPublicationTargets") {
+    group = "verification"
+    description = "Fails if declared Kotlin targets and registered Maven publications diverge."
+    doLast {
+        val expectedPublications = kotlin.targets
+            .map { target -> if (target.name == "metadata") "kotlinMultiplatform" else target.name }
+            .toSortedSet()
+        val actualPublications = publishing.publications.names.toSortedSet()
+        check(expectedPublications == actualPublications) {
+            val missing = expectedPublications - actualPublications
+            val unexpected = actualPublications - expectedPublications
+            buildString {
+                appendLine("Declared Kotlin targets and Maven publications are out of sync.")
+                if (missing.isNotEmpty()) appendLine("Targets with no publication (likely skipped by kotlin.native.ignoreDisabledTargets): $missing")
+                if (unexpected.isNotEmpty()) appendLine("Publications with no matching declared target: $unexpected")
+            }
+        }
+    }
+}
+
+tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+    dependsOn(verifyPublicationTargets)
+}
