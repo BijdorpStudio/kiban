@@ -15,6 +15,11 @@ apiValidation {
     klib {
         enabled = true
     }
+    // kiban-test (see its README) has no public API surface yet, and its baseline dump
+    // depends on targets (Android, Kotlin/Native) this environment can't build. Drop it
+    // once the first real helper lands and `./gradlew :kiban-test:apiDump` has been run
+    // on a host that can build the full target matrix.
+    ignoredProjects.add("kiban-test")
 }
 
 versionCatalogUpdate {
