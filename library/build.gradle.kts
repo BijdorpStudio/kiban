@@ -90,10 +90,7 @@ mavenPublishing {
 
     coordinates(group.toString(), "kiban", version.toString())
 
-    // Without this, com.vanniktech.maven.publish auto-detects the applied Dokka plugin and
-    // packs the entire generated HTML site (nav, fonts, search index, ~2MB) into the
-    // -javadoc.jar. kotlinx.coroutines, kotlinx-datetime and Metro all ship an empty
-    // javadoc-classifier jar instead — real docs live on the website (see #64) — so match that.
+    // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar (see #78).
     configure(
         KotlinMultiplatform(
             javadocJar = JavadocJar.Empty(),
