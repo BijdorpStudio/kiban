@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -86,6 +89,17 @@ mavenPublishing {
     signAllPublications()
 
     coordinates(group.toString(), "kiban", version.toString())
+
+    // Without this, com.vanniktech.maven.publish auto-detects the applied Dokka plugin and
+    // packs the entire generated HTML site (nav, fonts, search index, ~2MB) into the
+    // -javadoc.jar. kotlinx.coroutines, kotlinx-datetime and Metro all ship an empty
+    // javadoc-classifier jar instead — real docs live on the website (see #64) — so match that.
+    configure(
+        KotlinMultiplatform(
+            javadocJar = JavadocJar.Empty(),
+            sourcesJar = SourcesJar.Sources(),
+        )
+    )
 
     pom {
         name = "Kiban"
