@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -86,6 +89,14 @@ mavenPublishing {
     signAllPublications()
 
     coordinates(group.toString(), "kiban", version.toString())
+
+    // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar (see #78).
+    configure(
+        KotlinMultiplatform(
+            javadocJar = JavadocJar.Empty(),
+            sourcesJar = SourcesJar.Sources(),
+        )
+    )
 
     pom {
         name = "Kiban"
