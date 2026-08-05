@@ -12,7 +12,9 @@ kotlin = "2.4.10"
 kotlinx-binary-compatibility-validator = "0.18.1"
 # @keep this is library kotlin compatibility version
 kotlin-version = "2.3.0"
+ktfmt = "0.64"
 maven-publish-plugin = "0.37.0"
+spotless-plugin = "8.9.0"
 tapmoc-plugin = "0.4.2"
 versions-catalogue-update-plugin = "1.1.0"
 
@@ -27,4 +29,5 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binary-compatibility-validator" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless-plugin" }
 versions-catalogue-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versions-catalogue-update-plugin" }

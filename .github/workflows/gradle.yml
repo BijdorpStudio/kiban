@@ -46,6 +46,8 @@ jobs:
           # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
           - target: :library:dokkaGeneratePublicationHtml
             os: ubuntu-latest
+          - target: spotlessCheck
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:

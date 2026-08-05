@@ -8,6 +8,19 @@ plugins {
     alias(libs.plugins.kotlinx.api.validator)
     alias(libs.plugins.compat.tapmoc) apply false
     alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.spotless)
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        targetExclude("**/build/**/*.kt")
+        ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
+    }
+    kotlinGradle {
+        target("**/*.gradle.kts")
+        ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
+    }
 }
 
 @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
