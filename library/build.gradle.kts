@@ -6,11 +6,14 @@ plugins {
     alias(libs.plugins.compat.tapmoc)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.ktfmt)
 }
 
 group = "nl.bijdorpstudio.kiban"
 
 version = "0.5.0"
+
+ktfmt { kotlinLangStyle() }
 
 dokka {
     moduleName.set("kiban")
@@ -52,24 +55,12 @@ kotlin {
     mingwX64()
     js(IR) {
         nodejs()
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
+        browser { testTask { useKarma { useChromeHeadless() } } }
     }
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         nodejs()
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
+        browser { testTask { useKarma { useChromeHeadless() } } }
     }
 
     sourceSets {
