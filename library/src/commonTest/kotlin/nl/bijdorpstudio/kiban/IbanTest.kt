@@ -1,18 +1,18 @@
 /*
-   Copyright 2021 Barend Garvelink, Eugen Martynov
+  Copyright 2021 Barend Garvelink, Eugen Martynov
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
- */
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 package nl.bijdorpstudio.kiban
 
 import assertk.assertThat
@@ -28,14 +28,12 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
 
-
-/**
- * Miscellaneous tests for the [Iban] class.
- */
+/** Miscellaneous tests for the [Iban] class. */
 class IbanTest {
     @Test
     fun `Operator invoke should parse IBAN`() {
-        // Called through the companion explicitly: inside the library module the internal constructor would win.
+        // Called through the companion explicitly: inside the library module the internal
+        // constructor would win.
         val iban = Iban.Companion.invoke(VALID_IBAN).getOrThrow()
         assertThat(iban.plain).isEqualTo(VALID_IBAN)
     }
@@ -48,8 +46,7 @@ class IbanTest {
 
     @Test
     fun `toIban extension should return failure for invalid IBAN`() {
-        assertThat(INVALID_IBAN.toIban().failure())
-            .isInstanceOf<IbanParseException.WrongChecksum>()
+        assertThat(INVALID_IBAN.toIban().failure()).isInstanceOf<IbanParseException.WrongChecksum>()
     }
 
     @Test
@@ -75,23 +72,26 @@ class IbanTest {
     @Test
     fun `isValidIban and toIbanOrNull should agree with parse for every rejection kind`() {
         listOf(
-            "",
-            "Shenanigans!",
-            " $VALID_IBAN",
-            "$VALID_IBAN ",
-            "NL03",
-            "NLAB0143267469",
-            VALID_IBAN.replaceRange(6, 7, "_"),
-            "UU345678345543234",
-            VALID_IBAN + "0",
-            INVALID_IBAN,
-            VALID_IBAN
-        ).forEach { input ->
-            val expectedSuccess = Iban.parse(input).isSuccess
+                "",
+                "Shenanigans!",
+                " $VALID_IBAN",
+                "$VALID_IBAN ",
+                "NL03",
+                "NLAB0143267469",
+                VALID_IBAN.replaceRange(6, 7, "_"),
+                "UU345678345543234",
+                VALID_IBAN + "0",
+                INVALID_IBAN,
+                VALID_IBAN,
+            )
+            .forEach { input ->
+                val expectedSuccess = Iban.parse(input).isSuccess
 
-            assertThat(input.isValidIban(), "isValidIban for '$input'").isEqualTo(expectedSuccess)
-            assertThat(input.toIbanOrNull() != null, "toIbanOrNull for '$input'").isEqualTo(expectedSuccess)
-        }
+                assertThat(input.isValidIban(), "isValidIban for '$input'")
+                    .isEqualTo(expectedSuccess)
+                assertThat(input.toIbanOrNull() != null, "toIbanOrNull for '$input'")
+                    .isEqualTo(expectedSuccess)
+            }
     }
 
     @Test
@@ -113,14 +113,13 @@ class IbanTest {
 
     @Test
     fun `valueOf should throw for invalid input`() {
-        assertFailsWith<IbanParseException.WrongChecksum> {
-            Iban.valueOf(INVALID_IBAN)
-        }
+        assertFailsWith<IbanParseException.WrongChecksum> { Iban.valueOf(INVALID_IBAN) }
     }
 
     @Test
     fun `Parse should reject empty input`() {
-        assertThat(Iban.parse("").malformedKind()).isEqualTo(IbanParseException.Malformed.Kind.EMPTY)
+        assertThat(Iban.parse("").malformedKind())
+            .isEqualTo(IbanParseException.Malformed.Kind.EMPTY)
     }
 
     @Test
@@ -129,7 +128,8 @@ class IbanTest {
 
         assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character: Shenanigans!")
+        assertThat(failure.message)
+            .isEqualTo("Input begins or ends in an invalid character: Shenanigans!")
     }
 
     @Test
@@ -138,7 +138,8 @@ class IbanTest {
 
         assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character:  $VALID_IBAN")
+        assertThat(failure.message)
+            .isEqualTo("Input begins or ends in an invalid character:  $VALID_IBAN")
     }
 
     @Test
@@ -147,14 +148,16 @@ class IbanTest {
 
         assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-        assertThat(failure.message).isEqualTo("Input begins or ends in an invalid character: $VALID_IBAN ")
+        assertThat(failure.message)
+            .isEqualTo("Input begins or ends in an invalid character: $VALID_IBAN ")
     }
 
     @Test
     fun `Parse should reject too short input`() {
         val failure = Iban.parse("NL03").failure()
 
-        assertThat((failure as? IbanParseException.Malformed)?.kind).isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+        assertThat((failure as? IbanParseException.Malformed)?.kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
         assertThat(failure.message).isEqualTo("Length is too short to be an IBAN: NL03")
     }
 
@@ -164,7 +167,8 @@ class IbanTest {
 
         assertThat((failure as? IbanParseException.Malformed)?.kind)
             .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
-        assertThat(failure.message).isEqualTo("Characters at index 2 and 3 not both numeric. NLAB0143267469")
+        assertThat(failure.message)
+            .isEqualTo("Characters at index 2 and 3 not both numeric. NLAB0143267469")
     }
 
     @Test
@@ -209,16 +213,16 @@ class IbanTest {
 
     @Test
     fun `Parse failure should be an IllegalArgumentException`() {
-        assertThat(Iban.parse(INVALID_IBAN).failure())
-            .isInstanceOf<IllegalArgumentException>()
+        assertThat(Iban.parse(INVALID_IBAN).failure()).isInstanceOf<IllegalArgumentException>()
     }
 
     @Test
     fun `Compose should handle correct input`() {
-        val composed = Iban.compose(
-            countryCode = VALID_IBAN.substring(0, 2),
-            bban = VALID_IBAN.substring(4)
-        )
+        val composed =
+            Iban.compose(
+                countryCode = VALID_IBAN.substring(0, 2),
+                bban = VALID_IBAN.substring(4),
+            )
         assertThat(composed.getOrThrow()).isEqualTo(Iban.parse(VALID_IBAN).getOrThrow())
     }
 
@@ -237,7 +241,9 @@ class IbanTest {
 
     @Test
     fun `Compose should reject malformed country code`() {
-        assertThat(Iban.compose(countryCode = "potato", bban = VALID_IBAN.substring(4)).malformedKind())
+        assertThat(
+                Iban.compose(countryCode = "potato", bban = VALID_IBAN.substring(4)).malformedKind()
+            )
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
     }
 
@@ -249,7 +255,13 @@ class IbanTest {
 
     @Test
     fun `Compose should reject wrong length BBAN`() {
-        assertThat(Iban.compose(countryCode = VALID_IBAN.substring(0, 2), bban = VALID_IBAN.substring(5)).failure())
+        assertThat(
+                Iban.compose(
+                        countryCode = VALID_IBAN.substring(0, 2),
+                        bban = VALID_IBAN.substring(5),
+                    )
+                    .failure()
+            )
             .isInstanceOf<IbanParseException.WrongLength>()
     }
 
@@ -281,9 +293,7 @@ class IbanTest {
             .row("1234 5678", "1234 5678")
             .row("123456789", "1234 5678 9")
             .row("1234 5678 9", "1234 5678 9")
-            .forAll { input, formatted ->
-                assertThat(Iban.toPretty(input)).isEqualTo(formatted)
-            }
+            .forAll { input, formatted -> assertThat(Iban.toPretty(input)).isEqualTo(formatted) }
     }
 
     @Test
@@ -300,23 +310,23 @@ class IbanTest {
             .row("1234 5678", "12345678")
             .row("123456789", "123456789")
             .row("1234 5678 9", "123456789")
-            .forAll { input, plain ->
-                assertThat(Iban.toPlain(input)).isEqualTo(plain)
-            }
+            .forAll { input, plain -> assertThat(Iban.toPlain(input)).isEqualTo(plain) }
     }
 
     @Test
     fun `Lexical sort should order IBANs correctly`() {
-        val expected = listOf(
-            Iban.parse("DK3400000000000003").getOrThrow(),
-            Iban.parse("NL41BANK0000000002").getOrThrow(),
-            Iban.parse("NL68BANK0000000001").getOrThrow()
-        )
-        val actual = listOf(
-            Iban.parse("NL68BANK0000000001").getOrThrow(),
-            Iban.parse("DK3400000000000003").getOrThrow(),
-            Iban.parse("NL41BANK0000000002").getOrThrow()
-        )
+        val expected =
+            listOf(
+                Iban.parse("DK3400000000000003").getOrThrow(),
+                Iban.parse("NL41BANK0000000002").getOrThrow(),
+                Iban.parse("NL68BANK0000000001").getOrThrow(),
+            )
+        val actual =
+            listOf(
+                Iban.parse("NL68BANK0000000001").getOrThrow(),
+                Iban.parse("DK3400000000000003").getOrThrow(),
+                Iban.parse("NL41BANK0000000002").getOrThrow(),
+            )
 
         assertThat(actual.sorted()).isEqualTo(expected)
     }

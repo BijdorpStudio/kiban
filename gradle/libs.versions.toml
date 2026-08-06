@@ -12,6 +12,7 @@ kotlin = "2.4.10"
 kotlinx-binary-compatibility-validator = "0.18.1"
 # @keep this is library kotlin compatibility version
 kotlin-version = "2.3.0"
+ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
 versions-catalogue-update-plugin = "1.1.0"
@@ -26,5 +27,6 @@ compat-tapmoc = { id = "com.gradleup.tapmoc", version.ref = "tapmoc-plugin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binary-compatibility-validator" }
+ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt-plugin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 versions-catalogue-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versions-catalogue-update-plugin" }

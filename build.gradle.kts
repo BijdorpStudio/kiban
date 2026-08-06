@@ -8,14 +8,12 @@ plugins {
     alias(libs.plugins.kotlinx.api.validator)
     alias(libs.plugins.compat.tapmoc) apply false
     alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.ktfmt)
 }
 
-@OptIn(kotlinx.validation.ExperimentalBCVApi::class)
-apiValidation {
-    klib {
-        enabled = true
-    }
-}
+ktfmt { kotlinLangStyle() }
+
+@OptIn(kotlinx.validation.ExperimentalBCVApi::class) apiValidation { klib { enabled = true } }
 
 versionCatalogUpdate {
     sortByKey = true
