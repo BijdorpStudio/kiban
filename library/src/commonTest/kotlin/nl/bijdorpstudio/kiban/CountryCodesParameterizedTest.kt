@@ -64,9 +64,7 @@ class CountryCodesParameterizedTest {
         val countriesTestDataTable =
             tableOf("Test data").run {
                 var table: Table1<IbanCountryTestData>? = null
-                testData.forEach {
-                    table = table?.row(it) ?: row(it)
-                }
+                testData.forEach { table = table?.row(it) ?: row(it) }
                 requireNotNull(table)
             }
     }

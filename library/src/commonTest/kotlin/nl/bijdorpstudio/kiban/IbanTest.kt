@@ -113,9 +113,7 @@ class IbanTest {
 
     @Test
     fun `valueOf should throw for invalid input`() {
-        assertFailsWith<IbanParseException.WrongChecksum> {
-            Iban.valueOf(INVALID_IBAN)
-        }
+        assertFailsWith<IbanParseException.WrongChecksum> { Iban.valueOf(INVALID_IBAN) }
     }
 
     @Test
@@ -295,9 +293,7 @@ class IbanTest {
             .row("1234 5678", "1234 5678")
             .row("123456789", "1234 5678 9")
             .row("1234 5678 9", "1234 5678 9")
-            .forAll { input, formatted ->
-                assertThat(Iban.toPretty(input)).isEqualTo(formatted)
-            }
+            .forAll { input, formatted -> assertThat(Iban.toPretty(input)).isEqualTo(formatted) }
     }
 
     @Test
@@ -314,9 +310,7 @@ class IbanTest {
             .row("1234 5678", "12345678")
             .row("123456789", "123456789")
             .row("1234 5678 9", "123456789")
-            .forAll { input, plain ->
-                assertThat(Iban.toPlain(input)).isEqualTo(plain)
-            }
+            .forAll { input, plain -> assertThat(Iban.toPlain(input)).isEqualTo(plain) }
     }
 
     @Test

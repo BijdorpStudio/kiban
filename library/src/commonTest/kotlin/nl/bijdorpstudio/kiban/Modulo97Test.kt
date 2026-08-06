@@ -27,79 +27,57 @@ class Modulo97Test {
 
     @Test
     fun `It should reject length 0`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("") }
     }
 
     @Test
     fun `It should reject length 1`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("M")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M") }
     }
 
     @Test
     fun `It should reject length 2`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("MO")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO") }
     }
 
     @Test
     fun `It should reject length 3`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("MO9")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO9") }
     }
 
     @Test
     fun `It should reject length 4`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("MO97")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO97") }
     }
 
     @Test
     fun `It should reject length 1 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("M    ")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M    ") }
     }
 
     @Test
     fun `It should reject length 2 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("   MO")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("   MO") }
     }
 
     @Test
     fun `It should reject length 3 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("M O 9")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M O 9") }
     }
 
     @Test
     fun `It should reject length 4 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum(" MO97")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum(" MO97") }
     }
 
     @Test
     fun `It should reject invalid non-whitespace`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("TS00☠")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("TS00☠") }
     }
 
     @Test
     fun `It should reject invalid whitespace`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.checksum("MO97\tA")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO97\tA") }
     }
 
     @Test
@@ -144,16 +122,12 @@ class Modulo97Test {
 
     @Test
     fun `It should refuse to calculate check digits if index 2 is not 0`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.calculateCheckDigits("MO10A")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.calculateCheckDigits("MO10A") }
     }
 
     @Test
     fun `It should refuse to calculate check digits if index 3 is not 0`() {
-        assertFailsWith<IllegalArgumentException> {
-            Modulo97.calculateCheckDigits("MO02A")
-        }
+        assertFailsWith<IllegalArgumentException> { Modulo97.calculateCheckDigits("MO02A") }
     }
 
     @Test
