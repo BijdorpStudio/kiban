@@ -15,7 +15,7 @@ kotlin-version = "2.3.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
-versions-catalogue-update-plugin = "1.1.0"
+versions-catalogue-update-plugin = "1.1.1"
 
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
