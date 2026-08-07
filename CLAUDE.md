@@ -62,6 +62,14 @@ This also blocks anything that requires actually running Swift-facing code
 Export) — that needs a real macOS/Xcode host, not speculation from reading
 Kotlin source.
 
+`.github/workflows/ios-interop-verify.yml` provides on-demand access to that
+host: a `workflow_dispatch`-only job on a `macos-latest` runner (Actions tab →
+"iOS/Swift interop verification" → "Run workflow"), for pulling real build
+output and toolchain versions without a maintainer at a physical Mac. It's
+scoped to what's buildable today (the existing Apple targets); the
+`ios-consumer` sample build and Swift Export artifact generation that #9
+needs belong in this same job once #68 lands.
+
 ## What "verified" should mean when local verification is blocked
 
 Don't claim untested changes pass. If `jvmTest`/`apiCheck` couldn't be run
