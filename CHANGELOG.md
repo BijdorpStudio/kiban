@@ -4,10 +4,10 @@
 
 **Infrastructure**
 
-* Added `samples/`: a `jvm-cli` app (depending on `:library` directly) whose test suite executes
-  every code example from this README's "Use" section, and a `swift-console` Swift Package
-  Manager executable exercising the library through Kotlin/Native's Objective-C interop — the
-  concrete testbed for the Swift-API review in #9. `jvm-cli` is tested on every PR;
+* Added `samples/`: a `jvm-cli` app (depending on `:library` directly) that walks through every
+  code example from this README's "Use" section as a runnable demo, and a `swift-console` Swift
+  Package Manager executable exercising the library through Kotlin/Native's Objective-C interop
+  — the concrete testbed for the Swift-API review in #9. `jvm-cli` runs on every PR;
   `swift-console` builds on demand via `ios-interop-verify.yml`.
 
 ## 0.4.0

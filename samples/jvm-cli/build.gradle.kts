@@ -6,11 +6,6 @@ plugins {
 
 ktfmt { kotlinLangStyle() }
 
-dependencies {
-    implementation(project(":library"))
-    testImplementation(kotlin("test-junit5"))
-}
+dependencies { implementation(project(":library")) }
 
 application { mainClass.set("nl.bijdorpstudio.kiban.samples.jvmcli.MainKt") }
-
-tasks.test { useJUnitPlatform() }

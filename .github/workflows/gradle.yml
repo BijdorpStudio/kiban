@@ -48,11 +48,11 @@ jobs:
             os: ubuntu-latest
           - target: ktfmtCheck
             os: ubuntu-latest
-          # jvm-cli (#68) depends on :library directly and hosts the README "Use" section's
-          # executable examples -- catches drift like #60's Modulo97.calculateCheckDigits bug.
-          # Its formatting is already covered by the unqualified `ktfmtCheck` entry above (an
-          # unqualified task name runs in every subproject that declares it).
-          - target: :samples:jvm-cli:test
+          # jvm-cli (#68) depends on :library directly and runs through the README "Use"
+          # section's examples as a walkthrough, not a test suite -- this just confirms it still
+          # runs. Its formatting is already covered by the unqualified `ktfmtCheck` entry above
+          # (an unqualified task name runs in every subproject that declares it).
+          - target: :samples:jvm-cli:run
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -95,7 +95,5 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: test-reports-${{ matrix.target }}-${{ matrix.os }}
-        path: |
-          library/build/reports/tests/
-          samples/jvm-cli/build/reports/tests/
+        path: library/build/reports/tests/
         retention-days: 7

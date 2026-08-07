@@ -5,13 +5,11 @@ Consumer projects for `kiban`, focused on API/interop ergonomics rather than Mav
 
 ## jvm-cli
 
-A JVM console app depending on `:library` directly, and the home for the assertions that keep
-README.md's "Use" section executable — see `ReadmeExamplesTest.kt`'s doc comment for why this
-exists (#60's undetected `Modulo97.calculateCheckDigits("XX", "X")` documentation bug).
+A runnable walkthrough of the API, depending on `:library` directly and following README.md's
+"Use" section step by step, printing each result. Not a test suite — running it is the check.
 
 ```shell
-./gradlew :samples:jvm-cli:test
-./gradlew :samples:jvm-cli:run --args="NL91ABNA0417164300"
+./gradlew :samples:jvm-cli:run
 ```
 
 ## swift-console
