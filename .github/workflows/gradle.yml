@@ -91,3 +91,51 @@ jobs:
         name: test-reports-${{ matrix.target }}-${{ matrix.os }}
         path: library/build/reports/tests/
         retention-days: 7
+
+  samples:
+    name: Build samples against the published artifact
+    # samples/ (#68) resolves kiban by Maven coordinates, not by depending on :library directly,
+    # so this exercises the real published artifact shape (POM, Gradle module metadata, per-target
+    # variants). publishToMavenLocal needs every declared Kotlin target buildable on one host (see
+    # verifyPublicationTargets in library/build.gradle.kts) -- macos-latest is the only
+    # GitHub-hosted runner that covers all of them: Apple targets natively, Android SDK
+    # preinstalled, linuxX64/mingwX64 via Kotlin/Native cross-compilation, JS/wasm via Node.
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - uses: actions/cache@v6
+      with:
+        path: |
+          ~/.konan
+        key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v5
+      with:
+        java-version: '25'
+        distribution: 'zulu'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
+        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    - name: Publish kiban to mavenLocal
+      run: ./gradlew publishToMavenLocal
+
+    - name: Build and test jvm-cli against the published artifact
+      run: ./gradlew -p samples :jvm-cli:test
+
+    - name: Check jvm-cli formatting
+      run: ./gradlew -p samples :jvm-cli:ktfmtCheck
+
+    - name: Upload test reports
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-reports-samples-jvm-cli
+        path: samples/jvm-cli/build/reports/tests/
+        retention-days: 7

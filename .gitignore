@@ -11,6 +11,8 @@ captures
 .cxx
 local.properties
 xcuserdata
+.build
+samples/swift-console/Frameworks/
 .kotlin
 #So we don't accidentally commit our private keys
 *.gpg

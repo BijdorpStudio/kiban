@@ -2,6 +2,7 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -44,8 +45,16 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    // Exported as an XCFramework so samples/swift-console (#68) can link against it to exercise
+    // the Objective-C interop path #9 needs to evaluate. Scoped to macOS only, matching that
+    // sample; add the other Apple targets here if a sample needs them too.
+    val kibanFramework = XCFramework("Kiban")
+    listOf(macosX64(), macosArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Kiban"
+            kibanFramework.add(this)
+        }
+    }
     tvosX64()
     tvosArm64()
     tvosSimulatorArm64()
@@ -77,7 +86,13 @@ kotlin {
 mavenPublishing {
     publishToMavenCentral()
 
-    signAllPublications()
+    // Signing is only meaningful for the real Maven Central release (publish.yml supplies the
+    // in-memory PGP key via ORG_GRADLE_PROJECT_signingInMemoryKey*). Skip it when that key isn't
+    // present, e.g. for the samples/ CI job's publishToMavenLocal (#68), which publishes a
+    // throwaway local artifact that has no signature to verify.
+    if (project.hasProperty("signingInMemoryKey")) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "kiban", version.toString())
 
