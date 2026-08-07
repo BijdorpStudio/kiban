@@ -76,7 +76,7 @@ jobs:
         run: ./gradlew :library:dokkaGeneratePublicationHtml
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: library/build/dokka/html
 
