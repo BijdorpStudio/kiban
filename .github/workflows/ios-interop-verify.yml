@@ -1,0 +1,67 @@
+# On-demand macOS/Xcode toolchain access for iOS/Swift interop verification (#9, #91).
+#
+# gradle.yml already builds and tests every Apple target on every PR, but that matrix only
+# runs on push/PR and only reports pass/fail — it doesn't give a maintainer or agent a way to
+# pull real, inspectable build output (framework headers, Swift Export artifacts, toolchain
+# versions) on demand for the #9 Swift-interop review. This workflow exists for that: a
+# workflow_dispatch-only job on a macos-latest runner, so that review can happen without a
+# maintainer sitting at a physical Mac and without paying for a persistent macOS environment.
+#
+# Cost control: this never runs automatically (workflow_dispatch only), GitHub-hosted macOS
+# runner minutes are free for this public repo (same as the macos-latest jobs in gradle.yml),
+# and the runner is released as soon as the job finishes — there's no standing/always-on cost.
+#
+# Scope note: building the `ios-consumer` sample and generating Objective-C framework / Swift
+# Export output for that sample belongs here once #68 lands (see #68 and #91's "Scope"
+# section) — #68 doesn't exist yet, so this job currently verifies the Apple targets that
+# already exist and reports the toolchain versions available for that future work.
+name: iOS/Swift interop verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Report Xcode and Swift toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build and test Apple targets
+        run: ./gradlew iosSimulatorArm64Test macosArm64Test tvosSimulatorArm64Test watchosSimulatorArm64Test apiCheck
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-interop-verify-test-reports
+          path: library/build/reports/tests/
+          retention-days: 7
