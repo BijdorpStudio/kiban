@@ -14,7 +14,11 @@ plugins {
 
 ktfmt { kotlinLangStyle() }
 
-@OptIn(kotlinx.validation.ExperimentalBCVApi::class) apiValidation { klib { enabled = true } }
+@OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+apiValidation {
+    klib { enabled = true }
+    ignoredProjects.add("jvm-cli")
+}
 
 versionCatalogUpdate {
     sortByKey = true
