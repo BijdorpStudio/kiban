@@ -48,10 +48,6 @@ jobs:
             os: ubuntu-latest
           - target: ktfmtCheck
             os: ubuntu-latest
-          # jvm-cli (#68) depends on :library directly and runs through the README "Use"
-          # section's examples as a walkthrough, not a test suite -- this just confirms it still
-          # runs. Its formatting is already covered by the unqualified `ktfmtCheck` entry above
-          # (an unqualified task name runs in every subproject that declares it).
           - target: :samples:jvm-cli:run
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}

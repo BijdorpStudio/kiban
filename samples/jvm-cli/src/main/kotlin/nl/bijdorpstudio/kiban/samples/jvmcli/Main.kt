@@ -8,11 +8,6 @@ import nl.bijdorpstudio.kiban.isValidIban
 import nl.bijdorpstudio.kiban.toIban
 import nl.bijdorpstudio.kiban.toIbanOrNull
 
-/**
- * Runs through the kiban API the way README.md's "Use" section describes it, printing each result.
- * Not a test suite -- a runnable walkthrough of the library, depending on `:library` directly. Run
- * it with `./gradlew :samples:jvm-cli:run`.
- */
 fun main() {
     // Parse returns Result<Iban>.
     val iban: Iban = Iban.parse("NL91ABNA0417164300").getOrThrow()

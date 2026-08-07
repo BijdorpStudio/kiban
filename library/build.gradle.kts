@@ -45,9 +45,6 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    // Exported as an XCFramework so samples/swift-console (#68) can link against it to exercise
-    // the Objective-C interop path #9 needs to evaluate. Scoped to macOS only, matching that
-    // sample; add the other Apple targets here if a sample needs them too.
     val kibanFramework = XCFramework("Kiban")
     listOf(macosX64(), macosArm64()).forEach { target ->
         target.binaries.framework {
