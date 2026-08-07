@@ -65,10 +65,31 @@ Kotlin source.
 `.github/workflows/ios-interop-verify.yml` provides on-demand access to that
 host: a `workflow_dispatch`-only job on a `macos-latest` runner (Actions tab →
 "iOS/Swift interop verification" → "Run workflow"), for pulling real build
-output and toolchain versions without a maintainer at a physical Mac. It's
-scoped to what's buildable today (the existing Apple targets); the
-`ios-consumer` sample build and Swift Export artifact generation that #9
-needs belong in this same job once #68 lands.
+output and toolchain versions without a maintainer at a physical Mac. It now
+also builds and runs `samples/swift-console` (#68) — the concrete testbed
+#9's actual API review needs — so Swift Export artifact generation for that
+sample is the only piece #9 still has to add.
+
+## Kotlin/Native compiler distribution download may also be blocked
+
+Separately from the two egress restrictions above: any task that needs to
+*compile* a Kotlin/Native target — not just Apple ones — downloads the
+Kotlin/Native compiler distribution from `download.jetbrains.com` the first
+time it's needed, into `~/.konan`. If the sandbox's egress policy blocks that
+host too, this fails even for targets this Linux host could otherwise build
+natively, like `linuxX64`/`linuxArm64`. The failure looks like:
+
+```
+Cannot download a dependency https://download.jetbrains.com/kotlin/native/...: java.io.IOException: Unable to tunnel through proxy. Proxy returns "HTTP/1.1 403 Forbidden"
+```
+
+This means `apiCheck`, `publishToMavenLocal`, and
+`assembleKibanDebugXCFramework` (used by `samples/swift-console`, see #68) can
+all fail here for a *third* reason beyond the AGP and Apple-toolchain gaps
+above — even after working around both of those. `./gradlew jvmTest` is
+unaffected: the JVM target never touches the Kotlin/Native compiler. As with
+the other two gaps, don't route around it (no mirrors, no disabling targets
+in a committed change) — disclose it in the PR.
 
 ## What "verified" should mean when local verification is blocked
 

@@ -128,6 +128,10 @@ Parsing returns a `kotlin.Result`, so invalid input is a value rather than an ex
 
 Migrating from `java-iban` or from kiban 0.3.0 and earlier? See [MIGRATION.md](MIGRATION.md).
 
+Every example above is walked through by [`samples/jvm-cli`](samples/jvm-cli), a runnable demo
+of the API; see [`samples/`](samples) for that and a Swift consumer exercising the library
+through Kotlin/Native's Objective-C interop.
+
 ## Design choices
 
 ### Java IBAN library

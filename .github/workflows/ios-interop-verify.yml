@@ -11,10 +11,9 @@
 # runner minutes are free for this public repo (same as the macos-latest jobs in gradle.yml),
 # and the runner is released as soon as the job finishes — there's no standing/always-on cost.
 #
-# Scope note: building the `ios-consumer` sample and generating Objective-C framework / Swift
-# Export output for that sample belongs here once #68 lands (see #68 and #91's "Scope"
-# section) — #68 doesn't exist yet, so this job currently verifies the Apple targets that
-# already exist and reports the toolchain versions available for that future work.
+# Also builds and runs samples/swift-console (#68): the concrete testbed #9's actual API review
+# needs, so its Objective-C interop output is real, inspectable build output on every dispatch
+# rather than something #9 has to build for itself first.
 name: iOS/Swift interop verification
 
 on:
@@ -57,6 +56,17 @@ jobs:
 
       - name: Build and test Apple targets
         run: ./gradlew iosSimulatorArm64Test macosArm64Test tvosSimulatorArm64Test watchosSimulatorArm64Test apiCheck
+
+      - name: Assemble the Kiban XCFramework
+        run: ./gradlew :library:assembleKibanDebugXCFramework
+
+      - name: Build and run samples/swift-console
+        run: |
+          mkdir -p samples/swift-console/Frameworks
+          cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
+          cd samples/swift-console
+          swift build
+          swift run
 
       - name: Upload test reports
         if: failure()

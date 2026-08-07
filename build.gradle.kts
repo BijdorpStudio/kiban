@@ -3,6 +3,7 @@ import nl.littlerobots.vcu.plugin.resolver.VersionSelectors.Companion.PREFER_STA
 plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.versions.catalogue.update)
     alias(libs.plugins.kotlinx.api.validator)
@@ -13,7 +14,11 @@ plugins {
 
 ktfmt { kotlinLangStyle() }
 
-@OptIn(kotlinx.validation.ExperimentalBCVApi::class) apiValidation { klib { enabled = true } }
+@OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+apiValidation {
+    klib { enabled = true }
+    ignoredProjects.add("jvm-cli")
+}
 
 versionCatalogUpdate {
     sortByKey = true

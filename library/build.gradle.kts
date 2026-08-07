@@ -2,6 +2,7 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -44,8 +45,13 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    val kibanFramework = XCFramework("Kiban")
+    listOf(macosX64(), macosArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Kiban"
+            kibanFramework.add(this)
+        }
+    }
     tvosX64()
     tvosArm64()
     tvosSimulatorArm64()

@@ -48,6 +48,8 @@ jobs:
             os: ubuntu-latest
           - target: ktfmtCheck
             os: ubuntu-latest
+          - target: :samples:jvm-cli:run
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
