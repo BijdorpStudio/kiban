@@ -1,24 +1,17 @@
 # Samples
 
-Consumer projects that resolve `kiban` by Maven coordinates against a locally-published
-artifact, not by depending on the `:library` Gradle project directly. This is what #68 is for:
-an in-repo module bypasses the published artifact shape entirely (broken POMs, missing target
-variants), so these samples resolve the real thing instead.
-
-Both samples are deliberately outside the root build (`settings.gradle.kts` does not
-`include()` them) so Gradle project substitution can't quietly swap in `:library` for the
-dependency and defeat the point.
+Consumer projects for `kiban`, focused on API/interop ergonomics rather than Maven packaging
+(the publish flow, `apiCheck`, and `verifyPublicationTargets` already cover the packaging side).
 
 ## jvm-cli
 
-A JVM console app, and the home for the assertions that keep README.md's "Use" section
-executable — see `ReadmeExamplesTest.kt`'s doc comment for why this exists (#60's undetected
-`Modulo97.calculateCheckDigits("XX", "X")` documentation bug).
+A JVM console app depending on `:library` directly, and the home for the assertions that keep
+README.md's "Use" section executable — see `ReadmeExamplesTest.kt`'s doc comment for why this
+exists (#60's undetected `Modulo97.calculateCheckDigits("XX", "X")` documentation bug).
 
 ```shell
-./gradlew publishToMavenLocal   # from the repo root; publishes the version jvm-cli depends on
-./gradlew -p samples :jvm-cli:test
-./gradlew -p samples :jvm-cli:run --args="NL91ABNA0417164300"
+./gradlew :samples:jvm-cli:test
+./gradlew :samples:jvm-cli:run --args="NL91ABNA0417164300"
 ```
 
 ## swift-console

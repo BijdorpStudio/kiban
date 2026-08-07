@@ -86,13 +86,7 @@ kotlin {
 mavenPublishing {
     publishToMavenCentral()
 
-    // Signing is only meaningful for the real Maven Central release (publish.yml supplies the
-    // in-memory PGP key via ORG_GRADLE_PROJECT_signingInMemoryKey*). Skip it when that key isn't
-    // present, e.g. for the samples/ CI job's publishToMavenLocal (#68), which publishes a
-    // throwaway local artifact that has no signature to verify.
-    if (project.hasProperty("signingInMemoryKey")) {
-        signAllPublications()
-    }
+    signAllPublications()
 
     coordinates(group.toString(), "kiban", version.toString())
 

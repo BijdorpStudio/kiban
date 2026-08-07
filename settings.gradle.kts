@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 rootProject.name = "multiplatform-library-template"
 
 include(":library")
+
+include(":samples:jvm-cli")

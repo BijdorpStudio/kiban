@@ -73,12 +73,16 @@ class ReadmeExamplesTest {
         //     null -> Unit // parsed successfully
         // }
         fun reasonFor(input: String) =
+            // exceptionOrNull()'s static type is Throwable?, not the sealed IbanParseException?,
+            // so this when-as-expression needs an else even though Iban.parse always fails with
+            // an IbanParseException -- the README's own when is a statement, which doesn't.
             when (val failure = Iban.parse(input).exceptionOrNull()) {
                 is IbanParseException.UnknownCountryCode -> "unknown:${failure.countryCode}"
                 is IbanParseException.WrongLength -> "length:${failure.expectedLength}"
                 is IbanParseException.WrongChecksum -> "checksum"
                 is IbanParseException.Malformed -> "malformed:${failure.kind}"
                 null -> "ok"
+                else -> error("unexpected failure type: $failure")
             }
 
         assertEquals("unknown:UU", reasonFor("UU345678345543234"))
