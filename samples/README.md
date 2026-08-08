@@ -3,6 +3,10 @@
 Consumer projects for `kiban`, focused on API/interop ergonomics rather than Maven packaging
 (the publish flow, `apiCheck`, and `verifyPublicationTargets` already cover the packaging side).
 
+`swift-console` and `swift-export-probe` are the testbed for
+[`docs/9-swift-interop-review.md`](../docs/9-swift-interop-review.md) — read that first for
+the actual findings; the notes below are about running the samples themselves.
+
 ## jvm-cli
 
 A runnable walkthrough of the API, depending on `:library` directly and following README.md's
