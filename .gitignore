@@ -13,7 +13,6 @@ local.properties
 xcuserdata
 .build
 samples/swift-console/Frameworks/
-samples/swift-export-probe/*.xcodeproj
 .kotlin
 #So we don't accidentally commit our private keys
 *.gpg
