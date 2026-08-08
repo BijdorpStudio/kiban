@@ -129,8 +129,8 @@ Parsing returns a `kotlin.Result`, so invalid input is a value rather than an ex
 Migrating from `java-iban` or from kiban 0.3.0 and earlier? See [MIGRATION.md](MIGRATION.md).
 
 Every example above is walked through by [`samples/jvm-cli`](samples/jvm-cli), a runnable demo
-of the API; see [`samples/`](samples) for that and Swift consumers exercising the library
-through both Kotlin/Native's Objective-C interop and Swift Export — see
+of the API; see [`samples/`](samples) for that and a Swift consumer exercising the library
+through Kotlin/Native's Objective-C interop — see
 [`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md) for what that review found
 and why kiban's `Result`-returning API needs a Swift-friendly companion surface before 1.0.
 

@@ -7,12 +7,14 @@ needs a Swift-friendly companion surface, before the 1.0 API freeze.
 
 Everything below was produced by actually compiling and running Swift code against a real
 `Kiban.xcframework` / Swift Export output on a `macos-latest` GitHub Actions runner (Kotlin
-2.4.10, Xcode 26.6), not inferred from documentation. The testbed is
-[`samples/swift-console`](../samples/swift-console) (Objective-C interop) and
-[`samples/swift-export-probe`](../samples/swift-export-probe) (Swift Export); both are driven
-by [`.github/workflows/ios-interop-verify.yml`](../.github/workflows/ios-interop-verify.yml),
-which anyone can re-run on demand (Actions tab → "iOS/Swift interop verification" → "Run
-workflow").
+2.4.10, Xcode 26.6), not inferred from documentation. The testbed lives on the
+[`swift-export-playground`](https://github.com/BijdorpStudio/kiban/tree/swift-export-playground)
+branch: `samples/swift-console`'s `Probe*` targets (Objective-C interop) and
+`samples/swift-export-probe` (Swift Export), driven there by
+`.github/workflows/ios-interop-verify.yml`, which anyone can re-run on demand from that
+branch (Actions tab → "iOS/Swift interop verification" → "Run workflow"). `main` keeps only
+the consumer-facing `SwiftConsole` sample, which the same workflow builds and runs on `main`
+as a compile regression check.
 
 ## Objective-C interop (today's default framework path)
 

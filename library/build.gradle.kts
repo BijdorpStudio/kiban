@@ -3,7 +3,6 @@ import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -46,11 +45,6 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    // #9's Swift Export experiment: only reachable via embedSwiftExportForXcode inside a
-    // real, direct-integration Xcode project (see samples/swift-export-probe), not a
-    // standalone Gradle task. Kept separate from the ObjC-interop XCFramework below, which
-    // is what's actually published.
-    @OptIn(ExperimentalSwiftExportDsl::class) swiftExport { moduleName = "Kiban" }
     val kibanFramework = XCFramework("Kiban")
     listOf(macosX64(), macosArm64()).forEach { target ->
         target.binaries.framework {
