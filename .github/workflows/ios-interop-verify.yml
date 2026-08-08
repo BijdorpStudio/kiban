@@ -13,7 +13,10 @@
 #
 # Also builds and runs samples/swift-console (#68): the concrete testbed #9's actual API review
 # needs, so its Objective-C interop output is real, inspectable build output on every dispatch
-# rather than something #9 has to build for itself first.
+# rather than something #9 has to build for itself first. Its Probe* targets are #9's own
+# experiment (Result<Iban>, the IbanParseException hierarchy, Malformed.Kind, undeclared-throw
+# behavior) — each is a separate SwiftPM executable so one target's compile failure can't hide
+# another's output; ProbeUndeclaredThrow is expected to crash the process by design.
 name: iOS/Swift interop verification
 
 on:
@@ -65,8 +68,20 @@ jobs:
           mkdir -p samples/swift-console/Frameworks
           cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
           cd samples/swift-console
-          swift build
-          swift run
+          set +e
+          status=0
+          for target in SwiftConsole ProbeResult ProbeExceptions ProbeKindDescribe ProbeKindSwitch ProbeUndeclaredThrow; do
+            echo "::group::swift run $target"
+            swift build --target "$target" && swift run "$target"
+            code=$?
+            if [ "$target" = "ProbeUndeclaredThrow" ]; then
+              echo "ProbeUndeclaredThrow exited with $code (a crash, i.e. non-zero, is the expected #9 finding)"
+            elif [ $code -ne 0 ]; then
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $status
 
       - name: Upload test reports
         if: failure()
