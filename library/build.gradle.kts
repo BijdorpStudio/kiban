@@ -50,8 +50,7 @@ kotlin {
     // real, direct-integration Xcode project (see samples/swift-export-probe), not a
     // standalone Gradle task. Kept separate from the ObjC-interop XCFramework below, which
     // is what's actually published.
-    @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport { moduleName = "Kiban" }
+    @OptIn(ExperimentalSwiftExportDsl::class) swiftExport { moduleName = "Kiban" }
     val kibanFramework = XCFramework("Kiban")
     listOf(macosX64(), macosArm64()).forEach { target ->
         target.binaries.framework {
