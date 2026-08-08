@@ -100,7 +100,8 @@ jobs:
 
       - name: Report samples/swift-console outcome
         if: always()
-        run: echo "Build outcome: ${{ steps.swift_console.outcome }}"
+        run: |
+          echo "Build outcome: ${{ steps.swift_console.outcome }}"
 
       - name: Install XcodeGen
         run: brew install xcodegen
