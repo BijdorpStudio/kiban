@@ -63,6 +63,10 @@ jobs:
       - name: Assemble the Kiban XCFramework
         run: ./gradlew :library:assembleKibanDebugXCFramework
 
+      - name: Dump the generated Objective-C header
+        run: |
+          find library/build/XCFrameworks -iname "*.h" -print -exec cat {} \;
+
       - name: Build and run samples/swift-console
         run: |
           mkdir -p samples/swift-console/Frameworks

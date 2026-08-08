@@ -1,12 +1,14 @@
+import Foundation
 import Kiban
 
-// Safe half of the Malformed.Kind probe: describe the value without guessing at Swift
-// case names, so it survives even if ProbeKindSwitch's guess is wrong. See that target
-// for whether Kind arrives as a genuine, exhaustively-switchable Swift enum.
+// Isolated guess: Kotlin/Native's documented nested-class convention concatenates outer and
+// inner class names (IbanParseException.Malformed -> IbanParseExceptionMalformed). If that
+// guess is wrong, only this target (and ProbeKindSwitch, which depends on it) fails to
+// compile — ProbeExceptions above already gives real signal on the base type regardless.
 
 let result = Iban.companion.parse(input: "")
-guard let malformed = result.exceptionOrNull() as? IbanParseExceptionMalformed else {
-    print("expected a Malformed failure for empty input, got something else")
+guard let malformed = result as? IbanParseExceptionMalformed else {
+    print("as? IbanParseExceptionMalformed failed for empty input — got \(type(of: result))")
     exit(1)
 }
 

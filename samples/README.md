@@ -18,17 +18,21 @@ A Swift Package Manager executable exercising the library through Kotlin/Native'
 Objective-C interop — the concrete testbed #9 needs to evaluate that for real. Needs a macOS
 host with Xcode; see `.github/workflows/ios-interop-verify.yml` for on-demand CI access to one.
 
-The package declares several executables:
+The package declares several executables (product names match the target names below —
+there's no `products:` array, SwiftPM vends one implicitly per target):
 
-- `SwiftConsole` — the happy-path walkthrough (parsing, formatting, `isSEPA`, etc).
-- `ProbeResult` — exercises `Result<Iban>` from `Iban.parse`/`Iban.compose` (`isSuccess`,
-  `getOrNull()`, `exceptionOrNull()`, and whether the erased generic type survives an `as?`
-  cast back to `Iban`).
-- `ProbeExceptions` — exercises the sealed `IbanParseException` hierarchy via `as?` per
-  subtype, since Swift can't switch over it exhaustively.
-- `ProbeKindDescribe` / `ProbeKindSwitch` — split so a wrong guess about `Malformed.Kind`'s
-  generated Swift case names (`ProbeKindSwitch`) can't hide the safe `String(describing:)`
-  output (`ProbeKindDescribe`).
+- `SwiftConsole` — the happy-path walkthrough (parsing, formatting, `isSEPA`, etc). Needs
+  `import Foundation`: Kotlin extension functions on `String` (`toIbanOrNull()`,
+  `isValidIban()`) are exported as an NSString category, which Swift only resolves on its
+  native `String` via Foundation's bridging.
+- `ProbeResult` — Iban.parse's return type is erased to plain `Any?` in Swift (confirmed by
+  running this on a macOS runner: no `Result`-shaped wrapper, no `isSuccess`/`getOrNull()`/
+  `exceptionOrNull()` survive the interop boundary). Probes what's still recoverable via
+  `as? Iban` / `as? IbanParseException` on that bare `Any?`.
+- `ProbeExceptions` — casts the erased failure to the top-level `IbanParseException` type.
+- `ProbeKindDescribe` / `ProbeKindSwitch` — split so a wrong guess about the nested
+  `Malformed` class name or `Kind`'s generated Swift case names (`ProbeKindSwitch`) can't
+  hide the safer `String(describing:)` output (`ProbeKindDescribe`).
 - `ProbeUndeclaredThrow` — calls the deprecated, non-`@Throws` `Iban.valueOf` with invalid
   input; expected to crash the process, since Kotlin/Native terminates on an exception that
   crosses into Swift without a declared `@Throws`.
@@ -38,10 +42,10 @@ The package declares several executables:
 mkdir -p samples/swift-console/Frameworks
 cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
 cd samples/swift-console
-swift run swift-console
-swift run probe-result
-swift run probe-exceptions
-swift run probe-kind-describe
-swift run probe-kind-switch
-swift run probe-undeclared-throw  # expected to crash
+swift run SwiftConsole
+swift run ProbeResult
+swift run ProbeExceptions
+swift run ProbeKindDescribe
+swift run ProbeKindSwitch
+swift run ProbeUndeclaredThrow  # expected to crash
 ```

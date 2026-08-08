@@ -1,36 +1,22 @@
+import Foundation
 import Kiban
 
-// #9's other open question: the sealed IbanParseException hierarchy arrives as a plain
-// class hierarchy through Objective-C interop, so Swift can't switch over it exhaustively.
-// This probes what typed, non-exhaustive inspection (`as?` per subtype) actually looks
-// like. Malformed.Kind and the undeclared-exception crash behavior are separate probes —
-// see ProbeKindDescribe/ProbeKindSwitch/ProbeUndeclaredThrow.
+// #9's other open question: does the sealed IbanParseException hierarchy allow typed
+// inspection from Swift? This casts the erased `Any?` failure (see ProbeResult) to the
+// top-level IbanParseException type — an ordinary, non-nested, non-generic public class, so
+// its exported Swift name should just be its Kotlin name. Per-subtype casts (Malformed,
+// UnknownCountryCode, etc.) are their own, separately isolated probes (ProbeMalformedCast,
+// ProbeKindDescribe, ProbeKindSwitch) since nested-class name generation is a real guess.
 
 func inspect(_ label: String, _ input: String) {
     print("--- \(label): \(input) ---")
     let result = Iban.companion.parse(input: input)
-    guard let error = result.exceptionOrNull() else {
-        print("unexpectedly succeeded")
+    guard let error = result as? IbanParseException else {
+        print("as? IbanParseException failed — got \(type(of: result)): \(String(describing: result))")
         return
     }
     print("runtime type: \(type(of: error))")
     print("message: \(error.message ?? "<no message>")")
-
-    if let malformed = error as? IbanParseExceptionMalformed {
-        print("case: Malformed, kind = \(malformed.kind)")
-    } else if let unknownCountry = error as? IbanParseExceptionUnknownCountryCode {
-        print("case: UnknownCountryCode, countryCode = \(unknownCountry.countryCode)")
-    } else if let wrongLength = error as? IbanParseExceptionWrongLength {
-        print(
-            "case: WrongLength, expected = \(wrongLength.expectedLength), actual = \(wrongLength.actualLength)"
-        )
-    } else if error is IbanParseExceptionWrongChecksum {
-        print("case: WrongChecksum")
-    } else {
-        print(
-            "case: none of the four known subtypes matched via `as?` — exhaustiveness is not possible from Swift, this branch would be the silent-failure trap in real client code"
-        )
-    }
 }
 
 inspect("empty", "")

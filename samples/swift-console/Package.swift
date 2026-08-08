@@ -4,14 +4,6 @@ import PackageDescription
 let package = Package(
     name: "swift-console",
     platforms: [.macOS(.v12)],
-    products: [
-        .executable(name: "swift-console", targets: ["SwiftConsole"]),
-        .executable(name: "probe-result", targets: ["ProbeResult"]),
-        .executable(name: "probe-exceptions", targets: ["ProbeExceptions"]),
-        .executable(name: "probe-kind-describe", targets: ["ProbeKindDescribe"]),
-        .executable(name: "probe-kind-switch", targets: ["ProbeKindSwitch"]),
-        .executable(name: "probe-undeclared-throw", targets: ["ProbeUndeclaredThrow"]),
-    ],
     targets: [
         // Populated by CI/a local run before `swift build`: `./gradlew
         // :library:assembleKibanDebugXCFramework`, then copy
@@ -22,7 +14,8 @@ let package = Package(
         // Malformed.Kind, undeclared-exception behavior) each get their own target instead of
         // sharing SwiftConsole's. `swift build` fails an entire target on any single compile
         // error, so one wrong guess about generated Swift API shape must not cost us the CI
-        // output of the other probes.
+        // output of the other probes. Product names default to the target name, matching
+        // what `swift run <name>` in ios-interop-verify.yml passes.
         .executableTarget(name: "ProbeResult", dependencies: ["Kiban"]),
         .executableTarget(name: "ProbeExceptions", dependencies: ["Kiban"]),
         .executableTarget(name: "ProbeKindDescribe", dependencies: ["Kiban"]),

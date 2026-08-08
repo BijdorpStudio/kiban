@@ -1,4 +1,12 @@
+import Foundation
 import Kiban
+
+// import Foundation is required here: Kotlin extension functions on String are exported as
+// an NSString category, and Swift only resolves those on its native String via the
+// String/NSString bridging that Foundation defines. Without it, e.g. "x".toIbanOrNull()
+// fails to compile with "value of type 'String' has no member 'toIbanOrNull'" — a real,
+// previously-unverified bug in this sample: ios-interop-verify.yml had never actually been
+// run before #9 picked this up, so this file had never been compiled for real.
 
 let iban = "NL91ABNA0417164300".toIbanOrNull()!
 print("parse: \(iban.plain)")

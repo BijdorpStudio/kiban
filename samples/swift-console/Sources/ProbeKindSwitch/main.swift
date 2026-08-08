@@ -1,3 +1,4 @@
+import Foundation
 import Kiban
 
 // Risky half of the Malformed.Kind probe: attempts to switch over Kind by guessed Swift
@@ -6,8 +7,8 @@ import Kiban
 // fails to compile — see ProbeKindDescribe for output that survives that.
 
 let result = Iban.companion.parse(input: "")
-guard let malformed = result.exceptionOrNull() as? IbanParseExceptionMalformed else {
-    print("expected a Malformed failure for empty input, got something else")
+guard let malformed = result as? IbanParseExceptionMalformed else {
+    print("as? IbanParseExceptionMalformed failed for empty input — got \(type(of: result))")
     exit(1)
 }
 
