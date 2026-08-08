@@ -21,21 +21,30 @@ host with Xcode; see `.github/workflows/ios-interop-verify.yml` for on-demand CI
 The package declares several executables (product names match the target names below —
 there's no `products:` array, SwiftPM vends one implicitly per target):
 
-- `SwiftConsole` — the happy-path walkthrough (parsing, formatting, `isSEPA`, etc). Needs
-  `import Foundation`: Kotlin extension functions on `String` (`toIbanOrNull()`,
-  `isValidIban()`) are exported as an NSString category, which Swift only resolves on its
-  native `String` via Foundation's bridging.
+- `SwiftConsole` — the happy-path walkthrough (parsing, formatting, `isSEPA`, etc). Top-level
+  Kotlin extension functions (`toIbanOrNull`, `isValidIban`) are NOT exported as true Swift
+  extensions on `String` — Kotlin/Native's default ObjC exporter puts them as static methods
+  on an `IbanKt` facade class instead (confirmed from the real generated header: the receiver
+  is the function's first parameter), so this calls `IbanKt.toIbanOrNull("...")`, not
+  `"...".toIbanOrNull()`.
 - `ProbeResult` — Iban.parse's return type is erased to plain `Any?` in Swift (confirmed by
   running this on a macOS runner: no `Result`-shaped wrapper, no `isSuccess`/`getOrNull()`/
-  `exceptionOrNull()` survive the interop boundary). Probes what's still recoverable via
-  `as? Iban` / `as? IbanParseException` on that bare `Any?`.
-- `ProbeExceptions` — casts the erased failure to the top-level `IbanParseException` type.
-- `ProbeKindDescribe` / `ProbeKindSwitch` — split so a wrong guess about the nested
-  `Malformed` class name or `Kind`'s generated Swift case names (`ProbeKindSwitch`) can't
-  hide the safer `String(describing:)` output (`ProbeKindDescribe`).
+  `exceptionOrNull()` survive the interop boundary). On success, the `Any?` holds the `Iban`
+  directly (`as? Iban` recovers it). On failure it holds Kotlin's own internal, non-public
+  `Result.Failure` box — confirmed via `String(describing:)`, which prints
+  `Failure(nl.bijdorpstudio.kiban.IbanParseException...: ...)` — so `as? IbanParseException`
+  fails for every failure case: there is no type-safe way to reach the exception from Swift.
+- `ProbeExceptions` — casts the erased failure to the top-level `IbanParseException` type;
+  fails for the same reason as above.
+- `ProbeKindDescribe` / `ProbeKindSwitch` — both cast to `IbanParseException.Malformed` (the
+  real generated Swift name, confirmed from the header — nested-type syntax, not a flat
+  concatenated name) to reach `.kind`, expected to fail the same way. `ProbeKindSwitch`
+  additionally attempts an exhaustive `switch` over `Kind`'s confirmed case names; the real
+  header shows `Kind` as an Objective-C class hierarchy, not an `NS_ENUM`, the same
+  "Kotlin enum, not a Swift enum" limitation the issue names for this interop path.
 - `ProbeUndeclaredThrow` — calls the deprecated, non-`@Throws` `Iban.valueOf` with invalid
-  input; expected to crash the process, since Kotlin/Native terminates on an exception that
-  crosses into Swift without a declared `@Throws`.
+  input; confirmed to crash the process (SIGABRT) on a macOS runner, since Kotlin/Native
+  terminates on an exception that crosses into Swift without a declared `@Throws`.
 
 ```shell
 ./gradlew :library:assembleKibanDebugXCFramework
@@ -48,4 +57,22 @@ swift run ProbeExceptions
 swift run ProbeKindDescribe
 swift run ProbeKindSwitch
 swift run ProbeUndeclaredThrow  # expected to crash
+```
+
+## swift-export-probe
+
+An [XcodeGen](https://github.com/yonaskolb/XcodeGen) project spec (not a committed
+`.xcodeproj` — generate it with `xcodegen generate`) for the other half of #9: Swift Export.
+Per Kotlin's docs, Swift Export only works via a real, direct-integration Xcode project build
+phase — there's no standalone Gradle task for it, unlike everything else in this directory.
+This is the minimal such project: one SwiftUI app target whose prebuild script runs
+`./gradlew :library:embedSwiftExportForXcode`, and whose `SwiftExportProbeApp.swift` tries the
+same `Result<Iban>`/`IbanParseException` probes as swift-console for a direct comparison.
+
+```shell
+brew install xcodegen  # if not already installed
+cd samples/swift-export-probe
+xcodegen generate
+xcodebuild build -project SwiftExportProbe.xcodeproj -scheme SwiftExportProbe \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
 ```

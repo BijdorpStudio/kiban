@@ -1,14 +1,18 @@
 import Foundation
 import Kiban
 
-// Risky half of the Malformed.Kind probe: attempts to switch over Kind by guessed Swift
-// case names (Kotlin/Native's usual SCREAMING_CASE -> lowerCamelCase conversion) and to
-// compare it with `==`. If Kind isn't exported as a genuine Swift enum, this whole file
-// fails to compile — see ProbeKindDescribe for output that survives that.
+// Risky half of the Malformed.Kind probe: attempts to switch over Kind by its confirmed
+// Swift case-property names (.empty, .tooShort, etc — these matched the real header) and to
+// compare it with `==`. The real header shows Kind (IbanParseException.MalformedKind) as an
+// Objective-C class hierarchy under KibanKotlinEnum<E>, not an NS_ENUM — the same "Kotlin
+// enum, not a Swift enum" limitation the issue itself names for the plain ObjC path. If
+// Swift's importer doesn't bridge that as a genuine, switchable enum, this whole file fails
+// to compile — see ProbeKindDescribe for output that survives that either way (the cast
+// itself is expected to fail at runtime regardless; see that file's comment).
 
 let result = Iban.companion.parse(input: "")
-guard let malformed = result as? IbanParseExceptionMalformed else {
-    print("as? IbanParseExceptionMalformed failed for empty input — got \(type(of: result))")
+guard let malformed = result as? IbanParseException.Malformed else {
+    print("as? IbanParseException.Malformed failed for empty input — got \(type(of: result))")
     exit(1)
 }
 

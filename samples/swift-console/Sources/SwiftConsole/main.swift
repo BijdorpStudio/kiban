@@ -1,33 +1,34 @@
-import Foundation
 import Kiban
 
-// import Foundation is required here: Kotlin extension functions on String are exported as
-// an NSString category, and Swift only resolves those on its native String via the
-// String/NSString bridging that Foundation defines. Without it, e.g. "x".toIbanOrNull()
-// fails to compile with "value of type 'String' has no member 'toIbanOrNull'" — a real,
-// previously-unverified bug in this sample: ios-interop-verify.yml had never actually been
-// run before #9 picked this up, so this file had never been compiled for real.
+// Top-level Kotlin extension functions (toIbanOrNull, isValidIban — declared alongside Iban
+// in the same file) are NOT exported as true Swift extensions on String. Kotlin/Native's
+// default ObjC exporter puts them as static methods on an "<File>Kt" facade class
+// (confirmed from the real generated header: `KibanIbanKt` / swift_name "IbanKt", with the
+// receiver as the first parameter) — so `"x".toIbanOrNull()` doesn't compile; the correct
+// call is `IbanKt.toIbanOrNull("x")`. This was a real, previously-unverified bug in this
+// sample: ios-interop-verify.yml had never actually been run before #9 picked this up, so
+// this file had never been compiled for real.
 
-let iban = "NL91ABNA0417164300".toIbanOrNull()!
+let iban = IbanKt.toIbanOrNull("NL91ABNA0417164300")!
 print("parse: \(iban.plain)")
 
-print("isValidIban(not an iban): \("not an iban".isValidIban())")
+print("isValidIban(not an iban): \(IbanKt.isValidIban("not an iban"))")
 
-let orNull = "NL91ABNA0417164301".toIbanOrNull()
+let orNull = IbanKt.toIbanOrNull("NL91ABNA0417164301")
 print("toIbanOrNull (wrong check digits): \(String(describing: orNull))")
 
-print("isValidIban: \(iban.plain.isValidIban())")
+print("isValidIban: \(IbanKt.isValidIban(iban.plain))")
 
 // Result<Iban> and the sealed IbanParseException hierarchy are left out here: how those surface
-// from Swift is #9's own open question, not something to guess at in this sample.
+// from Swift is #9's own open question — see ProbeResult/ProbeExceptions/ProbeKind*.
 
 print("formatted: \(iban.description)")
 print("plain: \(iban.plain)")
 
-let anotherIban = "BE68 5390 0754 7034".toIbanOrNull()!
+let anotherIban = IbanKt.toIbanOrNull("BE68 5390 0754 7034")!
 print("parsed formatted input: \(anotherIban.plain)")
 
-let ibanAgain = "NL91ABNA0417164300".toIbanOrNull()!
+let ibanAgain = IbanKt.toIbanOrNull("NL91ABNA0417164300")!
 print("equals: \(iban.isEqual(ibanAgain))")
 
 let candidate = "GB29 NWBK 6016 1331 9268 19"
@@ -36,7 +37,7 @@ print("verifyCheckDigits: \(Modulo97.shared.verifyCheckDigits(input: candidate))
 let composed = Iban.companion.compose(countryCode: "BI", bban: "10000100010000332045181")
 print("compose: \(composed)")
 
-let sepaIban = candidate.toIbanOrNull()!
+let sepaIban = IbanKt.toIbanOrNull(candidate)!
 print("isSEPA: \(sepaIban.isSEPA)")
 print("isInSwiftRegistry: \(sepaIban.isInSwiftRegistry)")
 
