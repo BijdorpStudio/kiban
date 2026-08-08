@@ -128,6 +128,8 @@ jobs:
           echo "--- searching for generated Swift Export output ---"
           find library/build -iregex '.*[Ss]wift[Ee]xport.*' 2>/dev/null
           find ~/Library/Developer/Xcode/DerivedData -iname "*Kiban*" 2>/dev/null | head -200
+          echo "--- dumping the generated Swift Export interface, if it exists ---"
+          find library/build/SwiftExport -iname "*.swift" -print -exec cat {} \; 2>/dev/null
 
       - name: Upload test reports
         if: failure()
