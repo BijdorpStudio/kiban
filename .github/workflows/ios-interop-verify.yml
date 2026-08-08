@@ -13,7 +13,19 @@
 #
 # Also builds and runs samples/swift-console (#68): the concrete testbed #9's actual API review
 # needs, so its Objective-C interop output is real, inspectable build output on every dispatch
-# rather than something #9 has to build for itself first.
+# rather than something #9 has to build for itself first. Its Probe* targets are #9's own
+# experiment (Result<Iban>, the IbanParseException hierarchy, Malformed.Kind, undeclared-throw
+# behavior) — each is a separate SwiftPM executable so one target's compile failure can't hide
+# another's output; ProbeUndeclaredThrow is expected to crash the process by design. Both this
+# step and the samples/swift-export-probe step below use continue-on-error: their individual
+# probe outcomes (including expected failures/crashes) are the finding, not a reason to skip
+# the rest of the job.
+#
+# samples/swift-export-probe drives the *other* half of #9: Swift Export only works via a real,
+# direct-integration Xcode project (no standalone Gradle task for it), so this XcodeGen-
+# generated minimal SwiftUI app exists purely to trigger embedSwiftExportForXcode for real and
+# capture whatever it actually produces (or however it actually fails), rather than relying on
+# documentation alone.
 name: iOS/Swift interop verification
 
 on:
@@ -60,13 +72,64 @@ jobs:
       - name: Assemble the Kiban XCFramework
         run: ./gradlew :library:assembleKibanDebugXCFramework
 
+      - name: Dump the generated Objective-C header
+        run: |
+          find library/build/XCFrameworks -iname "*.h" -print -exec cat {} \;
+
       - name: Build and run samples/swift-console
+        id: swift_console
+        continue-on-error: true
         run: |
           mkdir -p samples/swift-console/Frameworks
           cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
           cd samples/swift-console
-          swift build
-          swift run
+          set +e
+          status=0
+          for target in SwiftConsole ProbeResult ProbeExceptions ProbeKindDescribe ProbeKindSwitch ProbeUndeclaredThrow; do
+            echo "::group::swift run $target"
+            swift build --target "$target" && swift run "$target"
+            code=$?
+            if [ "$target" = "ProbeUndeclaredThrow" ]; then
+              echo "ProbeUndeclaredThrow exited with $code (a crash, i.e. non-zero, is the expected #9 finding)"
+            elif [ $code -ne 0 ]; then
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Report samples/swift-console outcome
+        if: always()
+        run: |
+          echo "Build outcome: ${{ steps.swift_console.outcome }}"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Swift Export probe Xcode project
+        run: cd samples/swift-export-probe && xcodegen generate
+
+      - name: Build samples/swift-export-probe (drives embedSwiftExportForXcode for real)
+        id: swift_export_build
+        continue-on-error: true
+        run: |
+          cd samples/swift-export-probe
+          xcodebuild build \
+            -project SwiftExportProbe.xcodeproj \
+            -scheme SwiftExportProbe \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Report Swift Export probe outcome
+        if: always()
+        run: |
+          echo "Build outcome: ${{ steps.swift_export_build.outcome }}"
+          echo "--- searching for generated Swift Export output ---"
+          find library/build -iregex '.*[Ss]wift[Ee]xport.*' 2>/dev/null
+          find ~/Library/Developer/Xcode/DerivedData -iname "*Kiban*" 2>/dev/null | head -200
+          echo "--- dumping the generated Swift Export interface, if it exists ---"
+          find library/build/SwiftExport -iname "*.swift" -print -exec cat {} \; 2>/dev/null
 
       - name: Upload test reports
         if: failure()
