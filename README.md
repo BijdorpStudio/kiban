@@ -165,6 +165,23 @@ Adopted design choices from the Java library, plus:
 * `Modulo97` keeps throwing: it is a low-level utility whose errors indicate a contract violation, not invalid user input.
 * Zero dependencies: only the Kotlin standard library, which is what lets the library ship on every Kotlin target.
 
+## Updating the IBAN registry data
+
+The embedded country data (`CountryCodesData.kt`) and the country test data table are generated from the SWIFT IBAN Registry TXT. The registry TXT is not redistributable and is never committed: it lives only in the gitignored `scripts/input/`.
+
+* **Automatically:** the [SWIFT registry sync](.github/workflows/registry-sync.yml) workflow runs monthly (and on demand), downloads the registry through a real Chromium context, regenerates the data, and opens a pull request when it changed. Bot detection is outside this project's control, so treat it as convenience rather than a guarantee.
+* **Manually,** which always works and is the fallback when the workflow is blocked:
+
+```shell
+# Download "IBAN Registry (TXT)" in a browser from https://www.swift.com/standards/data-standards/iban,
+# or try the scripted download:
+kotlin scripts/fetch_registry.main.kts --out scripts/input/iban-registry.txt
+
+kotlin scripts/generate_country_data.main.kts --registry scripts/input/iban-registry.txt --rev <revision>
+```
+
+The generator validates every entry before writing (mod-97 checksum, declared length and country prefix, and bank/branch identifier positions cross-checked against the registry's own identifier examples), so a malformed or truncated download fails loudly instead of landing in the library.
+
 ## References
 
 * [SWIFT IBAN page](https://www.swift.com/standards/data-standards/iban) — official ISO 13616 registry page

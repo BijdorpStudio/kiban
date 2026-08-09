@@ -15,3 +15,5 @@ samples/swift-console/Frameworks/
 .kotlin
 #So we don't accidentally commit our private keys
 *.gpg
+#Input for scripts/: the SWIFT IBAN Registry TXT is not redistributable
+scripts/input/
