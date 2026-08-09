@@ -2,6 +2,13 @@
 
 ## 0.5.0 (unreleased)
 
+**Targets**
+
+* Removed `macosX64`, `tvosX64` and `watchosX64`, which JetBrains deprecated in Kotlin 2.3.20.
+  `iosX64` is not part of that deprecation and stays. This is a breaking change for consumers on
+  Intel Macs: the macOS artifact and the macOS slice of the `Kiban` XCFramework are now
+  `macosArm64` only.
+
 **Infrastructure**
 
 * Added `samples/`: a `jvm-cli` app (depending on `:library` directly) that walks through every
