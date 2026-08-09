@@ -163,6 +163,4 @@ val verifyPublicationTargets =
         }
     }
 
-tasks.withType<PublishToMavenRepository>().configureEach {
-    dependsOn(verifyPublicationTargets)
-}
+tasks.withType<PublishToMavenRepository>().configureEach { dependsOn(verifyPublicationTargets) }
