@@ -140,10 +140,7 @@ object CountryCodes {
      */
     fun isSEPACountry(countryCode: CharSequence): Boolean {
         val index = indexOf(countryCode.toString())
-        if (index > -1) {
-            return (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
-        }
-        return false
+        return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
     }
 
     /**
@@ -154,10 +151,7 @@ object CountryCodes {
      */
     fun isInSwiftRegistry(countryCode: CharSequence): Boolean {
         val index = indexOf(countryCode.toString())
-        if (index > -1) {
-            return (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
-        }
-        return false
+        return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
     }
 
     val knownCountryCodes: Collection<String>
@@ -176,10 +170,7 @@ object CountryCodes {
      *   [.getKnownCountryCodes].
      */
     fun isKnownCountryCode(countryCode: CharSequence): Boolean {
-        if (countryCode.length != 2) {
-            return false
-        }
-        return indexOf(countryCode.toString()) >= 0
+        return countryCode.length == 2 && indexOf(countryCode.toString()) >= 0
     }
 
     /**

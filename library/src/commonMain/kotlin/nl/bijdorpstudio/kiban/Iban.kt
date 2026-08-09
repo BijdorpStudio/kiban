@@ -58,9 +58,8 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
     val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
 
     /**
-     * Initializing constructor. Validation happens in [parse], so this constructor cannot fail.
-     *
-     * @param value the IBAN value, without any white space, already validated by [parse].
+     * Initializing constructor. Validation happens in [parse], so this constructor cannot fail. the
+     * IBAN value, without any white space, already validated by [parse].
      */
     init {
         val countryCode: String = value.substring(0, 2)
@@ -318,7 +317,7 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
  *   describing why the input was rejected.
  * @see Iban.parse
  */
-fun String.toIban(): Result<Iban> = Iban.parse(this)
+fun String.toIban(): Result<Iban> = parse(this)
 
 /**
  * Parses the given string into an IBAN object and confirms the check digits, discarding the failure
