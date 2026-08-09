@@ -37,7 +37,7 @@ tapmoc {
 
 kotlin {
     jvm()
-    androidLibrary {
+    android {
         namespace = "nl.bijdorpstudio.kiban"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -46,23 +46,21 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     val kibanFramework = XCFramework("Kiban")
-    listOf(macosX64(), macosArm64()).forEach { target ->
-        target.binaries.framework {
+    macosArm64 {
+        binaries.framework {
             baseName = "Kiban"
             kibanFramework.add(this)
         }
     }
-    tvosX64()
     tvosArm64()
     tvosSimulatorArm64()
-    watchosX64()
     watchosArm64()
     watchosDeviceArm64()
     watchosSimulatorArm64()
     linuxX64()
     linuxArm64()
     mingwX64()
-    js(IR) {
+    js {
         nodejs()
         browser { testTask { useKarma { useChromeHeadless() } } }
     }
@@ -132,8 +130,8 @@ mavenPublishing {
     }
 }
 
-// Guards against a publish that silently ships a partial artifact set: if a declared
-// Kotlin target's toolchain is missing on the publish host, kotlin.native.ignoreDisabledTargets
+// Guards against a publishing that silently ships a partial artifact set: if a declared
+// Kotlin target's toolchain is missing on the publishing host, kotlin.native.ignoreDisabledTargets
 // (needed for local dev and PR CI, where no single host can build every target) would otherwise
 // skip it without failing the build. This diffs the declared targets against the publications
 // the maven-publish plugin actually registered and fails before any upload happens.
@@ -165,6 +163,6 @@ val verifyPublicationTargets =
         }
     }
 
-tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+tasks.withType<PublishToMavenRepository>().configureEach {
     dependsOn(verifyPublicationTargets)
 }
