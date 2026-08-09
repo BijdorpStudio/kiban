@@ -16,12 +16,9 @@
 package nl.bijdorpstudio.kiban
 
 /**
- * The failure carried by the [Result] of a failed [Iban.parse] or [Iban.compose].
- *
- * Instances are never thrown by the library itself; they are wrapped in [Result.failure] so that
- * callers can decide whether to inspect the failure or to rethrow it with [Result.getOrThrow].
- * Extending [IllegalArgumentException] keeps the semantics of the deprecated throwing API
- * identical.
+ * Thrown by a failed [Iban.invoke] (`Iban(input)`), [Iban.compose] or [String.toIban] to describe
+ * why the input was rejected. Extending [IllegalArgumentException] means callers who only care that
+ * parsing failed don't need to catch this type specifically.
  *
  * @property input the offending input, with any white space removed.
  */
@@ -101,7 +98,7 @@ sealed class IbanParseException(
  * Carries the same information as [IbanParseException] without paying for a captured stack trace,
  * so that the non-throwing validation paths ([String.isValidIban] and [String.toIbanOrNull]) can
  * reject input without allocating a [Throwable]. [toException] builds the actual
- * [IbanParseException] for callers that need it, such as [Iban.parse].
+ * [IbanParseException] for callers that need it, such as [Iban.invoke].
  */
 internal sealed class Rejection(val input: String) {
 

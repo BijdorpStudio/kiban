@@ -33,7 +33,7 @@ Artifacts are published to Maven Central.
 
 ``` kotlin
 dependencies {
-    implementation("nl.bijdorpstudio.kiban:kiban:0.4.0")
+    implementation("nl.bijdorpstudio.kiban:kiban:0.5.0")
 }
 ```
 
@@ -43,7 +43,7 @@ In a multiplatform project, add it to `commonMain`:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("nl.bijdorpstudio.kiban:kiban:0.4.0")
+            implementation("nl.bijdorpstudio.kiban:kiban:0.5.0")
         }
     }
 }
@@ -53,30 +53,31 @@ Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js a
 
 ## Use
 
-Parsing returns a `kotlin.Result`, so invalid input is a value rather than an exception. Nothing in the library throws for bad user input.
+Parsing is strict: invalid input throws a typed `IbanParseException`, so you don't need to unwrap a
+`Result` for the common case. The exception-free `toIbanOrNull()` and `isValidIban()` are there for
+when you want to check input without paying for a stack trace.
 
 ``` kotlin
-    // Parse returns Result<Iban>.
-    val iban: Iban = Iban.parse( "NL91ABNA0417164300" ).getOrThrow()
+    // The primary entry point. Throws IbanParseException on invalid input.
+    val iban: Iban = Iban( "NL91ABNA0417164300" )
 
-    // Handle failure without exceptions.
-    Iban.parse( input ).fold(
-        onSuccess = { accept( it ) },
-        onFailure = { showError( it.message ) }
-    )
+    // Or use the String extension; same throwing behaviour.
+    val parsed: Iban = "NL91ABNA0417164300".toIban()
 
-    // Or use the String extensions.
-    val parsed: Result<Iban> = "NL91ABNA0417164300".toIban()
+    // Exception-free fast paths.
     val orNull: Iban? = "NL91ABNA0417164301".toIbanOrNull() // null, check digits are wrong
     val isValid: Boolean = "NL91ABNA0417164300".isValidIban() // true
 
     // Failures carry a typed reason, so you never have to match on messages.
-    when ( val failure = Iban.parse( input ).exceptionOrNull() ) {
-        is IbanParseException.UnknownCountryCode -> reportUnknown( failure.countryCode )
-        is IbanParseException.WrongLength -> reportLength( failure.expectedLength, failure.actualLength )
-        is IbanParseException.WrongChecksum -> reportChecksum()
-        is IbanParseException.Malformed -> reportMalformed( failure.kind )
-        null -> Unit // parsed successfully
+    try {
+        Iban( input )
+    } catch ( failure: IbanParseException ) {
+        when ( failure ) {
+            is IbanParseException.UnknownCountryCode -> reportUnknown( failure.countryCode )
+            is IbanParseException.WrongLength -> reportLength( failure.expectedLength, failure.actualLength )
+            is IbanParseException.WrongChecksum -> reportChecksum()
+            is IbanParseException.Malformed -> reportMalformed( failure.kind )
+        }
     }
 
     // toString() emits standard formatting, plain is compact.
@@ -84,7 +85,7 @@ Parsing returns a `kotlin.Result`, so invalid input is a value rather than an ex
     val plain = iban.plain // "NL91ABNA0417164300"
 
     // Input may be formatted.
-    val anotherIban = Iban.parse( "BE68 5390 0754 7034" ).getOrThrow()
+    val anotherIban = Iban( "BE68 5390 0754 7034" )
 
     // Iban implements Comparable<T>.
     val ibans = getListOfIBANs()
@@ -98,14 +99,14 @@ Parsing returns a `kotlin.Result`, so invalid input is a value rather than an ex
     val candidate = "GB29 NWBK 6016 1331 9268 19"
     val valid = Modulo97.verifyCheckDigits( candidate ) // true
 
-    // Compose the IBAN for a country and BBAN; this also returns a Result.
-    Iban.compose( "BI", "10000100010000332045181" ).getOrThrow() // BI4210000100010000332045181
+    // Compose the IBAN for a country and BBAN; also throws on invalid input.
+    Iban.compose( "BI", "10000100010000332045181" ) // BI4210000100010000332045181
 
     // You can query whether an IBAN is of a SEPA-participating country
-    val isSepa = Iban.parse( candidate ).getOrThrow().isSEPA // true
+    val isSepa = Iban( candidate ).isSEPA // true
 
     // You can query whether an IBAN is in the SWIFT Registry
-    val isRegistered = Iban.parse( candidate ).getOrThrow().isInSwiftRegistry // true
+    val isRegistered = Iban( candidate ).isInSwiftRegistry // true
 
     // Modulo97 API methods take CharSequence, not just String.
     val builder = StringBuilder( "LU000019400644750000" )
@@ -124,15 +125,22 @@ Parsing returns a `kotlin.Result`, so invalid input is a value rather than an ex
     val branchId: String? = iban.branchIdentifier
 ```
 
-`Modulo97` is the one part of the library that still throws: its inputs are programmer-supplied, so a bad one is a contract violation rather than user input to be validated.
+`Modulo97` is the one part of the library that still throws unconditionally: its inputs are
+programmer-supplied, so a bad one is a contract violation rather than user input to be validated.
+`Iban`'s throwing entry points (`Iban(...)`, `Iban.compose(...)`, `String.toIban()`) are annotated
+`@Throws(IbanParseException::class)`, so Kotlin/Native's Objective-C exporter emits an `NSError**`
+out-parameter and Swift sees a normal `throws` function instead of the process aborting on an
+unannotated exception.
 
-Migrating from `java-iban` or from kiban 0.3.0 and earlier? See [MIGRATION.md](MIGRATION.md).
+Migrating from `java-iban`, from kiban 0.3.0 and earlier, or from the `Result`-returning 0.4.0 API?
+See [MIGRATION.md](MIGRATION.md).
 
 Every example above is walked through by [`samples/jvm-cli`](samples/jvm-cli), a runnable demo
 of the API; see [`samples/`](samples) for that and a Swift consumer exercising the library
 through Kotlin/Native's Objective-C interop — see
-[`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md) for what that review found
-and why kiban's `Result`-returning API needs a Swift-friendly companion surface before 1.0.
+[`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md) for the review that found the
+0.4.0 `Result`-returning API didn't survive the trip to Swift, which is what this strict,
+`@Throws`-annotated API is meant to fix.
 
 ## Design choices
 
@@ -153,9 +161,8 @@ I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to
 
 Adopted design choices from the Java library, plus:
 * Kotlinize the API so it is idiomatic for Kotlin users.
-* Parsing reports failure as `Result.failure` carrying a sealed `IbanParseException`, rather than by throwing. The exception type extends `IllegalArgumentException`, so `getOrThrow()` behaves exactly like the old throwing API, and callers who want typed errors can inspect the failure instead of matching on messages.
+* Parsing is strict and throws a sealed `IbanParseException` on invalid input, rather than returning a `Result`. The exception type extends `IllegalArgumentException`, and callers who want typed errors can catch it and inspect the failure instead of matching on messages. Every throwing entry point carries `@Throws(IbanParseException::class)`, which is load-bearing for Kotlin/Native's Objective-C interop: an exception escaping an unannotated function aborts the process there, rather than surfacing as a catchable Swift error.
 * `Modulo97` keeps throwing: it is a low-level utility whose errors indicate a contract violation, not invalid user input.
-* Deprecate old API and provide an automatic migration mechanism through `ReplaceWith`. The compat layer is kept until 1.0.
 * Zero dependencies: only the Kotlin standard library, which is what lets the library ship on every Kotlin target.
 
 ## References

@@ -19,15 +19,17 @@ Objective-C interop — the path consumers of the published `Kiban.xcframework` 
 Needs a macOS host with Xcode; see `.github/workflows/ios-interop-verify.yml` for on-demand
 CI access to one.
 
-Two things to know before reading it, both findings of the #9 interop review
-([`docs/9-swift-interop-review.md`](../docs/9-swift-interop-review.md)):
+One thing to know before reading it, a finding of the #9 interop review
+([`docs/9-swift-interop-review.md`](../docs/9-swift-interop-review.md)): top-level Kotlin
+extension functions (`toIbanOrNull`, `isValidIban`, `toIban`) surface as static methods on an
+`IbanKt` facade class, not as Swift extensions on `String`.
 
-- Top-level Kotlin extension functions (`toIbanOrNull`, `isValidIban`) surface as static
-  methods on an `IbanKt` facade class, not as Swift extensions on `String`.
-- `Result<Iban>`-returning APIs (`Iban.parse`, `Iban.compose`) erase to an opaque `Any?` with
-  no typed access to the failure, so the sample sticks to `toIbanOrNull`/`isValidIban`. The
-  probe executables that established this live on the `swift-export-playground` branch,
-  alongside the Swift Export experiment.
+`Iban.parse`/`Iban.compose` used to erase to an opaque `Result<Iban>` under Objective-C interop
+(#9's headline finding, since fixed in 0.5.0 — see `docs/9-swift-interop-review.md` for what the
+old shape looked like from Swift). The throwing entry points are now annotated
+`@Throws(IbanParseException::class)`, so the sample also demonstrates catching a failure as a
+Swift error. The probe executables from the original #9 investigation live on the
+`swift-export-playground` branch, alongside the Swift Export experiment.
 
 ```shell
 ./gradlew :library:assembleKibanDebugXCFramework

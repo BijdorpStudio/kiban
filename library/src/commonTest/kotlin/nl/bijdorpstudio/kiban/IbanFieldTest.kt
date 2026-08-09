@@ -28,16 +28,16 @@ class CountryCodesIbanFieldsTest {
     @Test
     fun `Should extract bank identifier`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban.parse(td.plain).getOrThrow()
-            assertThat(CountryCodes.getBankIdentifier(iban)).isEqualTo(td.bank)
+            val iban = Iban(td.plain)
+            assertThat(iban.bankIdentifier).isEqualTo(td.bank)
         }
     }
 
     @Test
     fun `Should extract branch identifier`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban.parse(td.plain).getOrThrow()
-            assertThat(CountryCodes.getBranchIdentifier(iban)).isEqualTo(td.branch)
+            val iban = Iban(td.plain)
+            assertThat(iban.branchIdentifier).isEqualTo(td.branch)
         }
     }
 }

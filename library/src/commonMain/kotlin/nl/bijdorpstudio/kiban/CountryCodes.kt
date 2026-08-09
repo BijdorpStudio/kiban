@@ -71,10 +71,7 @@ object CountryCodes {
      * @param iban an iban to evaluate. Cannot be null.
      * @return the bank ID for this IBAN, or `null` if unknown.
      */
-    @Deprecated("Use Iban.bankIdentifier instead", ReplaceWith("iban.bankIdentifier"))
-    fun getBankIdentifier(iban: Iban): String? = getBankIdentifierInternal(iban)
-
-    internal fun getBankIdentifierInternal(iban: Iban): String? {
+    internal fun getBankIdentifier(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
@@ -91,10 +88,7 @@ object CountryCodes {
      * @param iban an iban to evaluate. Cannot be null.
      * @return the branch ID for this IBAN, or `null` if unknown.
      */
-    @Deprecated("Use Iban.branchIdentifier instead", ReplaceWith("iban.branchIdentifier"))
-    fun getBranchIdentifier(iban: Iban): String? = getBranchIdentifierInternal(iban)
-
-    internal fun getBranchIdentifierInternal(iban: Iban): String? {
+    internal fun getBranchIdentifier(iban: Iban): String? {
         val index: Int = indexOf(iban.countryCode)
         if (index > -1) {
             val data: Int = BANK_CODE_BRANCH_CODE[index]
@@ -121,16 +115,6 @@ object CountryCodes {
         }
         return null
     }
-
-    /**
-     * Returns the IBAN length for a given country code.
-     *
-     * @param countryCode a non-null, uppercase, two-character country code.
-     * @return the IBAN length for the given country, or -1 if the input is not a known,
-     *   two-character country code.
-     */
-    @Deprecated("Use getLength instead", ReplaceWith("getLength(countryCode) ?: -1"))
-    fun getLengthForCountryCode(countryCode: CharSequence): Int = getLength(countryCode) ?: -1
 
     /**
      * Returns whether the given country code is in SEPA.
@@ -182,15 +166,7 @@ object CountryCodes {
         get() = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
     /**
-     * Returns the date that the IBAN reference data was last updated.
-     *
-     * @return the last update date of the reference data in this library.
-     */
-    @Deprecated("Use lastUpdateDate property instead", ReplaceWith("lastUpdateDate"))
-    const val lastUpdateDateString: String = LAST_UPDATE_DATE
-
-    /**
-     * Returns the version information of the SWIFT IBAN Registry used on [.lastUpdateDateString].
+     * Returns the version information of the SWIFT IBAN Registry used on [.lastUpdateDate].
      *
      * @return revision information of the SWIFT IBAN Registry.
      */

@@ -32,8 +32,7 @@ class CountryCodesParameterizedTest {
     @Test
     fun `Length for country code should return correct value`() {
         countriesTestDataTable.forAll { testData ->
-            val lengthForCountryCode =
-                CountryCodes.getLengthForCountryCode(testData.plain.substring(0, 2))
+            val lengthForCountryCode = CountryCodes.getLength(testData.plain.substring(0, 2)) ?: -1
             assertThat(lengthForCountryCode).isEqualTo(testData.plain.length)
         }
     }

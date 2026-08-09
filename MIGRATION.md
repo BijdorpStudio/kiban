@@ -1,18 +1,48 @@
 # Migration guide
 
 Kiban is a port of [`java-iban`](https://github.com/barend/java-iban). This document maps the old API onto the
-current one, both for people arriving from `java-iban` and for people upgrading from kiban 0.3.0 or earlier.
+current one, for people arriving from `java-iban`, from kiban 0.3.0 or earlier, or from the `Result`-returning
+kiban 0.4.0 API.
 
-Most of the work is mechanical. The deprecated declarations carry `ReplaceWith`, so the IDE can apply the
-majority of these changes for you: **Code > Inspect Code**, or Alt+Enter on each warning. The compat layer stays
-in place until 1.0.
+The library has not reached 1.0 yet, so there is no deprecation cycle or compat layer: removed API is gone, not
+deprecated. Every break below is a compile error, not a runtime surprise.
+
+## Upgrading from kiban 0.4.0 to 0.5.0
+
+0.4.0 made `Iban.parse`, `Iban(...)`, `String.toIban()` and `Iban.compose` return `Result<Iban>` instead of
+throwing. That shape didn't survive the trip to Swift (see
+[`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md)), so 0.5.0 reverts it: parsing is strict again
+and throws a typed `IbanParseException`. 0.5.0 also removes every member that was `@Deprecated` in 0.4.0 and
+earlier — there are no replacements to reach for beyond what's listed here.
+
+| From | To |
+| --- | --- |
+| `Iban.parse(s)` | `Iban(s)` |
+| `Iban.parse(s).getOrThrow()` | `Iban(s)` |
+| `Iban.parse(s).getOrNull()` | `s.toIbanOrNull()` |
+| `Iban.parse(s).exceptionOrNull()` | `try { Iban(s) } catch (e: IbanParseException) { … }` |
+| `Iban.parse(s).fold(...)` | `try`/`catch`, or `runCatching { Iban(s) }.fold(...)` |
+| `Iban(s)` *(returned `Result`)* | `Iban(s)` — now returns `Iban` directly, throws |
+| `"...".toIban()` *(returned `Result`)* | `"...".toIban()` — now returns `Iban` directly, throws |
+| `Iban.valueOf(s)` | `Iban(s)` |
+| `Iban.compose(cc, bban).getOrThrow()` | `Iban.compose(cc, bban)` |
+| `Iban.format(s)` | no replacement — parse, then use `iban.pretty` |
+| `Iban.toPretty(s)` / `Iban.toPlain(s)` | no replacement — parse, then `iban.pretty` / `iban.plain` |
+| `iban.toPlainString()` | `iban.plain` |
+| `CountryCodes.getBankIdentifier(iban)` | `iban.bankIdentifier` |
+| `CountryCodes.getBranchIdentifier(iban)` | `iban.branchIdentifier` |
+| `CountryCodes.getLengthForCountryCode(cc)` | `CountryCodes.getLength(cc) ?: -1` |
+| `CountryCodes.lastUpdateDateString` | `CountryCodes.lastUpdateDate` |
+
+`runCatching { Iban(s) }` reproduces the old `Result`-returning behaviour exactly, for anyone who wants it back
+locally without touching the public API.
 
 ## Package and type names
 
 | java-iban | kiban |
 | --- | --- |
 | `nl.garvelink.iban` | `nl.bijdorpstudio.kiban` |
-| `IBAN` | `Iban` (a deprecated `typealias IBAN = Iban` exists on JVM) |
+| `IBAN` | `Iban` (a `typealias IBAN = Iban` exists on JVM) |
 | `Modulo97` | `Modulo97` |
 | `CountryCodes` | `CountryCodes` |
 | `IBANFields` | removed — use `Iban.bankIdentifier` / `Iban.branchIdentifier` |
@@ -20,48 +50,43 @@ in place until 1.0.
 
 ## Parsing
 
-The big change. `Iban.parse` returns `Result<Iban>` instead of throwing.
+`Iban(input)` — or the `invoke` operator's spelling, `Iban.invoke(input)` — is the primary entry point. It
+validates the input and confirms the check digits, throwing `IbanParseException` on any failure.
 
 | Before | Now |
 | --- | --- |
-| `IBAN.valueOf(input)` | `Iban.parse(input).getOrThrow()` — or better, handle the `Result` |
-| `IBAN.parse(input)` | `Iban.parse(input)`, which now returns `Result<Iban>` |
+| `IBAN.valueOf(input)` | `Iban(input)` |
+| `IBAN.parse(input)` | `Iban(input)` |
 | `try { IBAN.valueOf(s) } catch (e: IllegalArgumentException) { null }` | `s.toIbanOrNull()` |
 | `try { IBAN.valueOf(s); true } catch (e: IllegalArgumentException) { false }` | `s.isValidIban()` |
 
-`getOrThrow()` throws the same `IllegalArgumentException` the old API threw, so the narrowest possible migration
-is to append it to every call and change nothing else:
+`IbanParseException` extends `IllegalArgumentException`, so the narrowest possible migration from java-iban is to
+change nothing but the call itself:
 
 ``` kotlin
 // java-iban
 val iban = IBAN.valueOf(input)
 
-// kiban, minimal change
-val iban = Iban.parse(input).getOrThrow()
-
-// kiban, idiomatic
-Iban.parse(input).fold(
-    onSuccess = { accept(it) },
-    onFailure = { showError(it.message) }
-)
+// kiban
+val iban = Iban(input)
 ```
 
 ### Typed failures
 
-Catching `IllegalArgumentException` and reading `message` is no longer necessary. Failures carry a sealed type:
+Catching `IllegalArgumentException` and reading `message` is not necessary. Failures carry a sealed type:
 
 ``` kotlin
-when (val failure = Iban.parse(input).exceptionOrNull()) {
-    is IbanParseException.UnknownCountryCode -> failure.countryCode
-    is IbanParseException.WrongLength -> "${failure.actualLength} != ${failure.expectedLength}"
-    is IbanParseException.WrongChecksum -> "check digits do not match"
-    is IbanParseException.Malformed -> failure.kind.name
-    null -> "parsed successfully"
+try {
+    Iban(input)
+} catch (failure: IbanParseException) {
+    when (failure) {
+        is IbanParseException.UnknownCountryCode -> failure.countryCode
+        is IbanParseException.WrongLength -> "${failure.actualLength} != ${failure.expectedLength}"
+        is IbanParseException.WrongChecksum -> "check digits do not match"
+        is IbanParseException.Malformed -> failure.kind.name
+    }
 }
 ```
-
-`IbanParseException` extends `IllegalArgumentException`, so existing `catch` blocks around `getOrThrow()` keep
-working unchanged.
 
 ## Instance API
 
@@ -69,8 +94,8 @@ working unchanged.
 | --- | --- |
 | `iban.toPlainString()` | `iban.plain` |
 | `iban.toString()` | `iban.toString()` or `iban.pretty` (unchanged behaviour: spaced formatting) |
-| `IBAN.toPretty(input)` | `Iban.format(input)` |
-| `IBAN.toPlain(input)` | `Iban.toPlain(input)` |
+| `IBAN.toPretty(input)` | no replacement — parse with `Iban(input)`, then use `iban.pretty` |
+| `IBAN.toPlain(input)` | no replacement — parse with `Iban(input)`, then use `iban.plain` |
 | `iban.countryCode` | `iban.countryCode` |
 | `iban.checkDigits` | `iban.checkDigits` |
 | `iban.isSEPA` / `iban.isInSwiftRegistry` | unchanged |
@@ -99,14 +124,14 @@ ground, and `?:` replaces `orElse`.
 
 ## Composition
 
-`Iban.compose` also returns a `Result`:
+`Iban.compose` throws on invalid input, same as `Iban(input)`:
 
 ``` kotlin
 // before
 val iban = IBAN.compose("BI", "10000100010000332045181")
 
 // now
-val iban = Iban.compose("BI", "10000100010000332045181").getOrThrow()
+val iban = Iban.compose("BI", "10000100010000332045181")
 ```
 
 If you used `compose` on kiban 0.3.0, note that it was broken for any country whose check digits are 10 or

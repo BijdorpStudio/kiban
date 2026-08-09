@@ -15,8 +15,6 @@
 */
 package nl.bijdorpstudio.kiban
 
-import kotlin.Result.Companion.failure
-import nl.bijdorpstudio.kiban.Iban.Companion.parse
 import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 
 /**
@@ -33,13 +31,12 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  *   International Bank Account Number</a>
  * @author Barend Garvelink https://github.com/barend
  *
- * Instances can only be obtained through [Iban.parse] or [Iban.compose], which validate the input
- * and report failures as a [Result] carrying an [IbanParseException]. Construction itself never
- * fails.
+ * Instances can only be obtained through [Iban.invoke] (`Iban(input)`) or [Iban.compose], which
+ * validate the input and throw an [IbanParseException] on failure. Construction itself never fails.
  *
  * @since 1.0.0
  */
-class Iban internal constructor(internal val value: String) : Comparable<Iban> {
+class Iban private constructor(internal val value: String) : Comparable<Iban> {
     /**
      * Whether or not this IBAN data is from the SWIFT IBAN Registry.
      *
@@ -58,8 +55,8 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
     val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
 
     /**
-     * Initializing constructor. Validation happens in [parse], so this constructor cannot fail. the
-     * IBAN value, without any white space, already validated by [parse].
+     * Initializing constructor. Validation happens before construction, so this constructor cannot
+     * fail. the IBAN value, without any white space, already validated by the caller.
      */
     init {
         val countryCode: String = value.substring(0, 2)
@@ -89,7 +86,7 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
      * @return the bank ID, or `null` if unknown for this country code.
      */
     val bankIdentifier: String?
-        get() = CountryCodes.getBankIdentifierInternal(this)
+        get() = CountryCodes.getBankIdentifier(this)
 
     /**
      * Returns the branch identifier embedded in the IBAN, if available.
@@ -97,7 +94,7 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
      * @return the branch ID, or `null` if unknown for this country code.
      */
     val branchIdentifier: String?
-        get() = CountryCodes.getBranchIdentifierInternal(this)
+        get() = CountryCodes.getBranchIdentifier(this)
 
     /**
      * Returns the IBAN without formatting.
@@ -106,14 +103,6 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
      */
     val plain: String
         get() = value
-
-    /**
-     * Returns the IBAN without formatting.
-     *
-     * @return the unformatted IBAN number.
-     */
-    @Deprecated("Use plain property instead", ReplaceWith("plain"))
-    fun toPlainString(): String = plain
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -142,11 +131,15 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
          *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
-         * @return a [Result] holding the parsed and validated IBAN object, or an
-         *   [IbanParseException] describing why the input was rejected.
-         * @see [parse]
+         * @return the parsed and validated IBAN object.
+         * @throws IbanParseException describing why the input was rejected.
          */
-        operator fun invoke(input: CharSequence): Result<Iban> = parse(input)
+        @Throws(IbanParseException::class)
+        operator fun invoke(input: CharSequence): Iban =
+            when (val rejection = validate(input)) {
+                null -> Iban(toPlain(input))
+                else -> throw rejection.toException()
+            }
 
         /**
          * The technically shortest possible IBAN. See [CountryCodes.SHORTEST_IBAN_LENGTH] for the
@@ -155,29 +148,16 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
         const val SHORTEST_POSSIBLE_IBAN: Int = 5
 
         /**
-         * Parses the given string into an IBAN object and confirms the check digits.
-         *
-         * This is the primary entry point of the library. It never throws for invalid user input;
-         * failures are returned as a [Result.failure] carrying an [IbanParseException]. Use
-         * [Result.getOrThrow] for the semantics of the deprecated throwing API.
-         *
-         * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
-         *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
-         * @return a [Result] holding the parsed and validated IBAN object, or an
-         *   [IbanParseException] describing why the input was rejected.
-         * @see [IbanParseException]
+         * Wraps an already-validated, whitespace-stripped IBAN string, without paying for
+         * validation a second time.
          */
-        fun parse(input: CharSequence): Result<Iban> =
-            when (val rejection = validate(input)) {
-                null -> Result.success(Iban(toPlain(input)))
-                else -> failure(rejection.toException())
-            }
+        internal fun ofValidated(plain: String): Iban = Iban(plain)
 
         /**
          * Validates the given input without constructing an [IbanParseException], so that
          * [String.isValidIban] and [String.toIbanOrNull] can reject invalid input without paying
-         * for a captured stack trace. [parse] builds on this and constructs the exception only when
-         * a caller actually needs one.
+         * for a captured stack trace. [invoke] builds on this and constructs the exception only
+         * when a caller actually needs one.
          *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
@@ -226,28 +206,16 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
         }
 
         /**
-         * Parses the given string into an IBAN object and confirms the check digits, throwing on
-         * invalid input.
-         *
-         * @param input the input, which can be either plain ("CC11ABCD123...") or formatted ("CC11
-         *   ABCD 123. ..").
-         * @return the parsed and validated IBAN object.
-         * @throws [IllegalArgumentException] if the input is in some way invalid.
-         * @see [parse]
-         */
-        @Deprecated("Use parse() instead", ReplaceWith("parse(input).getOrThrow()"))
-        fun valueOf(input: CharSequence): Iban = parse(input).getOrThrow()
-
-        /**
          * Composes an IBAN from the given country code and basic bank account number, calculating
          * the check digits.
          *
          * @param countryCode the country code.
          * @param bban the BBAN.
-         * @return a [Result] holding the IBAN object composed of the given parts, or an
-         *   [IbanParseException] describing why the parts were rejected.
+         * @return the IBAN object composed of the given parts.
+         * @throws IbanParseException describing why the parts were rejected.
          */
-        fun compose(countryCode: CharSequence, bban: CharSequence): Result<Iban> {
+        @Throws(IbanParseException::class)
+        fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb =
                 StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH)
                     .append(countryCode)
@@ -257,16 +225,14 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
                 try {
                     Modulo97.calculateCheckDigits(sb)
                 } catch (e: IllegalArgumentException) {
-                    return failure(
-                        IbanParseException.Malformed(
-                            toPlain(sb),
-                            Kind.INVALID_STRUCTURE,
-                            e.message ?: "Cannot calculate check digits for $sb",
-                        )
+                    throw IbanParseException.Malformed(
+                        toPlain(sb),
+                        Kind.INVALID_STRUCTURE,
+                        e.message ?: "Cannot calculate check digits for $sb",
                     )
                 }
             sb.setRange(2, 4, checkDigits.toString().padStart(2, '0'))
-            return parse(sb)
+            return invoke(sb)
         }
 
         /**
@@ -275,30 +241,8 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
          * @param input possibly pretty printed IBAN
          * @return plain IBAN
          */
-        fun toPlain(input: CharSequence): String = input.filter { !it.isWhitespace() }.toString()
-
-        /**
-         * Ensures that the input is pretty printed by first removing any spaces the String might
-         * contain and then adding spaces in the right places.
-         *
-         * This can be useful when prompting a user to correct wrong input
-         *
-         * @param input plain or pretty printed IBAN
-         * @return pretty printed IBAN
-         */
-        fun format(input: CharSequence): String = addSpaces(toPlain(input))
-
-        /**
-         * Ensures that the input is pretty printed by first removing any spaces the String might
-         * contain and then adding spaces in the right places.
-         *
-         * This can be useful when prompting a user to correct wrong input
-         *
-         * @param input plain or pretty printed IBAN
-         * @return pretty printed IBAN
-         */
-        @Deprecated("Use format() instead", ReplaceWith("format(input)"))
-        fun toPretty(input: CharSequence): String = format(input)
+        internal fun toPlain(input: CharSequence): String =
+            input.filter { !it.isWhitespace() }.toString()
 
         /**
          * Converts a plain to a pretty printed IBAN
@@ -306,28 +250,36 @@ class Iban internal constructor(internal val value: String) : Comparable<Iban> {
          * @param value plain iban
          * @return pretty printed IBAN
          */
-        private fun addSpaces(value: CharSequence): String = value.chunked(4).joinToString(" ")
+        internal fun addSpaces(value: CharSequence): String = value.chunked(4).joinToString(" ")
     }
 }
 
 /**
  * Parses the given string into an IBAN object and confirms the check digits.
  *
- * @return a [Result] holding the parsed and validated IBAN object, or an [IbanParseException]
- *   describing why the input was rejected.
- * @see Iban.parse
+ * @return the parsed and validated IBAN object.
+ * @throws IbanParseException describing why the input was rejected.
+ * @see Iban.invoke
  */
-fun String.toIban(): Result<Iban> = parse(this)
+@Throws(IbanParseException::class)
+fun String.toIban(): Iban =
+    when (val rejection = Iban.validate(this)) {
+        // Must stay ofValidated, not Iban(...): this is a top-level function, so Iban(...) here
+        // would resolve to invoke and re-run validate() on an input already known to be valid.
+        null -> Iban.ofValidated(Iban.toPlain(this))
+        else -> throw rejection.toException()
+    }
 
 /**
  * Parses the given string into an IBAN object and confirms the check digits, discarding the failure
  * detail.
  *
  * @return the parsed and validated IBAN object, or `null` if the input is in some way invalid.
- * @see Iban.parse
+ * @see Iban.invoke
  */
 fun String.toIbanOrNull(): Iban? =
-    if (Iban.validate(this) == null) Iban(Iban.toPlain(this)) else null
+    // Must stay ofValidated, not Iban(...): see the comment on toIban above.
+    if (Iban.validate(this) == null) Iban.ofValidated(Iban.toPlain(this)) else null
 
 /** Returns whether the given string is a valid IBAN. */
 fun String.isValidIban(): Boolean = Iban.validate(this) == null

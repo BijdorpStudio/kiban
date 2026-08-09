@@ -20,6 +20,7 @@ import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -63,8 +64,8 @@ class CountryCodesTest {
     }
 
     @Test
-    fun `getLengthForCountryCode returns -1 for unknown country code`() {
-        assertThat(CountryCodes.getLengthForCountryCode("XX")).isEqualTo(-1)
+    fun `getLength returns null for unknown country code`() {
+        assertThat(CountryCodes.getLength("XX")).isNull()
     }
 
     @Test

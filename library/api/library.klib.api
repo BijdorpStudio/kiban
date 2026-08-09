@@ -27,20 +27,14 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
     final fun compareTo(nl.bijdorpstudio.kiban/Iban): kotlin/Int // nl.bijdorpstudio.kiban/Iban.compareTo|compareTo(nl.bijdorpstudio.kiban.Iban){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // nl.bijdorpstudio.kiban/Iban.hashCode|hashCode(){}[0]
-    final fun toPlainString(): kotlin/String // nl.bijdorpstudio.kiban/Iban.toPlainString|toPlainString(){}[0]
     final fun toString(): kotlin/String // nl.bijdorpstudio.kiban/Iban.toString|toString(){}[0]
 
     final object Companion { // nl.bijdorpstudio.kiban/Iban.Companion|null[0]
         final const val SHORTEST_POSSIBLE_IBAN // nl.bijdorpstudio.kiban/Iban.Companion.SHORTEST_POSSIBLE_IBAN|{}SHORTEST_POSSIBLE_IBAN[0]
             final fun <get-SHORTEST_POSSIBLE_IBAN>(): kotlin/Int // nl.bijdorpstudio.kiban/Iban.Companion.SHORTEST_POSSIBLE_IBAN.<get-SHORTEST_POSSIBLE_IBAN>|<get-SHORTEST_POSSIBLE_IBAN>(){}[0]
 
-        final fun compose(kotlin/CharSequence, kotlin/CharSequence): kotlin/Result<nl.bijdorpstudio.kiban/Iban> // nl.bijdorpstudio.kiban/Iban.Companion.compose|compose(kotlin.CharSequence;kotlin.CharSequence){}[0]
-        final fun format(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.format|format(kotlin.CharSequence){}[0]
-        final fun invoke(kotlin/CharSequence): kotlin/Result<nl.bijdorpstudio.kiban/Iban> // nl.bijdorpstudio.kiban/Iban.Companion.invoke|invoke(kotlin.CharSequence){}[0]
-        final fun parse(kotlin/CharSequence): kotlin/Result<nl.bijdorpstudio.kiban/Iban> // nl.bijdorpstudio.kiban/Iban.Companion.parse|parse(kotlin.CharSequence){}[0]
-        final fun toPlain(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.toPlain|toPlain(kotlin.CharSequence){}[0]
-        final fun toPretty(kotlin/CharSequence): kotlin/String // nl.bijdorpstudio.kiban/Iban.Companion.toPretty|toPretty(kotlin.CharSequence){}[0]
-        final fun valueOf(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.valueOf|valueOf(kotlin.CharSequence){}[0]
+        final fun compose(kotlin/CharSequence, kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.compose|compose(kotlin.CharSequence;kotlin.CharSequence){}[0]
+        final fun invoke(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.invoke|invoke(kotlin.CharSequence){}[0]
     }
 }
 
@@ -92,8 +86,6 @@ sealed class nl.bijdorpstudio.kiban/IbanParseException : kotlin/IllegalArgumentE
 }
 
 final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/CountryCodes|null[0]
-    final const val lastUpdateDateString // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDateString|{}lastUpdateDateString[0]
-        final fun <get-lastUpdateDateString>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDateString.<get-lastUpdateDateString>|<get-lastUpdateDateString>(){}[0]
     final const val lastUpdateRevision // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision|{}lastUpdateRevision[0]
         final fun <get-lastUpdateRevision>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision.<get-lastUpdateRevision>|<get-lastUpdateRevision>(){}[0]
 
@@ -106,10 +98,7 @@ final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/Cou
     final val lastUpdateDate // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate|{}lastUpdateDate[0]
         final fun <get-lastUpdateDate>(): kotlin.time/Instant // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate.<get-lastUpdateDate>|<get-lastUpdateDate>(){}[0]
 
-    final fun getBankIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBankIdentifier|getBankIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
-    final fun getBranchIdentifier(nl.bijdorpstudio.kiban/Iban): kotlin/String? // nl.bijdorpstudio.kiban/CountryCodes.getBranchIdentifier|getBranchIdentifier(nl.bijdorpstudio.kiban.Iban){}[0]
     final fun getLength(kotlin/CharSequence): kotlin/Int? // nl.bijdorpstudio.kiban/CountryCodes.getLength|getLength(kotlin.CharSequence){}[0]
-    final fun getLengthForCountryCode(kotlin/CharSequence): kotlin/Int // nl.bijdorpstudio.kiban/CountryCodes.getLengthForCountryCode|getLengthForCountryCode(kotlin.CharSequence){}[0]
     final fun isInSwiftRegistry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isInSwiftRegistry|isInSwiftRegistry(kotlin.CharSequence){}[0]
     final fun isKnownCountryCode(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isKnownCountryCode|isKnownCountryCode(kotlin.CharSequence){}[0]
     final fun isSEPACountry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isSEPACountry|isSEPACountry(kotlin.CharSequence){}[0]
@@ -123,5 +112,5 @@ final object nl.bijdorpstudio.kiban/Modulo97 { // nl.bijdorpstudio.kiban/Modulo9
 }
 
 final fun (kotlin/String).nl.bijdorpstudio.kiban/isValidIban(): kotlin/Boolean // nl.bijdorpstudio.kiban/isValidIban|isValidIban@kotlin.String(){}[0]
-final fun (kotlin/String).nl.bijdorpstudio.kiban/toIban(): kotlin/Result<nl.bijdorpstudio.kiban/Iban> // nl.bijdorpstudio.kiban/toIban|toIban@kotlin.String(){}[0]
+final fun (kotlin/String).nl.bijdorpstudio.kiban/toIban(): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/toIban|toIban@kotlin.String(){}[0]
 final fun (kotlin/String).nl.bijdorpstudio.kiban/toIbanOrNull(): nl.bijdorpstudio.kiban/Iban? // nl.bijdorpstudio.kiban/toIbanOrNull|toIbanOrNull@kotlin.String(){}[0]

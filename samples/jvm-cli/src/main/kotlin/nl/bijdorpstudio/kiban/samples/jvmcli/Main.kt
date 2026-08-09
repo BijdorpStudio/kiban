@@ -9,34 +9,34 @@ import nl.bijdorpstudio.kiban.toIban
 import nl.bijdorpstudio.kiban.toIbanOrNull
 
 fun main() {
-    // Parse returns Result<Iban>.
-    val iban: Iban = Iban.parse("NL91ABNA0417164300").getOrThrow()
-    println("parse: $iban")
+    // The primary entry point. Throws IbanParseException on invalid input.
+    val iban: Iban = Iban("NL91ABNA0417164300")
+    println("invoke: $iban")
 
-    // Handle failure without exceptions.
-    Iban.parse("not an iban")
-        .fold(
-            onSuccess = { println("fold success: $it") },
-            onFailure = { println("fold failure: ${it.message}") },
-        )
-
-    // Or use the String extensions.
-    val parsed: Result<Iban> = "NL91ABNA0417164300".toIban()
+    // Or use the String extension; same throwing behaviour.
+    val parsed: Iban = "NL91ABNA0417164300".toIban()
     println("toIban: $parsed")
+
+    // Exception-free fast paths.
     val orNull: Iban? = "NL91ABNA0417164301".toIbanOrNull() // null, check digits are wrong
     println("toIbanOrNull (wrong check digits): $orNull")
     val isValid: Boolean = "NL91ABNA0417164300".isValidIban() // true
     println("isValidIban: $isValid")
 
     // Failures carry a typed reason, so you never have to match on messages.
-    when (val failure = Iban.parse("not an iban").exceptionOrNull()) {
-        is IbanParseException.UnknownCountryCode ->
-            println("unknown country: ${failure.countryCode}")
-        is IbanParseException.WrongLength ->
-            println("wrong length: expected ${failure.expectedLength}, got ${failure.actualLength}")
-        is IbanParseException.WrongChecksum -> println("wrong checksum")
-        is IbanParseException.Malformed -> println("malformed: ${failure.kind}")
-        null -> println("parsed successfully")
+    try {
+        Iban("not an iban")
+    } catch (failure: IbanParseException) {
+        when (failure) {
+            is IbanParseException.UnknownCountryCode ->
+                println("unknown country: ${failure.countryCode}")
+            is IbanParseException.WrongLength ->
+                println(
+                    "wrong length: expected ${failure.expectedLength}, got ${failure.actualLength}"
+                )
+            is IbanParseException.WrongChecksum -> println("wrong checksum")
+            is IbanParseException.Malformed -> println("malformed: ${failure.kind}")
+        }
     }
 
     // toString() emits standard formatting, plain is compact.
@@ -44,7 +44,7 @@ fun main() {
     println("plain: ${iban.plain}")
 
     // Input may be formatted.
-    val anotherIban = Iban.parse("BE68 5390 0754 7034").getOrThrow()
+    val anotherIban = Iban("BE68 5390 0754 7034")
     println("parsed formatted input: $anotherIban")
 
     // Iban implements Comparable<T>.
@@ -61,17 +61,16 @@ fun main() {
     val valid = Modulo97.verifyCheckDigits(candidate) // true
     println("verifyCheckDigits: $valid")
 
-    // Compose the IBAN for a country and BBAN; this also returns a Result.
-    val composed =
-        Iban.compose("BI", "10000100010000332045181").getOrThrow() // BI4210000100010000332045181
+    // Compose the IBAN for a country and BBAN; also throws on invalid input.
+    val composed = Iban.compose("BI", "10000100010000332045181") // BI4210000100010000332045181
     println("compose: ${composed.plain}")
 
     // You can query whether an IBAN is of a SEPA-participating country
-    val isSepa = Iban.parse(candidate).getOrThrow().isSEPA // true
+    val isSepa = Iban(candidate).isSEPA // true
     println("isSEPA: $isSepa")
 
     // You can query whether an IBAN is in the SWIFT Registry
-    val isRegistered = Iban.parse(candidate).getOrThrow().isInSwiftRegistry // true
+    val isRegistered = Iban(candidate).isInSwiftRegistry // true
     println("isInSwiftRegistry: $isRegistered")
 
     // Modulo97 API methods take CharSequence, not just String.

@@ -161,3 +161,38 @@ Designing the actual companion surface (naming, whether it lives in `commonMain`
 `@JvmName`/`@ObjCName` or as an Apple-target-only source set, what shape the error side takes)
 is real API design work and its own issue — this review's job was to answer *whether* one is
 needed and *why*, with real evidence, not to design it.
+
+## 0.5.0 follow-up: `@Throws` verified for real (2026-08-09)
+
+#100 replaced the `Result<Iban>` shape with strict, `@Throws(IbanParseException::class)`-annotated
+parsing. Its own Verification section flagged the Swift catch shape as unconfirmed — that annotated
+functions surface to Swift as `throws`, but whether the Kotlin exception arrives usably. Confirmed
+on `feature/issue-100-strict-throwing-api` via `ios-interop-verify.yml`, building and running
+`samples/swift-console` against a real `Kiban.xcframework`.
+
+- The generated header confirms the documented NSError-out-param shape:
+  `invoke(input:)`, `compose(countryCode:bban:)` and the top-level `IbanKt.toIban(...)` each carry
+  `error:(NSError * _Nullable * _Nullable)error`, with a Kotlin/Native-generated doc comment on
+  every one of them: *"This method converts instances of IbanParseException to errors. Other
+  uncaught Kotlin exceptions are fatal."*
+- Calling `IbanKt.toIban("not an iban")` from a Swift `do { try ... } catch { ... }` does **not**
+  crash the process — unlike the old, unannotated `valueOf`, which the original #9 review confirmed
+  SIGABRTs. The caught error prints as:
+  ```
+  Error Domain=KotlinException Code=0 "Characters at index 2 and 3 not both numeric. notaniban"
+  UserInfo={NSLocalizedDescription=Characters at index 2 and 3 not both numeric. notaniban,
+  KotlinException=nl.bijdorpstudio.kiban.IbanParseException.Malformed: Characters at index 2 and 3
+  not both numeric. notaniban, KotlinExceptionOrigin=}
+  ```
+  So the original #9 finding — "no programmatic access to the failure at all" — is closed for the
+  "does it crash" and "can Swift catch it" questions. **Still open, not exercised by this run**:
+  whether `error.userInfo["KotlinException"]` can be `as?`-downcast from Swift to the real
+  `IbanParseException.Malformed` type for typed access, versus only reading its string description.
+  That's the concrete next thing to verify before calling the companion-surface question (see
+  Recommendation, above) fully settled either way.
+- `Iban`'s companion `invoke`/`compose` are **not** surfaced as Swift initializers under this
+  interop path — they're `Iban.companion.invoke(input:)` / `Iban.companion.compose(countryCode:bban:)`
+  (`companion` is a generated static property on the `KibanIban` ObjC class). `operator fun invoke`
+  gets no special Swift-init treatment here, which is why `samples/swift-console` calls the
+  top-level `IbanKt.toIban(...)` for its throwing-path demo instead of guessing at `Iban(...)`
+  syntax.

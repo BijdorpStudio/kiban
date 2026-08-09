@@ -1,9 +1,8 @@
 import Kiban
 
-// Top-level Kotlin extension functions (toIbanOrNull, isValidIban) are exported as static
-// methods on an `IbanKt` facade class, not as Swift extensions on String — so the call is
-// `IbanKt.toIbanOrNull("x")`, not `"x".toIbanOrNull()`. For everything else this interop
-// path can and cannot express (notably Result<Iban>), see docs/9-swift-interop-review.md.
+// Top-level Kotlin extension functions (toIbanOrNull, isValidIban, toIban) are exported as
+// static methods on an `IbanKt` facade class, not as Swift extensions on String — so the call is
+// `IbanKt.toIbanOrNull("x")`, not `"x".toIbanOrNull()`. See docs/9-swift-interop-review.md.
 
 guard let iban = IbanKt.toIbanOrNull("NL91ABNA0417164300") else {
     fatalError("expected a valid IBAN")
@@ -17,9 +16,16 @@ print("toIbanOrNull (wrong check digits): \(String(describing: orNull))")
 
 print("isValidIban: \(IbanKt.isValidIban(iban.plain))")
 
-// Result<Iban> (Iban.parse, Iban.compose) is erased to an opaque Any? on this interop path,
-// with no typed access to the failure — that's #9's headline finding, and why those APIs are
-// not demonstrated here. Use toIbanOrNull/isValidIban from Swift instead.
+// 0.5.0 made parsing strict again: Iban(input), Iban.compose(...) and toIban() throw
+// IbanParseException instead of returning Result<Iban> (#9's headline finding about the 0.4.0
+// API), and are annotated @Throws(IbanParseException::class) so this Objective-C interop path
+// surfaces the failure as a catchable Swift error instead of aborting the process.
+do {
+    let unexpected = try IbanKt.toIban("not an iban")
+    print("unexpected success: \(unexpected.plain)")
+} catch {
+    print("toIban(not an iban) failed as expected: \(error)")
+}
 
 print("formatted: \(iban.description)")
 print("plain: \(iban.plain)")
