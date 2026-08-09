@@ -40,7 +40,7 @@ jobs:
           # doubles as the compile check for the Apple targets.
           - target: apiCheck
             os: macos-latest
-          - target: assembleAndroidMain androidCompileLintChecks
+          - target: assembleAndroidMain androidCompileLintChecks :library:testAndroidHostTest
             os: ubuntu-latest
           # Generation only, no deploy: catches broken KDoc/sourceLink before a
           # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
