@@ -41,6 +41,7 @@ kotlin {
         namespace = "nl.bijdorpstudio.kiban"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        withHostTest {}
     }
     iosX64()
     iosArm64()
