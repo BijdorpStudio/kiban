@@ -27,8 +27,8 @@ class IbanInternationalTest {
     @Test
     fun `Parse should accept plain form`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { testData ->
-            val iban = Iban.parse(testData.plain).getOrThrow()
-            assertThat(iban.toPlainString()).isEqualTo(testData.plain)
+            val iban = Iban(testData.plain)
+            assertThat(iban.plain).isEqualTo(testData.plain)
             assertThat(iban.toString()).isEqualTo(testData.pretty)
         }
     }
@@ -36,8 +36,8 @@ class IbanInternationalTest {
     @Test
     fun `Parse should accept pretty printed form`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban.parse(td.pretty).getOrThrow()
-            assertThat(iban.toPlainString()).isEqualTo(td.plain)
+            val iban = Iban(td.pretty)
+            assertThat(iban.plain).isEqualTo(td.plain)
             assertThat(iban.toString()).isEqualTo(td.pretty)
         }
     }
@@ -50,29 +50,28 @@ class IbanInternationalTest {
                     countryCode = td.plain.substring(0, 2),
                     bban = td.plain.substring(4),
                 )
-            assertThat(composed.getOrThrow()).isEqualTo(Iban.parse(td.plain).getOrThrow())
+            assertThat(composed).isEqualTo(Iban(td.plain))
         }
     }
 
     @Test
     fun `Check is registered IBAN`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            assertThat(Iban.parse(td.plain).getOrThrow().isInSwiftRegistry).isEqualTo(td.swift)
+            assertThat(Iban(td.plain).isInSwiftRegistry).isEqualTo(td.swift)
         }
     }
 
     @Test
     fun `Check is SEPA country`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            assertThat(Iban.parse(td.plain).getOrThrow().isSEPA).isEqualTo(td.sepa)
+            assertThat(Iban(td.plain).isSEPA).isEqualTo(td.sepa)
         }
     }
 
     @Test
     fun `Get length for country code should return correct value`() {
         CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val lengthForCountryCode =
-                CountryCodes.getLengthForCountryCode(td.plain.substring(0, 2))
+            val lengthForCountryCode = CountryCodes.getLength(td.plain.substring(0, 2)) ?: -1
             assertThat(lengthForCountryCode).isEqualTo(td.plain.length)
         }
     }

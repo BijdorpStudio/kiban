@@ -2,6 +2,20 @@
 
 ## 0.5.0 (unreleased)
 
+**Breaking changes**
+
+* Reverted parsing from `Result`-returning (introduced in 0.4.0) back to strict and throwing. `Iban(input)`,
+  `Iban.compose(cc, bban)` and `String.toIban()` now return `Iban` directly and throw a sealed
+  `IbanParseException` on invalid input, instead of returning `Result<Iban>`. 0.4.0's `Result` shape did not
+  survive the trip to Swift (#9); this corrects it before a second published version carries it forward. The
+  throwing entry points are annotated `@Throws(IbanParseException::class)`, which Kotlin/Native's Objective-C
+  exporter needs to surface a catchable Swift error instead of aborting the process.
+* Removed `Iban.parse` and `Iban.valueOf` — use `Iban(input)` or `String.toIban()`.
+* Removed `Iban.format` and `Iban.toPretty` — parse and use `iban.pretty` instead.
+* Removed every other `@Deprecated` member: `Iban.toPlainString()`, `CountryCodes.getBankIdentifier(Iban)`,
+  `CountryCodes.getBranchIdentifier(Iban)`, `CountryCodes.getLengthForCountryCode(cc)`, and
+  `CountryCodes.lastUpdateDateString`. See [MIGRATION.md](MIGRATION.md) for the full mapping.
+
 **Targets**
 
 * Removed `macosX64`, `tvosX64` and `watchosX64`, which JetBrains deprecated in Kotlin 2.3.20.
