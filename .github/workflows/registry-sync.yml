@@ -48,6 +48,7 @@ jobs:
       DATA_FILE: library/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt
       TEST_DATA_FILE: library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt
       REGISTRY_TXT_PATH: scripts/input/iban-registry.txt
+      REV: ${{ inputs.rev }}
     steps:
       - uses: actions/checkout@v7
 
@@ -62,29 +63,16 @@ jobs:
         with:
           cache-read-only: true
 
-      - name: Install the Kotlin command-line compiler
-        run: |
-          version="$(sed -n 's/^kotlin = "\(.*\)"$/\1/p' gradle/libs.versions.toml)"
-          echo "Installing Kotlin $version"
-          curl -sSLo "$RUNNER_TEMP/kotlin-compiler.zip" \
-            "https://github.com/JetBrains/kotlin/releases/download/v${version}/kotlin-compiler-${version}.zip"
-          unzip -q "$RUNNER_TEMP/kotlin-compiler.zip" -d "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/kotlinc/bin" >> "$GITHUB_PATH"
-
       - name: Check the fetch script's parsing helpers
         run: kotlin scripts/fetch_registry.main.kts --self-check
 
       - name: Download the registry TXT (headless)
         id: headless
         continue-on-error: true
-        env:
-          REV: ${{ inputs.rev }}
         run: kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" ${REV:+--rev "$REV"}
 
       - name: Download the registry TXT (headed, under Xvfb)
         if: steps.headless.outcome == 'failure'
-        env:
-          REV: ${{ inputs.rev }}
         run: xvfb-run -a kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" --headed ${REV:+--rev "$REV"}
 
       # Regenerated with the currently committed datestamp first: LAST_UPDATE_DATE would

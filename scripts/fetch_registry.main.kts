@@ -32,11 +32,8 @@
 
 @file:DependsOn("com.microsoft.playwright:playwright:1.62.0")
 
-import com.microsoft.playwright.Browser
 import com.microsoft.playwright.BrowserType
-import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
-import com.microsoft.playwright.options.LoadState
 import java.io.File
 import java.security.MessageDigest
 
@@ -53,16 +50,16 @@ val minimumRegistrySize = 10_000
 // Parsing helpers (pure; covered by --self-check)
 // ---------------------------------------------------------------------------
 
-/** "IBAN Registry Release 99", "iban-registry-v100.txt" - the revision next to the registry name. */
+/**
+ * "IBAN Registry Release 99", "iban-registry-v100.txt": a revision only counts when it is
+ * written next to the registry's own name, so a stray "version 3" elsewhere on the page is not
+ * mistaken for one.
+ */
 val registryReleaseRegex =
     Regex(
         """iban[\s_-]*registry[\s_-]*(?:\(txt\)[\s_-]*)?(?:release|version|revision|rev\.?|v)?[\s_-]*(\d{2,3})(?!\d)""",
         RegexOption.IGNORE_CASE,
     )
-
-/** "Release 99", "v100" - only trusted in a filename, where there is nothing else to match. */
-val releaseNumberRegex =
-    Regex("""(?:release|version|revision|rev\.?|v)[\s_-]*(\d{2,3})(?!\d)""", RegexOption.IGNORE_CASE)
 
 /** Pulls the filename out of a Content-Disposition header, quoted, bare or RFC 5987 encoded. */
 fun filenameIn(contentDisposition: String): String? =
@@ -73,16 +70,8 @@ fun filenameIn(contentDisposition: String): String? =
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
 
-/** The registry revision as encoded in the download's filename, or null if it carries none. */
-fun revisionInFilename(filename: String): String? =
-    (registryReleaseRegex.find(filename) ?: releaseNumberRegex.find(filename))?.groupValues?.get(1)
-
-/**
- * The registry revision as stated on the registry page. Only the revision written next to the
- * registry's own name counts - a bare "version 3" somewhere else on the page is not it.
- */
-fun revisionInPageText(pageText: String): String? =
-    registryReleaseRegex.find(pageText)?.groupValues?.get(1)
+/** The registry revision stated in [text], or null when it states none. */
+fun revisionIn(text: String): String? = registryReleaseRegex.find(text)?.groupValues?.get(1)
 
 /** Everything that disqualifies a response from being the registry TXT. */
 fun problemsWith(status: Int, contentType: String, text: String): List<String> = buildList {
@@ -155,14 +144,9 @@ fun downloadRegistry(): RegistryDownload =
             .chromium()
             .launch(BrowserType.LaunchOptions().setHeadless(!headed))
             .use { browser ->
-                val context =
-                    browser.newContext(
-                        Browser.NewContextOptions().setLocale("en-US").setViewportSize(1280, 900)
-                    )
-                context.setDefaultTimeout(timeoutMillis)
-                val page = context.newPage()
-                page.navigate(registryPage, Page.NavigateOptions().setTimeout(timeoutMillis))
-                page.waitForLoadState(LoadState.DOMCONTENTLOADED)
+                val page = browser.newPage()
+                page.setDefaultTimeout(timeoutMillis)
+                page.navigate(registryPage)
 
                 @Suppress("UNCHECKED_CAST")
                 val response = page.evaluate(fetchInPageContext, registryTxt) as Map<String, Any?>
@@ -192,10 +176,7 @@ fun fetchRegistry() {
     }
 
     val filename = filenameIn(download.disposition)
-    val rev =
-        revOverride
-            ?: filename?.let(::revisionInFilename)
-            ?: revisionInPageText(download.pageText)
+    val rev = revOverride ?: filename?.let(::revisionIn) ?: revisionIn(download.pageText)
 
     val out = File(outPath).absoluteFile
     out.parentFile?.mkdirs()
@@ -230,10 +211,9 @@ fun fetchRegistry() {
 
 fun selfCheck() {
     var checks = 0
-    val failures = mutableListOf<String>()
     fun expect(what: String, expected: Any?, actual: Any?) {
+        check(expected == actual) { "$what: expected <$expected>, got <$actual>" }
         checks++
-        if (expected != actual) failures += "$what: expected <$expected>, got <$actual>"
     }
 
     expect(
@@ -254,33 +234,20 @@ fun selfCheck() {
     expect("filename in an empty disposition", null, filenameIn(""))
     expect("filename in a disposition without one", null, filenameIn("inline"))
 
-    expect("revision in an underscored filename", "99", revisionInFilename("IBAN_Registry_Release_99.txt"))
-    expect("revision in a spaced filename", "102", revisionInFilename("IBAN Registry Release 102.txt"))
-    expect("revision in a dashed filename", "100", revisionInFilename("iban-registry-v100.txt"))
-    expect("revision in a bare release filename", "97", revisionInFilename("registry-release-97.txt"))
-    expect("revision in an unnumbered filename", null, revisionInFilename("swift_registry.txt"))
+    expect("revision in an underscored filename", "99", revisionIn("IBAN_Registry_Release_99.txt"))
+    expect("revision in a spaced filename", "102", revisionIn("IBAN Registry Release 102.txt"))
+    expect("revision in a dashed filename", "100", revisionIn("iban-registry-v100.txt"))
+    expect("revision in an unnumbered filename", null, revisionIn("swift_registry.txt"))
 
-    expect(
-        "revision in page text",
-        "99",
-        revisionInPageText("Download the IBAN Registry (TXT) Release 99 below."),
-    )
-    expect(
-        "revision in page text without a release word",
-        "102",
-        revisionInPageText("IBAN REGISTRY 102 - published May 2026"),
-    )
-    expect("revision in page text without a number", null, revisionInPageText("IBAN Registry (TXT)"))
+    expect("revision in page text", "99", revisionIn("Download the IBAN Registry (TXT) Release 99 below."))
+    expect("revision in page text without a release word", "102", revisionIn("IBAN REGISTRY 102 - May 2026"))
+    expect("revision in page text without a number", null, revisionIn("IBAN Registry (TXT)"))
     expect(
         "revision in page text with an unrelated number",
         null,
-        revisionInPageText("Version 3 of our cookie policy applies to the IBAN Registry page."),
+        revisionIn("Version 3 of our cookie policy applies to the IBAN Registry page."),
     )
-    expect(
-        "revision in page text with a year after the name",
-        null,
-        revisionInPageText("IBAN Registry 2026 edition"),
-    )
+    expect("revision in page text with a year after the name", null, revisionIn("IBAN Registry 2026 edition"))
 
     val registryLike = registryMarker + "\t" + "AD\tAE\n".repeat(2_000)
     expect("problems with a registry response", emptyList<String>(), problemsWith(200, "text/plain", registryLike))
@@ -313,9 +280,6 @@ fun selfCheck() {
         sha256("abc"),
     )
 
-    if (failures.isNotEmpty()) {
-        error("$checks self-checks ran, ${failures.size} failed:\n" + failures.joinToString("\n") { " - $it" })
-    }
     println("All $checks self-checks passed.")
 }
 
