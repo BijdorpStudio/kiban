@@ -17,12 +17,12 @@
 # couple of runs a year) means the job is done without a revision ever being needed. Changed means a
 # maintainer re-runs it with the 'rev' input, which is worth the interruption exactly then.
 #
-# Best-effort by design: headless Chromium may get flagged even where headed browsing works, so
-# a failed headless attempt is retried headed under Xvfb, and a failure of both only costs the
-# convenience - manually downloading the TXT into scripts/input/ and running the generator stays
-# the guaranteed fallback. The schedule is weekly: the registry only changes ~1-2x/year, but a run
-# that finds nothing costs a couple of minutes and stops silently, and checking often shortens the
-# window in which a bot-detection change goes unnoticed.
+# Best-effort by design: acquisition runs headed under Xvfb because headless Chromium is blocked
+# (see the download step), and a failure only costs the convenience - manually downloading the TXT
+# into scripts/input/ and running the generator stays the guaranteed fallback. A failed run here
+# now means something actually broke. The schedule is weekly: the registry only changes ~1-2x/year,
+# but a run that finds nothing costs about two minutes and stops silently, and checking often
+# shortens the window in which a bot-detection change goes unnoticed.
 #
 # Two repository settings this job depends on: Actions must be allowed to create pull requests
 # (Settings > Actions > General), and note that pull requests opened with GITHUB_TOKEN do not
@@ -75,13 +75,14 @@ jobs:
       - name: Check the fetch script's parsing helpers
         run: kotlin scripts/fetch_registry.main.kts --self-check
 
-      - name: Download the registry TXT (headless)
-        id: headless
-        continue-on-error: true
-        run: kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" ${REV:+--rev "$REV"}
-
+      # Headed under Xvfb, with no headless attempt first. Headless Chromium is dropped by Swift's
+      # edge from a consumer ISP and from GitHub's runner range alike (run 31359092080), which puts
+      # the tell in the client fingerprint - navigator.webdriver, the HeadlessChrome UA token, no
+      # GPU - rather than in the origin IP. So a headless attempt is a guaranteed ~60s of every run
+      # buying a signal nothing acts on: if it ever started working it would save ten seconds of
+      # Xvfb startup. Do not re-add it as an optimisation. The script still defaults to headless,
+      # which is right for anyone whose network is not blocked and for hosts without a display.
       - name: Download the registry TXT (headed, under Xvfb)
-        if: steps.headless.outcome == 'failure'
         run: xvfb-run -a kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" --headed ${REV:+--rev "$REV"}
 
       # Regenerated with the currently committed revision and datestamp first. Both are metadata

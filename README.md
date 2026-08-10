@@ -174,7 +174,8 @@ The embedded country data (`CountryCodesData.kt`) and the country test data tabl
 
 ```shell
 # Download "IBAN Registry (TXT)" in a browser from https://www.swift.com/standards/data-standards/iban,
-# or try the scripted download (add --headed if headless Chromium is blocked on your network):
+# or try the scripted download. Headless Chromium is blocked by Swift's bot detection from at least
+# some networks (which is why CI runs headed under Xvfb), so reach for --headed when this times out:
 kotlin scripts/fetch_registry.main.kts --out scripts/input/iban-registry.txt
 
 kotlin scripts/generate_country_data.main.kts --registry scripts/input/iban-registry.txt --rev <revision>

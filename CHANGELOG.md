@@ -9,7 +9,10 @@
   a real registry change interrupts a maintainer — the release number is not published anywhere
   machine-readable, so it has to be supplied by hand when it matters. The generated sources are now
   formatted with ktfmt before diffing, without which every run reported ~1,700 whitespace-only changed
-  lines and would have opened a no-op pull request. The schedule moved from monthly to weekly.
+  lines and would have opened a no-op pull request. The schedule moved from monthly to weekly, and
+  acquisition goes straight to headed Chromium under Xvfb: headless is dropped by Swift's edge from
+  unrelated networks alike, so attempting it first spent ~60s of every run and left a failed step on
+  otherwise green builds. The script itself still defaults to headless.
 * `scripts/fetch_registry.main.kts` now reports a blocked download with the manual/`--headed` fallback
   advice instead of a raw Playwright stack trace: the block happens below the HTTP layer during
   navigation, so the existing response validation never saw it. It also exports the registry TXT's
