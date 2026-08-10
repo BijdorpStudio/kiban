@@ -10,10 +10,19 @@
 # the job workspace under scripts/input/ (gitignored), and the pull request carries just the
 # derived artifacts: CountryCodesData.kt and the country test data table.
 #
+# The registry's release number is not published anywhere a machine can read: the download sends
+# no Content-Disposition filename and the page states no release. So this job never asks for one
+# up front. It regenerates the data using the revision and datestamp already committed - metadata
+# the generator only stamps into its output - and diffs. Unchanged (the outcome of all but a
+# couple of runs a year) means the job is done without a revision ever being needed. Changed means a
+# maintainer re-runs it with the 'rev' input, which is worth the interruption exactly then.
+#
 # Best-effort by design: headless Chromium may get flagged even where headed browsing works, so
 # a failed headless attempt is retried headed under Xvfb, and a failure of both only costs the
 # convenience - manually downloading the TXT into scripts/input/ and running the generator stays
-# the guaranteed fallback. The schedule is monthly because the registry changes ~1-2x/year.
+# the guaranteed fallback. The schedule is weekly: the registry only changes ~1-2x/year, but a run
+# that finds nothing costs a couple of minutes and stops silently, and checking often shortens the
+# window in which a bot-detection change goes unnoticed.
 #
 # Two repository settings this job depends on: Actions must be allowed to create pull requests
 # (Settings > Actions > General), and note that pull requests opened with GITHUB_TOKEN do not
@@ -25,11 +34,11 @@ name: SWIFT registry sync
 
 on:
   schedule:
-    - cron: '17 4 1 * *'
+    - cron: '17 4 * * 1'
   workflow_dispatch:
     inputs:
       rev:
-        description: 'Registry revision to record, e.g. 103 (only needed when detection fails)'
+        description: 'Registry revision to record, e.g. 103 (needed only once the registry data has changed)'
         required: false
         type: string
 
@@ -75,34 +84,50 @@ jobs:
         if: steps.headless.outcome == 'failure'
         run: xvfb-run -a kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" --headed ${REV:+--rev "$REV"}
 
-      # Regenerated with the currently committed datestamp first: LAST_UPDATE_DATE would
-      # otherwise differ on every run and turn "nothing changed" into a monthly no-op PR.
-      - name: Regenerate the country data at the committed datestamp
+      # Regenerated with the currently committed revision and datestamp first. Both are metadata
+      # the generator only stamps into the output: reusing the committed values keeps a run where
+      # the registry did not change byte-identical to HEAD, so "nothing changed" cannot turn into
+      # a weekly no-op PR. It also means this step needs no revision of its own - which matters,
+      # because there is usually none to be had (see scripts/fetch_registry.main.kts).
+      # ktfmt is not optional here: KotlinPoet's raw output differs from the committed files in
+      # whitespace alone (license header indent, comment wrapping), so an unformatted regeneration
+      # reports ~1700 changed lines even when every byte of registry data is identical.
+      - name: Regenerate the country data as currently committed
         run: |
-          if [ -z "${REGISTRY_REV:-}" ]; then
-            echo "::error::Could not detect the registry revision; re-run this workflow with the 'rev' input."
-            exit 1
-          fi
           previous_date="$(sed -n 's/.*LAST_UPDATE_DATE: String = "\(.*\)"$/\1/p' "$DATA_FILE")"
+          previous_rev="$(sed -n 's/.*LAST_UPDATE_REV: String = "\(.*\)"$/\1/p' "$DATA_FILE")"
           kotlin scripts/generate_country_data.main.kts \
-            --registry "$REGISTRY_TXT_PATH" --rev "$REGISTRY_REV" --date "$previous_date"
+            --registry "$REGISTRY_TXT_PATH" --rev "$previous_rev" --date "$previous_date"
+          ./gradlew --quiet :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
 
       - name: Check whether the generated data changed
         id: diff
         run: |
           if git diff --quiet -- "$DATA_FILE" "$TEST_DATA_FILE"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Country data is already up to date with registry rev ${REGISTRY_REV}."
+            echo "Country data is already up to date with the registry as last modified ${REGISTRY_LAST_MODIFIED:-unknown} (sha256 ${REGISTRY_SHA256})."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             git --no-pager diff --stat -- "$DATA_FILE" "$TEST_DATA_FILE"
           fi
 
-      - name: Restamp the regenerated data with today's date
+      # Only reached when the registry actually changed - the one case where the release number
+      # has to be real, and the one case where asking a human for it is worth the interruption.
+      - name: Require a registry revision for the changed data
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          if [ -z "${REGISTRY_REV:-}" ]; then
+            echo "::error::The registry TXT changed (sha256 ${REGISTRY_SHA256}, last modified ${REGISTRY_LAST_MODIFIED:-unknown}), but its release number is not stated anywhere machine-readable. Look it up on https://www.swift.com/standards/data-standards/iban and re-run this workflow with the 'rev' input."
+            exit 1
+          fi
+          echo "Registry changed; recording revision ${REGISTRY_REV}."
+
+      - name: Restamp the regenerated data with today's date and revision
         if: steps.diff.outputs.changed == 'true'
         run: |
           kotlin scripts/generate_country_data.main.kts \
             --registry "$REGISTRY_TXT_PATH" --rev "$REGISTRY_REV"
+          ./gradlew --quiet :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
 
       - name: Verify the regenerated data
         if: steps.diff.outputs.changed == 'true'
@@ -129,6 +154,7 @@ jobs:
             "Generated by the [SWIFT registry sync workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)." \
             "" \
             "- Registry revision: \`$REGISTRY_REV\`" \
+            "- Registry TXT last modified: \`${REGISTRY_LAST_MODIFIED:-unknown}\`" \
             "- Registry TXT sha256: \`$REGISTRY_SHA256\`" \
             "" \
             "The registry TXT itself is not committed (it is not redistributable); only the files" \
