@@ -1,0 +1,143 @@
+# Scheduled SWIFT IBAN Registry sync (#53).
+#
+# Detects new SWIFT IBAN Registry revisions and opens a data-update PR without anyone having to
+# download the registry by hand. The download endpoint blocks plain HTTP clients below the HTTP
+# layer, so acquisition runs through a real Chromium context (scripts/fetch_registry.main.kts);
+# generation then runs the same scripts/generate_country_data.main.kts a maintainer would run
+# locally.
+#
+# The raw registry TXT is never committed - it is not redistributable. It only ever exists in
+# the job workspace under scripts/input/ (gitignored), and the pull request carries just the
+# derived artifacts: CountryCodesData.kt and the country test data table.
+#
+# Best-effort by design: headless Chromium may get flagged even where headed browsing works, so
+# a failed headless attempt is retried headed under Xvfb, and a failure of both only costs the
+# convenience - manually downloading the TXT into scripts/input/ and running the generator stays
+# the guaranteed fallback. The schedule is monthly because the registry changes ~1-2x/year.
+#
+# Two repository settings this job depends on: Actions must be allowed to create pull requests
+# (Settings > Actions > General), and note that pull requests opened with GITHUB_TOKEN do not
+# trigger further workflow runs, so gradle.yml does not run on the pull request this job creates.
+# Close and reopen it (or push to its branch) for a full CI run before merging; this job runs
+# ./gradlew jvmTest itself so the data is at least validated before the pull request is opened.
+
+name: SWIFT registry sync
+
+on:
+  schedule:
+    - cron: '17 4 1 * *'
+  workflow_dispatch:
+    inputs:
+      rev:
+        description: 'Registry revision to record, e.g. 103 (only needed when detection fails)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      DATA_FILE: library/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt
+      TEST_DATA_FILE: library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt
+      REGISTRY_TXT_PATH: scripts/input/iban-registry.txt
+      REV: ${{ inputs.rev }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Check the fetch script's parsing helpers
+        run: kotlin scripts/fetch_registry.main.kts --self-check
+
+      - name: Download the registry TXT (headless)
+        id: headless
+        continue-on-error: true
+        run: kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" ${REV:+--rev "$REV"}
+
+      - name: Download the registry TXT (headed, under Xvfb)
+        if: steps.headless.outcome == 'failure'
+        run: xvfb-run -a kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" --headed ${REV:+--rev "$REV"}
+
+      # Regenerated with the currently committed datestamp first: LAST_UPDATE_DATE would
+      # otherwise differ on every run and turn "nothing changed" into a monthly no-op PR.
+      - name: Regenerate the country data at the committed datestamp
+        run: |
+          if [ -z "${REGISTRY_REV:-}" ]; then
+            echo "::error::Could not detect the registry revision; re-run this workflow with the 'rev' input."
+            exit 1
+          fi
+          previous_date="$(sed -n 's/.*LAST_UPDATE_DATE: String = "\(.*\)"$/\1/p' "$DATA_FILE")"
+          kotlin scripts/generate_country_data.main.kts \
+            --registry "$REGISTRY_TXT_PATH" --rev "$REGISTRY_REV" --date "$previous_date"
+
+      - name: Check whether the generated data changed
+        id: diff
+        run: |
+          if git diff --quiet -- "$DATA_FILE" "$TEST_DATA_FILE"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Country data is already up to date with registry rev ${REGISTRY_REV}."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- "$DATA_FILE" "$TEST_DATA_FILE"
+          fi
+
+      - name: Restamp the regenerated data with today's date
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          kotlin scripts/generate_country_data.main.kts \
+            --registry "$REGISTRY_TXT_PATH" --rev "$REGISTRY_REV"
+
+      - name: Verify the regenerated data
+        if: steps.diff.outputs.changed == 'true'
+        run: ./gradlew jvmTest
+
+      - name: Open a data-update pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="registry-sync/rev-${REGISTRY_REV}"
+          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            echo "A pull request for $branch is already open; nothing to do."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          # Only the derived artifacts: the registry TXT stays out of the repository.
+          git add "$DATA_FILE" "$TEST_DATA_FILE"
+          git commit -m "Update IBAN country data to SWIFT registry rev ${REGISTRY_REV}"
+          git push --force-with-lease -u origin "$branch"
+          body="$(printf '%s\n' \
+            "Generated by the [SWIFT registry sync workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)." \
+            "" \
+            "- Registry revision: \`$REGISTRY_REV\`" \
+            "- Registry TXT sha256: \`$REGISTRY_SHA256\`" \
+            "" \
+            "The registry TXT itself is not committed (it is not redistributable); only the files" \
+            "generated from it by \`scripts/generate_country_data.main.kts\` are. The generator's" \
+            "validation (mod-97, declared lengths, bank/branch identifier cross-checks) and" \
+            "\`./gradlew jvmTest\` both passed against the regenerated data." \
+            "" \
+            "CI does not run automatically on pull requests opened by \`GITHUB_TOKEN\` - close and" \
+            "reopen this pull request to get a full run before merging.")"
+          gh pr create --base main --head "$branch" \
+            --title "Update IBAN country data to SWIFT registry rev $REGISTRY_REV" \
+            --body "$body"
