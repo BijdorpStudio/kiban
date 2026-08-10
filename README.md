@@ -169,16 +169,22 @@ Adopted design choices from the Java library, plus:
 
 The embedded country data (`CountryCodesData.kt`) and the country test data table are generated from the SWIFT IBAN Registry TXT. The registry TXT is not redistributable and is never committed: it lives only in the gitignored `scripts/input/`.
 
-* **Automatically:** the [SWIFT registry sync](.github/workflows/registry-sync.yml) workflow runs monthly (and on demand), downloads the registry through a real Chromium context, regenerates the data, and opens a pull request when it changed. Bot detection is outside this project's control, so treat it as convenience rather than a guarantee.
+* **Automatically:** the [SWIFT registry sync](.github/workflows/registry-sync.yml) workflow runs weekly (and on demand), downloads the registry through a real Chromium context, regenerates the data, and opens a pull request when it changed. Bot detection is outside this project's control, so treat it as convenience rather than a guarantee.
 * **Manually,** which always works and is the fallback when the workflow is blocked:
 
 ```shell
 # Download "IBAN Registry (TXT)" in a browser from https://www.swift.com/standards/data-standards/iban,
-# or try the scripted download:
+# or try the scripted download (add --headed if headless Chromium is blocked on your network):
 kotlin scripts/fetch_registry.main.kts --out scripts/input/iban-registry.txt
 
 kotlin scripts/generate_country_data.main.kts --registry scripts/input/iban-registry.txt --rev <revision>
+
+# The generator emits unformatted KotlinPoet output; without this the diff is thousands of
+# whitespace-only lines:
+./gradlew :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
 ```
+
+The registry's release number has to be supplied by hand: the download endpoint sends no filename and the registry page states no release, so neither script can detect it. Read it off the [registry PDF](https://www.swift.com/swift-resource/9606/download) and pass it as `--rev`.
 
 The generator validates every entry before writing (mod-97 checksum, declared length and country prefix, and bank/branch identifier positions cross-checked against the registry's own identifier examples), so a malformed or truncated download fails loudly instead of landing in the library.
 
