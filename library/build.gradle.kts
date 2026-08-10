@@ -15,7 +15,7 @@ plugins {
 
 group = "nl.bijdorpstudio.kiban"
 
-version = "0.5.0"
+version = "0.6.0"
 
 ktfmt { kotlinLangStyle() }
 
