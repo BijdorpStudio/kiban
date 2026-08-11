@@ -249,6 +249,40 @@ consumers at all (it requires direct Gradle-project integration) and that it cra
 on this toolchain, so a better Swift Export result would not change the recommendation while the
 Objective-C path remains the one kiban's consumers actually get.
 
+## 5. Considered alternative: `expect`/`actual` with a value class on some targets only
+
+An obvious follow-up idea: keep the regular class where the erasure bites (JVM for Java, the Apple
+targets for Objective-C) and make `Iban` a value class only on the remaining targets, via
+`expect class Iban` in `commonMain` with per-platform actuals.
+
+**The compiler rejects this outright.** Probed on this toolchain with a minimal
+`expect class Probe98` actualized as a regular class on `jvm` and as a `value class` on `js`:
+
+```
+e: Probe98.js.kt:3:20 The 'expect' and the 'actual' declarations are incompatible.
+  expect: public final expect class Probe98 : Any
+  actual: public final actual value class Probe98 : Any
+```
+
+The `value` modifier is part of the expect/actual matching contract, like `enum` or `fun`: every
+actual must have the same class shape as the expect. It cuts both ways — `expect value class`
+would force *every* actual to be a value class, including the JVM and Apple ones that can't afford
+it — and an `actual typealias` goes through the same checker, so there is no back door.
+
+Even if the language allowed it, the split would not pay for itself:
+
+- The targets that must keep the regular class are the ones with actual consumers. Ruling out JVM
+  and the seven Apple targets leaves the value class only on `linuxX64`/`linuxArm64`/`mingwX64`/
+  `js`/`wasmJs`.
+- The win shrinks further there: `Iban : Comparable<Iban>` means any use through the interface, in
+  a nullable position, or as a generic argument boxes anyway, on every backend — and the ~3.4×
+  property-read regression from section 3 would ship on exactly those platforms.
+- The cost is structural: expect/actual *classes* are still Beta (the probe also emitted the
+  `-Xexpect-actual-classes` warning, and JetBrains discourages them in published libraries), and
+  `Iban`'s entire body plus its companion would need duplicating into every actual or hollowing
+  out into shared internal functions, taking on per-platform semantic drift (identity vs. inlined
+  equality) in the library's central type.
+
 ## Verdict
 
 Don't do it. `Iban` stays a regular class, and #98 can close as answered.
