@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
-  <img src="assets/logo-light.png" alt="kiban" width="420">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark-trimmed.png">
+  <img src="assets/logo-light-trimmed.png" alt="kiban" width="175">
 </picture>
 
 # **K**Iban—Kotlin Multiplatform IBAN Library
