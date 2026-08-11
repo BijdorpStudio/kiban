@@ -16,39 +16,56 @@ jobs:
   build:
     strategy:
       matrix:
+        # 'id' is the slug used in artifact names and step conditions: matrix
+        # targets contain spaces and colons, which are not valid in artifact
+        # names, and would collide once sanitised away.
         include:
           - target: iosSimulatorArm64Test
+            id: ios-simulator-arm64-test
             os: macos-latest
           - target: macosArm64Test
+            id: macos-arm64-test
             os: macos-latest
           - target: tvosSimulatorArm64Test
+            id: tvos-simulator-arm64-test
             os: macos-latest
           - target: watchosSimulatorArm64Test
+            id: watchos-simulator-arm64-test
             os: macos-latest
           - target: jvmTest
+            id: jvm-test
             os: ubuntu-latest
           - target: linuxX64Test
+            id: linux-x64-test
             os: ubuntu-latest
           - target: jsTest
+            id: js-test
             os: ubuntu-latest
           - target: wasmJsTest
+            id: wasm-js-test
             os: ubuntu-latest
           # Targets with no runner to execute on: cross-compile only.
           - target: compileKotlinLinuxArm64 compileKotlinMingwX64
+            id: cross-compile
             os: ubuntu-latest
           # apiCheck builds a klib for every target the host supports, so it
           # doubles as the compile check for the Apple targets.
           - target: apiCheck
+            id: api-check
             os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks :library:testAndroidHostTest
+            id: android
             os: ubuntu-latest
           # Generation only, no deploy: catches broken KDoc/sourceLink before a
           # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
           - target: :library:dokkaGeneratePublicationHtml
+            id: dokka
             os: ubuntu-latest
           - target: ktfmtCheck
+            id: ktfmt-check
             os: ubuntu-latest
           - target: :samples:jvm-cli:run
+            id: samples-jvm-cli-run
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -76,20 +93,43 @@ jobs:
         cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     - name: Build with Gradle
-      run: ./gradlew ${{ matrix.target }}
+      # 'shell: bash' enables pipefail, so tee does not mask a Gradle failure.
+      # The log is the only diagnosable output for targets that write no report
+      # of their own (e.g. ':samples:jvm-cli:run').
+      shell: bash
+      run: |
+        mkdir -p build/reports/ci
+        ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
 
     - name: Upload API docs preview
-      if: matrix.target == ':library:dokkaGeneratePublicationHtml'
+      if: matrix.id == 'dokka'
       uses: actions/upload-artifact@v7
       with:
         name: api-docs-preview
         path: library/build/dokka/html
         retention-days: 7
 
-    - name: Upload test reports
-      if: failure() && contains(matrix.target, 'Test')
+    - name: Generate ktfmt diff
+      # ktfmtCheck fails with a bare file list; re-formatting turns that into a
+      # patch that can be downloaded and applied.
+      if: failure() && matrix.id == 'ktfmt-check'
+      shell: bash
+      run: |
+        ./gradlew ktfmtFormat || true
+        mkdir -p build/reports/ktfmt
+        git diff > build/reports/ktfmt/ktfmt.patch
+
+    - name: Upload failure reports
+      if: failure()
       uses: actions/upload-artifact@v7
       with:
-        name: test-reports-${{ matrix.target }}-${{ matrix.os }}
-        path: library/build/reports/tests/
+        name: reports-${{ matrix.id }}-${{ matrix.os }}
+        path: |
+          **/build/reports/**
+          **/build/test-results/**
+          **/build/api/**
+          !**/build/reports/configuration-cache/**
+        # Not every target writes every kind of report; an empty match is not
+        # itself a failure worth flagging.
+        if-no-files-found: ignore
         retention-days: 7
