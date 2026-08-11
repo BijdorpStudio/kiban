@@ -14,6 +14,10 @@ permissions:
 
 jobs:
   build:
+    # Named off 'matrix.id' alone, so the check name stays stable when a matrix
+    # key is added or reordered. The default name interpolates *every* matrix
+    # value, which is what renamed every check when 'id' was introduced.
+    name: ${{ matrix.id }} (${{ matrix.os }})
     strategy:
       matrix:
         # 'id' is the slug used in artifact names and step conditions: matrix
@@ -133,3 +137,22 @@ jobs:
         # itself a failure worth flagging.
         if-no-files-found: ignore
         retention-days: 7
+
+  # The single check a branch ruleset should require. 'needs' on a matrix job
+  # waits for every entry, so adding, renaming or removing a matrix target never
+  # touches the list of required checks.
+  ci:
+    name: CI
+    needs: build
+    # 'always()' is what makes this usable as a required check: without it the
+    # gate is skipped whenever a matrix entry fails, and a required check that
+    # never reports leaves the PR waiting forever instead of going red.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check matrix result
+      # 'needs.build.result' is the combined result of all matrix entries:
+      # 'success' only when every one of them succeeded.
+      run: |
+        echo "Build matrix result: ${{ needs.build.result }}"
+        test "${{ needs.build.result }}" = "success"
