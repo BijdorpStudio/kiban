@@ -15,7 +15,6 @@
 */
 package nl.bijdorpstudio.kiban
 
-import kotlin.jvm.JvmInline
 import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 
 /**
@@ -37,15 +36,13 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  *
  * @since 1.0.0
  */
-@JvmInline
-value class Iban private constructor(internal val value: String) : Comparable<Iban> {
+class Iban private constructor(internal val value: String) : Comparable<Iban> {
     /**
      * Whether or not this IBAN data is from the SWIFT IBAN Registry.
      *
      * @return true if from SWIFT IBAN Registry, false otherwise.
      */
     val isInSwiftRegistry: Boolean
-        get() = CountryCodes.isInSwiftRegistry(countryCode)
 
     /**
      * Whether or not this IBAN is of a SEPA participating country.
@@ -53,11 +50,19 @@ value class Iban private constructor(internal val value: String) : Comparable<Ib
      * @return true this IBAN is of a SEPA participating country, false otherwise.
      */
     val isSEPA: Boolean
-        get() = CountryCodes.isSEPACountry(countryCode)
 
-    /** Pretty-printed value. */
-    val pretty: String
-        get() = addSpaces(value)
+    /** Pretty-printed value, lazily initialized. */
+    val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
+
+    /**
+     * Initializing constructor. Validation happens before construction, so this constructor cannot
+     * fail. the IBAN value, without any white space, already validated by the caller.
+     */
+    init {
+        val countryCode: String = value.substring(0, 2)
+        this.isInSwiftRegistry = CountryCodes.isInSwiftRegistry(countryCode)
+        this.isSEPA = CountryCodes.isSEPACountry(countryCode)
+    }
 
     val countryCode: String
         /**
@@ -98,6 +103,16 @@ value class Iban private constructor(internal val value: String) : Comparable<Ib
      */
     val plain: String
         get() = value
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Iban) return false
+        return value == other.value
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 
     /**
      * Returns the IBAN in standard formatting, with a space every four characters.

@@ -6,7 +6,7 @@
 // - Show declarations: true
 
 // Library unique name: <nl.bijdorpstudio.kiban:library>
-final value class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kiban/Iban> { // nl.bijdorpstudio.kiban/Iban|null[0]
+final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kiban/Iban> { // nl.bijdorpstudio.kiban/Iban|null[0]
     final val bankIdentifier // nl.bijdorpstudio.kiban/Iban.bankIdentifier|{}bankIdentifier[0]
         final fun <get-bankIdentifier>(): kotlin/String? // nl.bijdorpstudio.kiban/Iban.bankIdentifier.<get-bankIdentifier>|<get-bankIdentifier>(){}[0]
     final val branchIdentifier // nl.bijdorpstudio.kiban/Iban.branchIdentifier|{}branchIdentifier[0]

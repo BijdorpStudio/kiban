@@ -14,37 +14,31 @@ public final class nl/bijdorpstudio/kiban/CountryCodes {
 public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public static final field Companion Lnl/bijdorpstudio/kiban/Iban$Companion;
 	public static final field SHORTEST_POSSIBLE_IBAN I
-	public static final synthetic fun box-impl (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun compareTo (Ljava/lang/Object;)I
-	public fun compareTo--SnQPyU (Ljava/lang/String;)I
-	public static fun compareTo--SnQPyU (Ljava/lang/String;Ljava/lang/String;)I
+	public fun compareTo (Lnl/bijdorpstudio/kiban/Iban;)I
 	public fun equals (Ljava/lang/Object;)Z
-	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
-	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
-	public static final fun getBankIdentifier-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getBranchIdentifier-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getCheckDigits-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getCountryCode-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getPlain-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getPretty-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getBankIdentifier ()Ljava/lang/String;
+	public final fun getBranchIdentifier ()Ljava/lang/String;
+	public final fun getCheckDigits ()Ljava/lang/String;
+	public final fun getCountryCode ()Ljava/lang/String;
+	public final fun getPlain ()Ljava/lang/String;
+	public final fun getPretty ()Ljava/lang/String;
 	public fun hashCode ()I
-	public static fun hashCode-impl (Ljava/lang/String;)I
-	public static final fun isInSwiftRegistry-impl (Ljava/lang/String;)Z
-	public static final fun isSEPA-impl (Ljava/lang/String;)Z
+	public final fun isInSwiftRegistry ()Z
+	public final fun isSEPA ()Z
 	public fun toString ()Ljava/lang/String;
-	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
-	public final synthetic fun unbox-impl ()Ljava/lang/String;
 }
 
 public final class nl/bijdorpstudio/kiban/Iban$Companion {
-	public final fun compose-ERZcmHI (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
-	public final fun invoke-o344ih8 (Ljava/lang/CharSequence;)Ljava/lang/String;
+	public final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun invoke (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 }
 
 public final class nl/bijdorpstudio/kiban/IbanKt {
 	public static final fun isValidIban (Ljava/lang/String;)Z
-	public static final fun toIban (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun toIbanOrNull (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun toIban (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
+	public static final fun toIbanOrNull (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/Iban;
 }
 
 public abstract class nl/bijdorpstudio/kiban/IbanParseException : java/lang/IllegalArgumentException {
