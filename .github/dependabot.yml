@@ -47,8 +47,13 @@ updates:
           - "minor"
           - "patch"
 
+  # '/' covers '.github/workflows'; the composite actions under
+  # '.github/actions' are separate manifests and need to be listed explicitly,
+  # otherwise the 'uses:' references inside them silently escape coverage.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/cache-konan"
     schedule:
       interval: "weekly"
     groups:
