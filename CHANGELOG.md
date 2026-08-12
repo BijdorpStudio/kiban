@@ -2,6 +2,17 @@
 
 ## 0.6.0 (unreleased)
 
+**Documentation**
+
+* Cleaned up KDoc inherited from `java-iban` (#108). The `Iban` class documentation had its
+  construction paragraph placed after an `@author` tag, which a KDoc block tag swallows — the
+  published API docs rendered that paragraph as part of the Author field instead of as the class
+  description. The paragraph moved above the block tags, and the `@author` tag was dropped;
+  attribution to Barend Garvelink stays where it already lives, in the per-file license headers and
+  the README. Also removed `@since 1.0.0` on `Iban` and `@since 1.9.0` on
+  `Modulo97.calculateCheckDigits`: those are `java-iban` versions, and kiban has never published a
+  1.x release.
+
 **Infrastructure**
 
 * Made the SWIFT registry sync (#53) able to run unattended. It regenerates and diffs the country data

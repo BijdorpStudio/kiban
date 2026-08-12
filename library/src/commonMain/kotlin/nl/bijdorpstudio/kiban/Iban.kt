@@ -23,18 +23,15 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  * validation is performed, other than matching the length of the IBAN to its country code. Unknown
  * country codes are not supported.
  *
+ * Instances can only be obtained through [Iban.invoke] (`Iban(input)`) or [Iban.compose], which
+ * validate the input and throw an [IbanParseException] on failure. Construction itself never fails.
+ *
  * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
  * @property isSEPA whether or not this IBAN is of a SEPA participating country.
  * @property plain the IBAN value, without any white space.
  * @property pretty the IBAN value, with spaces every four characters.
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia:
  *   International Bank Account Number</a>
- * @author Barend Garvelink https://github.com/barend
- *
- * Instances can only be obtained through [Iban.invoke] (`Iban(input)`) or [Iban.compose], which
- * validate the input and throw an [IbanParseException] on failure. Construction itself never fails.
- *
- * @since 1.0.0
  */
 class Iban private constructor(internal val value: String) : Comparable<Iban> {
     /**
