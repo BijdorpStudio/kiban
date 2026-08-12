@@ -83,7 +83,6 @@ object Modulo97 {
      * @return the check digits to be used at indices 2 and 3 to make the input MOD97 verifiable.
      * @throws [IllegalArgumentException] if the country code is not two characters or contains a
      *   space character.
-     * @since 1.9.0
      */
     fun calculateCheckDigits(countryCode: CharSequence, bban: CharSequence): Int {
         if (countryCode.length != 2) {
