@@ -1,0 +1,31 @@
+# Shared '~/.konan' cache step for every workflow that touches the Kotlin/Native
+# toolchain (#109).
+#
+# Every job that compiles a native target, and every job that runs Dokka, needs
+# the Kotlin/Native distribution: Dokka runs the Kotlin analysis frontend rather
+# than scraping comments, so it resolves 'nativeMain'/'appleMain' too and pulls
+# the platform klibs in through ':library:downloadKotlinNativeDistribution'.
+# Without this step that is a fresh 'download.jetbrains.com' fetch per job.
+#
+# The cache key is keyed on 'gradle/libs.versions.toml' because the 'kotlin'
+# version declared there is what decides which 'kotlin-native-prebuilt-*' bundle
+# gets downloaded. The previous key -- 'hashFiles(''**/.lock'')' -- matched no
+# tracked file, and 'hashFiles' returns an empty string when nothing matches, so
+# it collapsed to a constant 'Linux-'/'macOS-' that was never invalidated: after
+# a Kotlin bump the stale bundle was restored and the new one downloaded on top,
+# growing the entry every time.
+name: Cache Kotlin/Native distribution
+description: Restores and saves '~/.konan', keyed on the Kotlin version in the Gradle version catalog.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@v6
+      with:
+        path: |
+          ~/.konan
+        key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
+        # A version bump should miss the exact key and still restore the most
+        # recent entry for this runner, so the new bundle downloads against a
+        # warm cache instead of an empty one.
+        restore-keys: ${{ runner.os }}-konan-
