@@ -4,6 +4,14 @@ name: Publish
 on:
   release:
     types: [released, prereleased]
+
+# Least privilege for every job in this workflow. Without this the GITHUB_TOKEN falls back to the
+# repository default, which is read-write for repositories created before February 2023 — and the
+# 'publish' job runs with the Maven Central and GPG signing secrets in scope. The 'docs' job
+# widens this for its Pages deployment; nothing else here needs more than read.
+permissions:
+  contents: read
+
 jobs:
   # Run the full check matrix (tests on every target plus apiCheck) before publishing anything.
   test:
