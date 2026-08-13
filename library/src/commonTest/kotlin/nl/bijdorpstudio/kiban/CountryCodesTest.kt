@@ -25,7 +25,9 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import de.infix.testBalloon.framework.core.TestConfig
+import de.infix.testBalloon.framework.core.TestPlatform
 import de.infix.testBalloon.framework.core.disable
+import de.infix.testBalloon.framework.core.testPlatform
 import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -34,7 +36,13 @@ import kotlin.time.Instant
 val CountryCodesTest by testSuite {
     test(
         "Known country codes should not be editable",
-        testConfig = TestConfig.disable(), // Fails on Kotlin native
+        // JVM only. There, Collection and MutableCollection erase to the same type, so the cast
+        // is a runtime no-op and `add` reaches the fixed-size list backing `asList()`, which
+        // rejects it with UnsupportedOperationException. Every other target checks the cast and
+        // throws ClassCastException first — the collection is just as immutable there, but this
+        // test asserts the JVM's particular way of saying so.
+        testConfig =
+            if (testPlatform.type == TestPlatform.Type.Jvm) TestConfig else TestConfig.disable(),
     ) {
         // Not meant to be an exhaustive test, just a reminder to keep API consistent if
         // implementation changes.
