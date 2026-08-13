@@ -18,26 +18,24 @@ package nl.bijdorpstudio.kiban
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import kotlin.test.Test
+import de.infix.testBalloon.framework.core.testSuite
 
 /**
  * Ensures that the [Iban] class accepts IBAN numbers from every participating country (...known at
  * the time the test was last updated).
  */
-class CountryCodesIbanFieldsTest {
-    @Test
-    fun `Should extract bank identifier`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban(td.plain)
-            assertThat(iban.bankIdentifier).isEqualTo(td.bank)
+val CountryCodesIbanFieldsTest by testSuite {
+    for (testData in countriesTestData) {
+        test("Should extract bank identifier for ${testData.name}") {
+            val iban = Iban(testData.plain)
+            assertThat(iban.bankIdentifier).isEqualTo(testData.bank)
         }
     }
 
-    @Test
-    fun `Should extract branch identifier`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban(td.plain)
-            assertThat(iban.branchIdentifier).isEqualTo(td.branch)
+    for (testData in countriesTestData) {
+        test("Should extract branch identifier for ${testData.name}") {
+            val iban = Iban(testData.plain)
+            assertThat(iban.branchIdentifier).isEqualTo(testData.branch)
         }
     }
 }

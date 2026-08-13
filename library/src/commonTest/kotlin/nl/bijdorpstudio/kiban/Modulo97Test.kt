@@ -15,94 +15,58 @@
 */
 package nl.bijdorpstudio.kiban
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
+import de.infix.testBalloon.framework.core.testSuite
+
+private const val VALID_COUNTRY = "NL"
+private const val VALID_BBAN = "ABNA0417164300"
 
 /** Test suite for [Modulo97]. */
-class Modulo97Test {
-
-    @Test
-    fun `It should reject length 0`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("") }
+val Modulo97Test by testSuite {
+    // Inputs the checksum must reject outright: anything shorter than five characters, and
+    // anything holding a character outside the accepted alphabet.
+    for ((label, input) in
+        listOf(
+            "length 0" to "",
+            "length 1" to "M",
+            "length 2" to "MO",
+            "length 3" to "MO9",
+            "length 4" to "MO97",
+            "length 1 padded to 5" to "M    ",
+            "length 2 padded to 5" to "   MO",
+            "length 3 padded to 5" to "M O 9",
+            "length 4 padded to 5" to " MO97",
+            "invalid non-whitespace" to "TS00☠",
+            "invalid whitespace" to "MO97\tA",
+        )) {
+        test("It should reject $label") {
+            assertFailure { Modulo97.checksum(input) }.isInstanceOf<IllegalArgumentException>()
+        }
     }
 
-    @Test
-    fun `It should reject length 1`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M") }
-    }
-
-    @Test
-    fun `It should reject length 2`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO") }
-    }
-
-    @Test
-    fun `It should reject length 3`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO9") }
-    }
-
-    @Test
-    fun `It should reject length 4`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO97") }
-    }
-
-    @Test
-    fun `It should reject length 1 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M    ") }
-    }
-
-    @Test
-    fun `It should reject length 2 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("   MO") }
-    }
-
-    @Test
-    fun `It should reject length 3 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("M O 9") }
-    }
-
-    @Test
-    fun `It should reject length 4 padded to 5`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum(" MO97") }
-    }
-
-    @Test
-    fun `It should reject invalid non-whitespace`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("TS00☠") }
-    }
-
-    @Test
-    fun `It should reject invalid whitespace`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.checksum("MO97\tA") }
-    }
-
-    @Test
-    fun `It should calculate an expected checksum`() {
+    test("It should calculate an expected checksum") {
         assertThat(Modulo97.checksum("MO00T")).isEqualTo(83)
     }
 
-    @Test
-    fun `It should ignore case`() {
+    test("It should ignore case") {
         assertThat(Modulo97.checksum("MO00T")).isEqualTo(83)
         assertThat(Modulo97.checksum("mo00t")).isEqualTo(83)
     }
 
-    @Test
-    fun `It should calculate an expected check digits`() {
+    test("It should calculate an expected check digits") {
         assertThat(Modulo97.calculateCheckDigits("MO00T")).isEqualTo(15)
     }
 
-    @Test
-    fun `It should return 1 for a known correct checksum`() {
+    test("It should return 1 for a known correct checksum") {
         assertThat(Modulo97.checksum("MO15T")).isEqualTo(1)
     }
 
-    @Test
-    fun `It should verify a known correct checksum`() {
+    test("It should verify a known correct checksum") {
         assertThat(Modulo97.verifyCheckDigits("MO15T")).isTrue()
         for (i in 0 until 15) {
             val verifyResult = Modulo97.verifyCheckDigits("MO${i.toString().padStart(2, '0')}T")
@@ -114,24 +78,22 @@ class Modulo97Test {
         }
     }
 
-    @Test
-    fun `Should verify correct Iban`() {
-        val verifyResult = Modulo97.verifyCheckDigits(IbanTest.VALID_IBAN)
+    test("Should verify correct Iban") {
+        val verifyResult = Modulo97.verifyCheckDigits(VALID_IBAN)
         assertThat(verifyResult).isTrue()
     }
 
-    @Test
-    fun `It should refuse to calculate check digits if index 2 is not 0`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.calculateCheckDigits("MO10A") }
+    test("It should refuse to calculate check digits if index 2 is not 0") {
+        assertFailure { Modulo97.calculateCheckDigits("MO10A") }
+            .isInstanceOf<IllegalArgumentException>()
     }
 
-    @Test
-    fun `It should refuse to calculate check digits if index 3 is not 0`() {
-        assertFailsWith<IllegalArgumentException> { Modulo97.calculateCheckDigits("MO02A") }
+    test("It should refuse to calculate check digits if index 3 is not 0") {
+        assertFailure { Modulo97.calculateCheckDigits("MO02A") }
+            .isInstanceOf<IllegalArgumentException>()
     }
 
-    @Test
-    fun `Compose should handle IBAN valid input`() {
+    test("Compose should handle IBAN valid input") {
         val checkDigits =
             Modulo97.calculateCheckDigits(
                 countryCode = VALID_COUNTRY,
@@ -140,28 +102,27 @@ class Modulo97Test {
         assertThat(checkDigits).isEqualTo(91)
     }
 
-    @Test
-    fun `Compose should reject blank country code`() {
-        assertFailsWith<IllegalArgumentException> {
+    test("Compose should reject blank country code") {
+        assertFailure {
             Modulo97.calculateCheckDigits(
                 countryCode = "  ",
                 bban = VALID_BBAN,
             )
         }
+            .isInstanceOf<IllegalArgumentException>()
     }
 
-    @Test
-    fun `Compose should reject malformed country code`() {
-        assertFailsWith<IllegalArgumentException> {
+    test("Compose should reject malformed country code") {
+        assertFailure {
             Modulo97.calculateCheckDigits(
                 countryCode = "potato",
                 bban = VALID_BBAN,
             )
         }
+            .isInstanceOf<IllegalArgumentException>()
     }
 
-    @Test
-    fun `Compose should accept unknown country code`() {
+    test("Compose should accept unknown country code") {
         val checkDigits =
             Modulo97.calculateCheckDigits(
                 countryCode = "XX",
@@ -170,18 +131,12 @@ class Modulo97Test {
         assertThat(checkDigits).isEqualTo(72)
     }
 
-    @Test
-    fun `Compose should accept wrong length BBAN`() {
+    test("Compose should accept wrong length BBAN") {
         val checkDigits =
             Modulo97.calculateCheckDigits(
                 countryCode = VALID_COUNTRY,
                 bban = VALID_BBAN.substring(1),
             )
         assertThat(checkDigits).isEqualTo(50)
-    }
-
-    companion object {
-        private const val VALID_COUNTRY = "NL"
-        private const val VALID_BBAN = "ABNA0417164300"
     }
 }

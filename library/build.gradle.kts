@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
     alias(libs.plugins.ktfmt)
+    alias(libs.plugins.testballoon)
 }
 
 group = "nl.bijdorpstudio.kiban"
@@ -74,8 +75,11 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(libs.assertk)
-            implementation(libs.kotlin.test)
+            implementation(libs.testballoon.framework.core)
         }
+        // TestBalloon runs Android host-side tests through the JUnit 4 runner, which the Android
+        // target does not put on the test classpath by itself.
+        named("androidHostTest").dependencies { implementation(libs.junit) }
     }
 }
 

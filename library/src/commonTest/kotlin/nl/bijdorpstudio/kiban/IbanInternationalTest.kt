@@ -17,62 +17,56 @@ package nl.bijdorpstudio.kiban
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import kotlin.test.Test
+import de.infix.testBalloon.framework.core.testSuite
 
 /**
  * Ensures that the [Iban] class accepts IBAN numbers from every participating country (...known at
  * the time the test was last updated).
  */
-class IbanInternationalTest {
-    @Test
-    fun `Parse should accept plain form`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { testData ->
+val IbanInternationalTest by testSuite {
+    for (testData in countriesTestData) {
+        test("Parse should accept plain form for ${testData.name}") {
             val iban = Iban(testData.plain)
             assertThat(iban.plain).isEqualTo(testData.plain)
             assertThat(iban.toString()).isEqualTo(testData.pretty)
         }
     }
 
-    @Test
-    fun `Parse should accept pretty printed form`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val iban = Iban(td.pretty)
-            assertThat(iban.plain).isEqualTo(td.plain)
-            assertThat(iban.toString()).isEqualTo(td.pretty)
+    for (testData in countriesTestData) {
+        test("Parse should accept pretty printed form for ${testData.name}") {
+            val iban = Iban(testData.pretty)
+            assertThat(iban.plain).isEqualTo(testData.plain)
+            assertThat(iban.toString()).isEqualTo(testData.pretty)
         }
     }
 
-    @Test
-    fun `Compose should round trip every country`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
+    for (testData in countriesTestData) {
+        test("Compose should round trip ${testData.name}") {
             val composed =
                 Iban.compose(
-                    countryCode = td.plain.substring(0, 2),
-                    bban = td.plain.substring(4),
+                    countryCode = testData.plain.substring(0, 2),
+                    bban = testData.plain.substring(4),
                 )
-            assertThat(composed).isEqualTo(Iban(td.plain))
+            assertThat(composed).isEqualTo(Iban(testData.plain))
         }
     }
 
-    @Test
-    fun `Check is registered IBAN`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            assertThat(Iban(td.plain).isInSwiftRegistry).isEqualTo(td.swift)
+    for (testData in countriesTestData) {
+        test("Check is registered IBAN for ${testData.name}") {
+            assertThat(Iban(testData.plain).isInSwiftRegistry).isEqualTo(testData.swift)
         }
     }
 
-    @Test
-    fun `Check is SEPA country`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            assertThat(Iban(td.plain).isSEPA).isEqualTo(td.sepa)
+    for (testData in countriesTestData) {
+        test("Check is SEPA country for ${testData.name}") {
+            assertThat(Iban(testData.plain).isSEPA).isEqualTo(testData.sepa)
         }
     }
 
-    @Test
-    fun `Get length for country code should return correct value`() {
-        CountryCodesParameterizedTest.countriesTestDataTable.forAll { td ->
-            val lengthForCountryCode = CountryCodes.getLength(td.plain.substring(0, 2)) ?: -1
-            assertThat(lengthForCountryCode).isEqualTo(td.plain.length)
+    for (testData in countriesTestData) {
+        test("Get length for country code should return correct value for ${testData.name}") {
+            val lengthForCountryCode = CountryCodes.getLength(testData.plain.substring(0, 2)) ?: -1
+            assertThat(lengthForCountryCode).isEqualTo(testData.plain.length)
         }
     }
 }
