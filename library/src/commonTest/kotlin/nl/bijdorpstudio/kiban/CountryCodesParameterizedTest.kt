@@ -15,56 +15,41 @@
 */
 package nl.bijdorpstudio.kiban
 
-import assertk.Table1
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
-import assertk.tableOf
-import kotlin.test.Test
+import de.infix.testBalloon.framework.core.testSuite
+
+/**
+ * List of valid international IBAN's, ordered by country name so the generated test cases report in
+ * a stable order. References:
+ * - SWIFT: https://www.swift.com/standards/data-standards/iban
+ * - IBAN.com Experimental List: https://www.iban.com/structure
+ */
+internal val countriesTestData = countryTestData.sortedBy { it.name }
 
 /**
  * Ensures that the [Iban] class accepts IBAN numbers from every participating country (...known at
  * the time the test was last updated).
  */
-class CountryCodesParameterizedTest {
-
-    @Test
-    fun `Length for country code should return correct value`() {
-        countriesTestDataTable.forAll { testData ->
+val CountryCodesParameterizedTest by testSuite {
+    for (testData in countriesTestData) {
+        test("Length for ${testData.name} should return correct value") {
             val lengthForCountryCode = CountryCodes.getLength(testData.plain.substring(0, 2)) ?: -1
             assertThat(lengthForCountryCode).isEqualTo(testData.plain.length)
         }
     }
 
-    @Test
-    fun `Is known country code should return true`() {
-        countriesTestDataTable.forAll { td ->
-            assertThat(CountryCodes.isKnownCountryCode(td.plain.substring(0, 2))).isTrue()
+    for (testData in countriesTestData) {
+        test("${testData.name} should be a known country code") {
+            assertThat(CountryCodes.isKnownCountryCode(testData.plain.substring(0, 2))).isTrue()
         }
     }
 
-    @Test
-    fun `All country codes should be tested`() {
-        val testDataCountryCodes = testData.map { it.plain.substring(0, 2) }.toSet()
+    test("All country codes should be tested") {
+        val testDataCountryCodes = countriesTestData.map { it.plain.substring(0, 2) }.toSet()
 
         assertThat(CountryCodes.knownCountryCodes.toSet() - testDataCountryCodes).isEmpty()
-    }
-
-    companion object {
-        /**
-         * List of valid international IBAN's. References:
-         * - SWIFT: https://www.swift.com/standards/data-standards/iban
-         * - IBAN.com Experimental List: https://www.iban.com/structure
-         */
-        val testData = countryTestData.sortedBy { it.name }
-
-        // Table for parametrized tests
-        val countriesTestDataTable =
-            tableOf("Test data").run {
-                var table: Table1<IbanCountryTestData>? = null
-                testData.forEach { table = table?.row(it) ?: row(it) }
-                requireNotNull(table)
-            }
     }
 }

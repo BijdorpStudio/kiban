@@ -15,61 +15,65 @@
 */
 package nl.bijdorpstudio.kiban
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
+import de.infix.testBalloon.framework.core.TestConfig
+import de.infix.testBalloon.framework.core.TestPlatform
+import de.infix.testBalloon.framework.core.disable
+import de.infix.testBalloon.framework.core.testPlatform
+import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 /** Some tests for [CountryCodes]. */
-class CountryCodesTest {
-
-    @Ignore // Fails on Kotlin native
-    @Test
-    fun `Known country codes should not be editable`() {
+val CountryCodesTest by testSuite {
+    test(
+        "Known country codes should not be editable",
+        // JVM only. There, Collection and MutableCollection erase to the same type, so the cast
+        // is a runtime no-op and `add` reaches the fixed-size list backing `asList()`, which
+        // rejects it with UnsupportedOperationException. Every other target checks the cast and
+        // throws ClassCastException first — the collection is just as immutable there, but this
+        // test asserts the JVM's particular way of saying so.
+        testConfig =
+            if (testPlatform.type == TestPlatform.Type.Jvm) TestConfig else TestConfig.disable(),
+    ) {
         // Not meant to be an exhaustive test, just a reminder to keep API consistent if
         // implementation changes.
-        assertFailsWith<UnsupportedOperationException> {
-            (CountryCodes.knownCountryCodes as MutableCollection<String>).add("ZZ")
-        }
+        @Suppress("UNCHECKED_CAST")
+        assertFailure { (CountryCodes.knownCountryCodes as MutableCollection<String>).add("ZZ") }
+            .isInstanceOf<UnsupportedOperationException>()
     }
 
-    @Test
-    fun `Known country codes should be in ascending order`() {
+    test("Known country codes should be in ascending order") {
         val raw = CountryCodes.knownCountryCodes
 
         assertThat(raw.sorted()).isEqualTo(raw)
     }
 
-    @Test
-    fun `isKnownCountryCode should return false for empty string`() {
+    test("isKnownCountryCode should return false for empty string") {
         assertThat(CountryCodes.isKnownCountryCode("")).isFalse()
     }
 
-    @Test
-    fun `isKnownCountryCode should return false for lowercase`() {
+    test("isKnownCountryCode should return false for lowercase") {
         assertThat(CountryCodes.isKnownCountryCode("nl")).isFalse()
     }
 
-    @Test
-    fun `isKnownCountryCode should return true for existing country code`() {
+    test("isKnownCountryCode should return true for existing country code") {
         assertThat(CountryCodes.isKnownCountryCode("NL")).isTrue()
     }
 
-    @Test
-    fun `getLength returns null for unknown country code`() {
+    test("getLength returns null for unknown country code") {
         assertThat(CountryCodes.getLength("XX")).isNull()
     }
 
-    @Test
-    fun `lastUpdateDate should not be null`() {
+    test("lastUpdateDate should not be null") {
         assertThat(CountryCodes.lastUpdateDate)
             .isNotNull()
             .isBetween(
@@ -78,8 +82,7 @@ class CountryCodesTest {
             )
     }
 
-    @Test
-    fun `lastUpdateRevision should not be null`() {
+    test("lastUpdateRevision should not be null") {
         assertThat(CountryCodes.lastUpdateRevision).isNotNull()
     }
 }

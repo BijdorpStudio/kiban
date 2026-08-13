@@ -15,6 +15,19 @@
 
 **Infrastructure**
 
+* Migrated the test suite from `kotlin.test` to [TestBalloon](https://github.com/infix-de/testBalloon)
+  (#115), acting on the evaluation in `docs/82-testballoon-evaluation.md`. The country table used to be
+  folded into an assertk `Table1` and looped inside a handful of `@Test` methods, so all 111 countries
+  collapsed into 3 reported cases: a registry update that broke one country failed one opaque test and
+  stopped the loop, which is exactly the report a reviewer reads first on the automated registry-sync
+  pull requests. Each country now registers as its own test — `Length for Albania should return correct
+  value`, `Compose should round trip Albania`, and so on — taking the suite from 78 reported tests to
+  1,217 with no loss of coverage. Assertions are untouched: assertk stays, and the ~40 `assertFailsWith`
+  call sites became `assertFailure { … }.isInstanceOf<…>()`. `kotlin-test` is dropped from `commonTest`
+  entirely. TestBalloon is a compiler plugin plus a test-only dependency and registers no new Gradle test
+  tasks, so the published artifacts still declare `kotlin-stdlib` as their only dependency and the CI
+  target matrix needed no changes.
+
 * Made the SWIFT registry sync (#53) able to run unattended. It regenerates and diffs the country data
   before asking for a registry revision, so the ~50 runs a year that find nothing finish silently and only
   a real registry change interrupts a maintainer — the release number is not published anywhere
