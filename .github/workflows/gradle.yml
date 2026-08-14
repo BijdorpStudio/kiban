@@ -101,6 +101,51 @@ jobs:
         mkdir -p build/reports/ci
         ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
 
+    # Renders the JUnit XML Gradle already writes into this job's summary, and
+    # annotates failing tests on the run. 'always()' is the point of the step: a
+    # green run used to report nothing but "BUILD SUCCESSFUL", which stranded the
+    # per-test reporting #115 migrated to TestBalloon for.
+    #
+    # 'annotate_only' keeps this working under the workflow's 'contents: read'
+    # token and on pull requests from forks: creating a check run instead would
+    # need 'checks: write', which a fork's read-only token does not have.
+    - name: Report test results
+      # Half the matrix (apiCheck, dokka, ktfmt, cross-compile, the sample run)
+      # writes no test XML at all; those jobs skip the step rather than report an
+      # empty suite.
+      if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
+      # Reporting is a convenience wrapped around the real signal. If the action
+      # itself breaks it must not fail the job - and, because 'failure()' latches
+      # for the rest of the job once any step fails, it must not make the two
+      # diff steps below fire on an otherwise green run either.
+      continue-on-error: true
+      uses: mikepenz/action-junit-report@v5
+      with:
+        report_paths: '**/build/test-results/**/*.xml'
+        check_name: 'Tests: ${{ matrix.id }}'
+        annotate_only: true
+        detailed_summary: true
+        group_suite: true
+        # The per-country listing is the whole reason this is worth rendering on a
+        # passing run; failures alone are already visible in the Gradle log.
+        include_passed: true
+        # The Gradle step has already failed the job by this point. Failing again
+        # here would only replace a diagnosable error with this action's own.
+        fail_on_failure: false
+        require_tests: false
+
+    # Unlike 'Upload failure reports' below, this runs on green too - the XML is a
+    # few hundred KB and it is what the 'ci' job aggregates into a single summary.
+    # On a red run the two artifacts overlap; the failure one is still the richer
+    # of the pair (HTML reports, api dumps) and stays as it is.
+    - name: Upload test results
+      if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-results-${{ matrix.id }}
+        path: '**/build/test-results/**/*.xml'
+        retention-days: 7
+
     - name: Upload API docs preview
       if: matrix.id == 'dokka'
       uses: actions/upload-artifact@v7
@@ -111,13 +156,54 @@ jobs:
 
     - name: Generate ktfmt diff
       # ktfmtCheck fails with a bare file list; re-formatting turns that into a
-      # patch that can be downloaded and applied.
+      # patch that can be downloaded and applied. It is also rendered into the job
+      # summary, because the usual case is a handful of misformatted lines - not
+      # worth a round trip through an artifact download to read.
       if: failure() && matrix.id == 'ktfmt-check'
       shell: bash
       run: |
         ./gradlew ktfmtFormat || true
         mkdir -p build/reports/ktfmt
         git diff > build/reports/ktfmt/ktfmt.patch
+        {
+          echo '## ktfmt'
+          echo
+          echo 'Run `./gradlew ktfmtFormat` to apply this, or download the'
+          echo '`reports-ktfmt-check-ubuntu-latest` artifact and `git apply ktfmt.patch`.'
+          echo
+          echo '```diff'
+          # Truncated because the step summary is capped at 1 MiB and a run that
+          # blows past this is one where the artifact is the right tool anyway.
+          head -n 400 build/reports/ktfmt/ktfmt.patch
+          echo '```'
+          if [ "$(wc -l < build/reports/ktfmt/ktfmt.patch)" -gt 400 ]; then
+            echo '_Truncated to the first 400 lines; the full patch is in the artifact._'
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Generate API dump diff
+      # apiCheck reports a binary-compatibility break as a Gradle failure whose
+      # useful part - what the dump would have to become - is buried in the log
+      # tail. Regenerating the dump surfaces exactly that, as a reviewable diff.
+      if: failure() && matrix.id == 'api-check'
+      shell: bash
+      run: |
+        ./gradlew apiDump || true
+        mkdir -p build/reports/api-dump
+        git diff > build/reports/api-dump/api-dump.patch
+        {
+          echo '## API dump'
+          echo
+          echo 'If the change is intended, run `./gradlew apiDump` and commit the updated'
+          echo 'dump files. If it is not, it is a binary-compatibility break.'
+          echo
+          echo '```diff'
+          head -n 400 build/reports/api-dump/api-dump.patch
+          echo '```'
+          if [ "$(wc -l < build/reports/api-dump/api-dump.patch)" -gt 400 ]; then
+            echo '_Truncated to the first 400 lines; the full patch is in the artifact._'
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload failure reports
       if: failure()
@@ -146,9 +232,45 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+    # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
+    # certain to open. Suite names carry their target ('IbanTest[jvm]',
+    # 'IbanTest[iosSimulatorArm64]', ...), so grouping by suite attributes each
+    # result without the 14 jobs having to be listed out here.
+    #
+    # Both steps are 'continue-on-error' on purpose. This job is the single
+    # required check; a missing artifact or a bad parse has to cost the summary
+    # and nothing else, and must never be able to turn a green matrix red.
+    - name: Download test results
+      if: always()
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        pattern: test-results-*
+        path: test-results
+
+    - name: Summarise test results
+      if: always()
+      continue-on-error: true
+      uses: mikepenz/action-junit-report@v5
+      with:
+        report_paths: 'test-results/**/*.xml'
+        check_name: 'Test results (all targets)'
+        annotate_only: true
+        # The matrix jobs have already annotated their own failures; repeating
+        # them here would double every one of them on the pull request.
+        skip_annotations: true
+        detailed_summary: true
+        group_suite: true
+        # Failures only: the per-target listings live on the matrix jobs, and
+        # every passing test across 9 targets would not fit the summary anyway.
+        include_passed: false
+        fail_on_failure: false
+        require_tests: false
+
     - name: Check matrix result
       # 'needs.build.result' is the combined result of all matrix entries:
       # 'success' only when every one of them succeeded.
+      if: always()
       run: |
         echo "Build matrix result: ${{ needs.build.result }}"
         test "${{ needs.build.result }}" = "success"

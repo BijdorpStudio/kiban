@@ -42,6 +42,18 @@
   navigation, so the existing response validation never saw it. It also exports the registry TXT's
   `last-modified` date for the sync workflow's logs and pull request body.
 
+* CI now reports what it verified (#129). A passing run used to end at `BUILD SUCCESSFUL in 59s`,
+  with no counts and no test names anywhere in the GitHub UI — so the per-country reporting #115
+  migrated to TestBalloon for was only ever visible when something broke. Each matrix job now
+  renders the JUnit XML Gradle already writes into its own job summary, and the `ci` gate job
+  aggregates every target's results into a single roll-up. Test result XML is uploaded on green
+  runs too, not only on failure. Failing tests are annotated on the run rather than left in the
+  raw Gradle log; the reporter runs `annotate_only`, so it needs nothing beyond the workflow's
+  `contents: read` token and keeps working for pull requests from forks. The `ktfmt` patch is
+  rendered into the job summary instead of only being downloadable, and an `apiCheck` failure now
+  gets the same treatment via `apiDump` — the dump diff being the thing a reviewer actually needs.
+  Every added step is non-fatal: `ci` stays a usable required check whatever the reporting does.
+
 ## 0.5.0
 
 **Breaking changes**
