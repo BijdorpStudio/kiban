@@ -119,7 +119,7 @@ jobs:
       # for the rest of the job once any step fails, it must not make the two
       # diff steps below fire on an otherwise green run either.
       continue-on-error: true
-      uses: mikepenz/action-junit-report@v5
+      uses: mikepenz/action-junit-report@v6
       with:
         report_paths: '**/build/test-results/**/*.xml'
         check_name: 'Tests: ${{ matrix.id }}'
@@ -254,7 +254,7 @@ jobs:
     - name: Summarise test results
       if: always()
       continue-on-error: true
-      uses: mikepenz/action-junit-report@v5
+      uses: mikepenz/action-junit-report@v6
       with:
         report_paths: 'test-results/**/*.xml'
         check_name: 'Test results (all targets)'
