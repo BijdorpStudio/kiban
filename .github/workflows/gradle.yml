@@ -126,9 +126,12 @@ jobs:
         annotate_only: true
         detailed_summary: true
         group_suite: true
-        # The per-country listing is the whole reason this is worth rendering on a
-        # passing run; failures alone are already visible in the Gradle log.
-        include_passed: true
+        # Counts on green, the grouped failure listing on red. Listing all 1,217
+        # passing tests here as well was tried and reverted: nine test jobs each
+        # rendering the full per-country table buried the two numbers anyone
+        # opens a summary for. The full listing is still a download away in the
+        # 'test-results-*' artifact.
+        include_passed: false
         # The Gradle step has already failed the job by this point. Failing again
         # here would only replace a diagnosable error with this action's own.
         fail_on_failure: false
