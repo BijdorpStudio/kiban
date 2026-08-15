@@ -57,6 +57,7 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind : ja
 	public static final field INVALID_CHARACTER Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 	public static final field INVALID_STRUCTURE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 	public static final field NON_NUMERIC_CHECK_DIGITS Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+	public static final field NON_UPPER_CASE_COUNTRY_CODE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 	public static final field TOO_SHORT Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;

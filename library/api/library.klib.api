@@ -54,6 +54,7 @@ sealed class nl.bijdorpstudio.kiban/IbanParseException : kotlin/IllegalArgumentE
             enum entry INVALID_CHARACTER // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.INVALID_CHARACTER|null[0]
             enum entry INVALID_STRUCTURE // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.INVALID_STRUCTURE|null[0]
             enum entry NON_NUMERIC_CHECK_DIGITS // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS|null[0]
+            enum entry NON_UPPER_CASE_COUNTRY_CODE // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE|null[0]
             enum entry TOO_SHORT // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.TOO_SHORT|null[0]
 
             final val entries // nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind.entries|#static{}entries[0]

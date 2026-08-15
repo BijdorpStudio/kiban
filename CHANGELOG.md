@@ -2,6 +2,30 @@
 
 ## 0.6.0 (unreleased)
 
+**Breaking changes**
+
+* IBAN validation is now ASCII-only (#136). `Iban.validate` used `Char.isDigit()` and
+  `Char.isLetterOrDigit()`, and `Modulo97.checksum` used `Char.isDigit()` — all Unicode-aware on
+  every platform, as is `String.toLong`, which the checksum folds its buffer through. The effect was
+  that `Iban("NL９１ABNA0417164300")` (fullwidth digits) parsed successfully and produced an `Iban`
+  whose `plain` held non-ASCII characters, violating the class invariant and the documented
+  `[A-Za-z0-9 ]` character set. ISO 13616 defines the IBAN character set as ASCII `A-Z0-9`, so such
+  input is now rejected: `Malformed(NON_NUMERIC_CHECK_DIGITS)` for non-ASCII check digits,
+  `Malformed(INVALID_BOUNDARY_CHARACTER)` at the ends of the input and `Malformed(INVALID_CHARACTER)`
+  elsewhere. Rejecting rather than normalizing is deliberate — input-layer concerns like fullwidth
+  IME digits belong to the caller (NFKC before parsing), silently rewriting a bank account identifier
+  masks upstream data corruption, and any normalization line drawn here would become frozen contract
+  surface at 1.0. An opt-in normalizer stays possible later as an additive change; going lenient
+  first and strict later would not.
+
+* A known country code written in the wrong case is now reported as
+  `Malformed(NON_UPPER_CASE_COUNTRY_CODE)` instead of `UnknownCountryCode` (#136). Lower case input
+  such as `"nl91abna0417164300"` was already rejected and stays rejected (`java-iban` parity), but
+  the old rejection blamed the country rather than the case: `NL` is a known country code, `nl` is
+  the same country code miswritten. `NON_UPPER_CASE_COUNTRY_CODE` is a new `Malformed.Kind` entry,
+  so `when` statements over `Malformed.kind` that were exhaustive will need a branch for it. An
+  unknown country code that also happens to be lower case is still an `UnknownCountryCode`.
+
 **Documentation**
 
 * Cleaned up KDoc inherited from `java-iban` (#108). The `Iban` class documentation had its

@@ -21,9 +21,11 @@ object Modulo97 {
     /**
      * Calculates the raw MOD97 checksum for a given input.
      *
-     * The input is allowed to contain space characters. Any character outside the range `[A-Za-z0-9
-     * ]` will cause an [IllegalArgumentException] to be thrown. This method allocates a temporary
-     * buffer of twice the input length, so it will fail for unreasonably large inputs.
+     * The input is allowed to contain space characters. Any character outside the ASCII range
+     * `[A-Za-z0-9 ]` will cause an [IllegalArgumentException] to be thrown; non-ASCII digits such
+     * as fullwidth `９` or Arabic-Indic `٩` are rejected rather than normalized. This method
+     * allocates a temporary buffer of twice the input length, so it will fail for unreasonably
+     * large inputs.
      *
      * It is expected but not enforced that the characters at index 2 and 3 are numeric. If the
      * existing check digits are `00` then this method will return the value that, after subtracting
@@ -109,7 +111,7 @@ object Modulo97 {
      * Copies `src[srcPos...srcLen)` into `dest[destPos)` while applying character to numeric
      * transformation and skipping over space (ASCII 0x20) characters.
      *
-     * @param src the data to begin copying, must contain only characters `[A-Za-z0-9 ]`.
+     * @param src the data to begin copying, must contain only ASCII characters `[A-Za-z0-9 ]`.
      * @param srcPos the index in `src` to begin transforming (inclusive).
      * @param srcLen the number of characters starting from `srcPos` to transform.
      * @param dest the buffer to write transformed characters into.
@@ -132,7 +134,10 @@ object Modulo97 {
         for (i in srcPos..<srcLen) {
             val c = src[i]
             when {
-                c.isDigit() -> {
+                // Deliberately not Char.isDigit(): that is Unicode-aware and would accept
+                // fullwidth or Arabic-Indic digits, which are not part of the ISO 13616
+                // character set. See Iban.validate for the same reasoning.
+                c in '0'..'9' -> {
                     dest[offset++] = c
                 }
 
