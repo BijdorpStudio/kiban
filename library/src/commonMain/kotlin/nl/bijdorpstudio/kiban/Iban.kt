@@ -28,7 +28,7 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  *
  * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
  * @property isSEPA whether or not this IBAN is of a SEPA participating country.
- * @property plain the IBAN value, without any white space.
+ * @property plain the IBAN value, without any spaces.
  * @property pretty the IBAN value, with spaces every four characters.
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia:
  *   International Bank Account Number</a>
@@ -53,7 +53,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
 
     /**
      * Initializing constructor. Validation happens before construction, so this constructor cannot
-     * fail. the IBAN value, without any white space, already validated by the caller.
+     * fail. the IBAN value, without any spaces, already validated by the caller.
      */
     init {
         val countryCode: String = value.substring(0, 2)
@@ -130,6 +130,11 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * look-alikes such as fullwidth digits are rejected rather than normalized. Normalize
          * (NFKC) user input before parsing if your input layer can produce them.
          *
+         * The only whitespace tolerated is the (ASCII 0x20) space, and only between the first and
+         * last character: a leading or trailing space is rejected, as is any other whitespace
+         * anywhere, tabs and non-breaking spaces included. Trim before parsing if your input layer
+         * can produce them.
+         *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
          * @return the parsed and validated IBAN object.
@@ -149,8 +154,8 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         const val SHORTEST_POSSIBLE_IBAN: Int = 5
 
         /**
-         * Wraps an already-validated, whitespace-stripped IBAN string, without paying for
-         * validation a second time.
+         * Wraps an already-validated, space-stripped IBAN string, without paying for validation a
+         * second time.
          */
         internal fun ofValidated(plain: String): Iban = Iban(plain)
 
@@ -192,6 +197,21 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
                         Rejection.UnknownCountryCode(value, countryCode)
                     }
             if (expectedLength != value.length) {
+                // A character the IBAN character set does not contain — a tab, a non-breaking
+                // space, a '$' — adds to the length just like a legitimate character does, so the
+                // length is only the interesting failure once the characters are known to be
+                // legitimate. Correct-length input carrying such a character is caught below, by
+                // Modulo97; without this the two paths would blame different things for the same
+                // mistake. Deliberately not hoisted above the length comparison: the scan is
+                // wasted work for the valid input that is the hot path here.
+                val invalidCharacterIndex: Int = value.indexOfFirst { !it.isAsciiLetterOrDigit() }
+                if (invalidCharacterIndex >= 0) {
+                    return Rejection.Malformed(
+                        value,
+                        Kind.INVALID_CHARACTER,
+                        "Invalid character '${value[invalidCharacterIndex]}' in $value",
+                    )
+                }
                 return Rejection.WrongLength(value, expectedLength, value.length)
             }
             val calculatedChecksum: Int =
@@ -262,13 +282,15 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         }
 
         /**
-         * Removes any spaces contained in the String thereby converting the input into a plain IBAN
+         * Removes the (ASCII 0x20) space characters contained in the input, thereby converting a
+         * pretty printed IBAN into a plain one. Deliberately not [Char.isWhitespace]: only the
+         * space that [addSpaces] emits is grouping, every other whitespace character is a character
+         * an IBAN cannot contain and is left in place for [validate] to reject.
          *
          * @param input possibly pretty printed IBAN
          * @return plain IBAN
          */
-        internal fun toPlain(input: CharSequence): String =
-            input.filter { !it.isWhitespace() }.toString()
+        internal fun toPlain(input: CharSequence): String = input.filter { it != ' ' }.toString()
 
         /**
          * Converts a plain to a pretty printed IBAN

@@ -18,6 +18,22 @@
   surface at 1.0. An opt-in normalizer stays possible later as an additive change; going lenient
   first and strict later would not.
 
+* Whitespace leniency in parsing is now limited to the (ASCII 0x20) space (#137). `Iban.toPlain`
+  stripped every character `Char.isWhitespace()` accepts, anywhere in the input, so
+  `Iban("NL91\tABNA 0417164300")` parsed — while the documented contract, and `Modulo97.checksum`
+  one layer down, only ever tolerated 0x20. Tabs, non-breaking spaces and the rest are now left in
+  place and rejected as `Malformed(INVALID_CHARACTER)`, or `Malformed(INVALID_BOUNDARY_CHARACTER)`
+  at the ends of the input. Interior spaces still group (`"NL91 ABNA 0417 1643 00"` parses) and a
+  leading or trailing space is still rejected, both unchanged. Silently dropping a tab from the
+  middle of a bank account identifier treats a paste artifact as intent, and the leniency cannot be
+  narrowed after 1.0 without breaking callers who came to rely on it.
+
+* A wrong-length input that also carries a character outside the IBAN character set is now reported
+  as `Malformed(INVALID_CHARACTER)` rather than `WrongLength` (#137). Such a character adds to the
+  length exactly like a legitimate one, so the old rejection blamed the length for a problem the
+  character caused — and an input of the *correct* length carrying the same character was already
+  reported as `INVALID_CHARACTER` by `Modulo97`. The two paths now agree.
+
 * A known country code written in the wrong case is now reported as
   `Malformed(NON_UPPER_CASE_COUNTRY_CODE)` instead of `UnknownCountryCode` (#136). Lower case input
   such as `"nl91abna0417164300"` was already rejected and stays rejected (`java-iban` parity), but

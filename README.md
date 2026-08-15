@@ -63,6 +63,12 @@ fullwidth `９` or Arabic-Indic `٩` digits are rejected rather than normalized,
 rewriting a bank account identifier hides upstream data corruption. NFKC-normalize user input before
 parsing if your input layer can produce them.
 
+The whitespace leniency is just as narrow: the (ASCII 0x20) space is ignored between the first and
+last character, so both `"NL91ABNA0417164300"` and `"NL91 ABNA 0417 1643 00"` parse, but a leading
+or trailing space is rejected and so is any other whitespace anywhere — a tab or a non-breaking
+space mid-IBAN is a paste artifact, not grouping, and is reported as an invalid character. Trim
+before parsing if your input layer can produce them.
+
 ``` kotlin
     // The primary entry point. Throws IbanParseException on invalid input.
     val iban: Iban = Iban( "NL91ABNA0417164300" )
