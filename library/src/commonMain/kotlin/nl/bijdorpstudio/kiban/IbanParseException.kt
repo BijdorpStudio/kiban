@@ -50,10 +50,16 @@ sealed class IbanParseException(
             /** The input is shorter than [Iban.SHORTEST_POSSIBLE_IBAN]. */
             TOO_SHORT,
 
-            /** The characters at index 2 and 3 are not both numeric. */
+            /** The characters at index 2 and 3 are not both ASCII digits. */
             NON_NUMERIC_CHECK_DIGITS,
 
-            /** The input contains a character outside the range `[A-Za-z0-9 ]`. */
+            /**
+             * The country code is a known IBAN country code, but is not written in upper case.
+             * IBANs are upper case by definition, and kiban rejects rather than normalizes.
+             */
+            NON_UPPER_CASE_COUNTRY_CODE,
+
+            /** The input contains a character outside the ASCII range `[A-Za-z0-9 ]`. */
             INVALID_CHARACTER,
 
             /**
@@ -131,6 +137,8 @@ internal sealed class Rejection(val input: String) {
                 "Length is too short to be an IBAN: $input"
             IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS ->
                 "Characters at index 2 and 3 not both numeric. $input"
+            IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE ->
+                "Country code is not upper case: ${input.take(2)}. $input"
             IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
             IbanParseException.Malformed.Kind.INVALID_CHARACTER,
             IbanParseException.Malformed.Kind.INVALID_STRUCTURE ->

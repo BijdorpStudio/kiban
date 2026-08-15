@@ -31,6 +31,12 @@ import de.infix.testBalloon.framework.core.testSuite
 internal const val VALID_IBAN = "NL03ABNA0143267469"
 internal const val INVALID_IBAN = "NL13ABNA0143267469"
 
+/** [VALID_IBAN] with its check digits written as fullwidth (U+FF10..U+FF19) digits. */
+private val FULLWIDTH_CHECK_DIGITS = VALID_IBAN.replaceRange(2, 4, "０３")
+
+/** [VALID_IBAN] with one BBAN digit written as a fullwidth digit. */
+private val FULLWIDTH_DIGIT_IN_BBAN = VALID_IBAN.replaceRange(8, 9, "０")
+
 /**
  * One input per rejection kind the parser distinguishes, plus the valid IBAN. Shared by the tests
  * that assert every entry point agrees on accept/reject and that nothing but [IbanParseException]
@@ -48,6 +54,9 @@ private val rejectionKindInputs =
         "UU345678345543234",
         VALID_IBAN + "0",
         INVALID_IBAN,
+        VALID_IBAN.lowercase(),
+        FULLWIDTH_CHECK_DIGITS,
+        FULLWIDTH_DIGIT_IN_BBAN,
     )
 
 /** Miscellaneous tests for the [Iban] class. */
@@ -176,6 +185,75 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+    }
+
+    // The ASCII letter test folds the case bit before comparing, so the characters that sit
+    // immediately either side of 'A'-'Z' and 'a'-'z' are where a mis-stated range would show up.
+    for (punctuation in listOf('@', '[', '`', '{', '/', ':')) {
+        test("Invoke should reject '$punctuation', adjacent to the ASCII letter range") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, punctuation.toString())) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+        }
+    }
+
+    test("Invoke should reject fullwidth check digits") {
+        assertFailure { Iban(FULLWIDTH_CHECK_DIGITS) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
+    }
+
+    for ((label, replacement) in
+        listOf(
+            "fullwidth" to "０",
+            "Arabic-Indic" to "٠",
+            "Devanagari" to "०",
+        )) {
+        test("Invoke should reject $label digits in the BBAN") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(8, 9, replacement)) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+        }
+    }
+
+    for ((label, replacement) in
+        listOf(
+            "fullwidth letter" to "Ｎ",
+            "Cyrillic look-alike" to "А",
+        )) {
+        test("Invoke should reject a leading non-ASCII $label") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(0, 1, replacement)) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        }
+    }
+
+    test("Invoke should reject lower case input naming the case, not the country") {
+        assertFailure { Iban(VALID_IBAN.lowercase()) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .all {
+                prop(IbanParseException.Malformed::kind)
+                    .isEqualTo(IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE)
+                hasMessage("Country code is not upper case: nl. ${VALID_IBAN.lowercase()}")
+            }
+    }
+
+    test("Invoke should reject a mixed case country code") {
+        assertFailure { Iban(VALID_IBAN.replaceRange(1, 2, "l")) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE)
+    }
+
+    test("Invoke should still report an unknown country code that is lower case as unknown") {
+        assertFailure { Iban("uu345678345543234") }
+            .isInstanceOf<IbanParseException.UnknownCountryCode>()
+            .prop(IbanParseException.UnknownCountryCode::countryCode)
+            .isEqualTo("uu")
     }
 
     test("Invoke should reject unknown country code") {

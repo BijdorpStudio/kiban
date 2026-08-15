@@ -57,6 +57,12 @@ Parsing is strict: invalid input throws a typed `IbanParseException`, so you don
 `Result` for the common case. The exception-free `toIbanOrNull()` and `isValidIban()` are there for
 when you want to check input without paying for a stack trace.
 
+Input must be ASCII. ISO 13616 defines the IBAN character set as `A-Z0-9`, so upper case ASCII
+letters, ASCII digits and (ASCII 0x20) spaces are all that parse; non-ASCII look-alikes such as
+fullwidth `９` or Arabic-Indic `٩` digits are rejected rather than normalized, because silently
+rewriting a bank account identifier hides upstream data corruption. NFKC-normalize user input before
+parsing if your input layer can produce them.
+
 ``` kotlin
     // The primary entry point. Throws IbanParseException on invalid input.
     val iban: Iban = Iban( "NL91ABNA0417164300" )

@@ -43,6 +43,11 @@ val Modulo97Test by testSuite {
             "length 4 padded to 5" to " MO97",
             "invalid non-whitespace" to "TS00☠",
             "invalid whitespace" to "MO97\tA",
+            // ISO 13616 is ASCII-only, but Char.isDigit() is Unicode-aware: these used to be
+            // accepted and folded into the checksum as if they were ASCII digits.
+            "fullwidth digits" to "MO００T",
+            "Arabic-Indic digits" to "MO٠٠T",
+            "Devanagari digits" to "MO००T",
         )) {
         test("It should reject $label") {
             assertFailure { Modulo97.checksum(input) }.isInstanceOf<IllegalArgumentException>()
