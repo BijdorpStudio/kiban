@@ -20,7 +20,7 @@ package nl.bijdorpstudio.kiban
  * why the input was rejected. Extending [IllegalArgumentException] means callers who only care that
  * parsing failed don't need to catch this type specifically.
  *
- * @property input the offending input, with any white space removed.
+ * @property input the offending input, with any (ASCII 0x20) spaces removed.
  */
 sealed class IbanParseException(
     val input: String,

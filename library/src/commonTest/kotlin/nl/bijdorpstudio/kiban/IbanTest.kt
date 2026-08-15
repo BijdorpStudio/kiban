@@ -38,6 +38,24 @@ private val FULLWIDTH_CHECK_DIGITS = VALID_IBAN.replaceRange(2, 4, "０３")
 private val FULLWIDTH_DIGIT_IN_BBAN = VALID_IBAN.replaceRange(8, 9, "０")
 
 /**
+ * Whitespace characters that are not the (ASCII 0x20) space. Parsing tolerates only the space, so
+ * each of these is an invalid character wherever it occurs — the ASCII controls that
+ * [Char.isWhitespace] accepts as well as the Unicode spaces that look like the real thing in a
+ * pasted IBAN.
+ */
+private val nonSpaceWhitespace =
+    listOf(
+        "tab" to '\t',
+        "line feed" to '\n',
+        "carriage return" to '\r',
+        "vertical tab" to '\u000B',
+        "non-breaking space" to '\u00A0',
+        "figure space" to '\u2007',
+        "narrow non-breaking space" to '\u202F',
+        "ideographic space" to '\u3000',
+    )
+
+/**
  * One input per rejection kind the parser distinguishes, plus the valid IBAN. Shared by the tests
  * that assert every entry point agrees on accept/reject and that nothing but [IbanParseException]
  * escapes.
@@ -57,6 +75,8 @@ private val rejectionKindInputs =
         VALID_IBAN.lowercase(),
         FULLWIDTH_CHECK_DIGITS,
         FULLWIDTH_DIGIT_IN_BBAN,
+        VALID_IBAN.replaceRange(4, 4, "\t"),
+        VALID_IBAN.replaceRange(6, 7, "\u00A0"),
     )
 
 /** Miscellaneous tests for the [Iban] class. */
@@ -155,6 +175,62 @@ val IbanTest by testSuite {
                 prop(IbanParseException.Malformed::kind)
                     .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
                 hasMessage("Input begins or ends in an invalid character: $VALID_IBAN ")
+            }
+    }
+
+    test("Invoke should accept the pretty printed form") {
+        assertThat(Iban("NL03 ABNA 0143 2674 69").plain).isEqualTo(VALID_IBAN)
+    }
+
+    // The ASCII space is grouping, every other whitespace character is just a character an IBAN
+    // cannot contain. Inserting one makes the input a character too long and replacing one keeps
+    // the length correct; both have to be blamed on the character, not on the length.
+    for ((label, whitespace) in nonSpaceWhitespace) {
+        test("Invoke should reject an inserted $label") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, whitespace.toString())) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+        }
+
+        test("Invoke should reject a substituted $label") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, whitespace.toString())) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+        }
+
+        test("Invoke should reject a leading $label") {
+            assertFailure { Iban("$whitespace$VALID_IBAN") }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        }
+
+        test("Invoke should reject a trailing $label") {
+            assertFailure { Iban("$VALID_IBAN$whitespace") }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+        }
+    }
+
+    test("Invoke should reject the tab that used to be stripped silently") {
+        // The example from #137: before the leniency was narrowed to the ASCII space this parsed,
+        // because toPlain stripped every Unicode whitespace character anywhere in the input.
+        assertFailure { Iban("NL91\tABNA 0417164300") }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+    }
+
+    test("Invoke should reject a wrong length input by its invalid character, not its length") {
+        assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, "_")) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .all {
+                prop(IbanParseException.Malformed::kind)
+                    .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+                hasMessage("Invalid character '_' in ${VALID_IBAN.replaceRange(4, 4, "_")}")
             }
     }
 
@@ -377,6 +453,12 @@ val IbanTest by testSuite {
         )) {
         test("To plain should reduce '$input' to '$plain'") {
             assertThat(Iban.toPlain(input)).isEqualTo(plain)
+        }
+    }
+
+    for ((label, whitespace) in nonSpaceWhitespace) {
+        test("To plain should keep a $label") {
+            assertThat(Iban.toPlain("1234 5${whitespace}678")).isEqualTo("12345${whitespace}678")
         }
     }
 
