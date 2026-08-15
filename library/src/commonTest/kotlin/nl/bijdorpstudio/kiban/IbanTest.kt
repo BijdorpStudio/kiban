@@ -187,6 +187,17 @@ val IbanTest by testSuite {
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
     }
 
+    // The ASCII letter test folds the case bit before comparing, so the characters that sit
+    // immediately either side of 'A'-'Z' and 'a'-'z' are where a mis-stated range would show up.
+    for (punctuation in listOf('@', '[', '`', '{', '/', ':')) {
+        test("Invoke should reject '$punctuation', adjacent to the ASCII letter range") {
+            assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, punctuation.toString())) }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+        }
+    }
+
     test("Invoke should reject fullwidth check digits") {
         assertFailure { Iban(FULLWIDTH_CHECK_DIGITS) }
             .isInstanceOf<IbanParseException.Malformed>()

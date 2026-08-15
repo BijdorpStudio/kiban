@@ -241,15 +241,25 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         }
 
         /**
-         * Whether the given country code is a known IBAN country code that was written in the wrong
-         * case. Such input stays rejected — kiban rejects rather than normalizes — but it deserves
-         * a better diagnosis than "unknown country code", because the country is known.
+         * Whether the given two-character country code is a known IBAN country code that was
+         * written in the wrong case. Such input stays rejected — kiban rejects rather than
+         * normalizes — but it deserves a better diagnosis than "unknown country code", because the
+         * country is known.
+         *
+         * Only called once the code has already failed the [CountryCodes.getLength] lookup, so both
+         * early returns keep a doomed input from paying for a second binary search.
          */
-        private fun isKnownCountryCodeInWrongCase(countryCode: String): Boolean =
-            countryCode.all { it in 'A'..'Z' || it in 'a'..'z' } &&
-                // Safe to uppercase: every character is known to be an ASCII letter, so this
-                // cannot produce a locale-dependent or length-changing result.
-                CountryCodes.getLength(countryCode.uppercase()) != null
+        private fun isKnownCountryCodeInWrongCase(countryCode: String): Boolean {
+            val first: Char = countryCode[0]
+            val second: Char = countryCode[1]
+            if (!first.isAsciiLetter() || !second.isAsciiLetter()) return false
+            // An all-upper-case code that failed the lookup is genuinely unknown: upper-casing it
+            // cannot change the outcome.
+            if (!first.isAsciiLowerCase() && !second.isAsciiLowerCase()) return false
+            return CountryCodes.getLength(
+                charArrayOf(first.uppercaseAscii(), second.uppercaseAscii()).concatToString()
+            ) != null
+        }
 
         /**
          * Removes any spaces contained in the String thereby converting the input into a plain IBAN
@@ -301,14 +311,37 @@ fun String.toIbanOrNull(): Iban? =
 fun String.isValidIban(): Boolean = Iban.validate(this) == null
 
 /**
+ * Bit 5 of an ASCII letter is its case bit: setting it maps `A`-`Z` onto `a`-`z` and clearing it
+ * maps them back. Testing a letter of either case is therefore one range check rather than two, and
+ * upper-casing one is a single mask rather than a trip through the Unicode case tables that
+ * [Char.uppercaseChar] consults.
+ */
+private const val ASCII_CASE_BIT = 0x20
+
+/**
  * Whether this is an ASCII digit. Deliberately not [Char.isDigit], which is Unicode-aware on every
  * platform and accepts fullwidth (`９`), Arabic-Indic (`٩`) and other non-ASCII digits.
  */
 private fun Char.isAsciiDigit(): Boolean = this in '0'..'9'
 
 /**
+ * Whether this is an ASCII letter of either case. Deliberately not [Char.isLetter], for the same
+ * reason as [isAsciiDigit]: folding the case first keeps this to a single range check, and folding
+ * a non-ASCII character can only move it further outside `a`-`z`.
+ */
+private fun Char.isAsciiLetter(): Boolean = (code or ASCII_CASE_BIT).toChar() in 'a'..'z'
+
+/** Whether this is a lower case ASCII letter. */
+private fun Char.isAsciiLowerCase(): Boolean = this in 'a'..'z'
+
+/**
+ * Upper-cases an ASCII letter by clearing its case bit. The receiver must already be one — every
+ * other character comes back mangled, not unchanged.
+ */
+private fun Char.uppercaseAscii(): Char = (code and ASCII_CASE_BIT.inv()).toChar()
+
+/**
  * Whether this is an ASCII letter or digit, the character set ISO 13616 allows in an IBAN.
  * Deliberately not [Char.isLetterOrDigit], for the same reason as [isAsciiDigit].
  */
-private fun Char.isAsciiLetterOrDigit(): Boolean =
-    isAsciiDigit() || this in 'A'..'Z' || this in 'a'..'z'
+private fun Char.isAsciiLetterOrDigit(): Boolean = isAsciiDigit() || isAsciiLetter()
