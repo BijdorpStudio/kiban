@@ -35,6 +35,7 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
 
         final fun compose(kotlin/CharSequence, kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.compose|compose(kotlin.CharSequence;kotlin.CharSequence){}[0]
         final fun invoke(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.invoke|invoke(kotlin.CharSequence){}[0]
+        final fun parse(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.parse|parse(kotlin.CharSequence){}[0]
     }
 }
 

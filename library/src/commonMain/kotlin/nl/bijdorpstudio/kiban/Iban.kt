@@ -15,6 +15,7 @@
 */
 package nl.bijdorpstudio.kiban
 
+import kotlin.jvm.JvmStatic
 import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 
 /**
@@ -23,8 +24,9 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  * validation is performed, other than matching the length of the IBAN to its country code. Unknown
  * country codes are not supported.
  *
- * Instances can only be obtained through [Iban.invoke] (`Iban(input)`) or [Iban.compose], which
- * validate the input and throw an [IbanParseException] on failure. Construction itself never fails.
+ * Instances can only be obtained through [Iban.invoke] (`Iban(input)`), its named alias
+ * [Iban.parse] for callers outside Kotlin, or [Iban.compose] — all of which validate the input and
+ * throw an [IbanParseException] on failure. Construction itself never fails.
  *
  * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
  * @property isSEPA whether or not this IBAN is of a SEPA participating country.
@@ -148,6 +150,26 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
             }
 
         /**
+         * Parses the given string into an IBAN object and confirms the check digits. Identical to
+         * [invoke] in every way; it exists because `invoke` has no call syntax outside Kotlin.
+         * `Iban(input)` reads as `Iban.Companion.invoke(...)` from Java and
+         * `Iban.companion.invoke(input:)` from Swift, neither of which is an API anyone would write
+         * on purpose. Kotlin callers should keep using `Iban(input)`.
+         *
+         * The name follows the `java-iban` heritage this library continues, and reads naturally
+         * next to [String.toIban] and [String.toIbanOrNull].
+         *
+         * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
+         *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
+         * @return the parsed and validated IBAN object.
+         * @throws IbanParseException describing why the input was rejected.
+         * @see invoke for the full description of what is and isn't accepted.
+         */
+        @Throws(IbanParseException::class)
+        @JvmStatic
+        fun parse(input: CharSequence): Iban = invoke(input)
+
+        /**
          * The technically shortest possible IBAN. See [CountryCodes.SHORTEST_IBAN_LENGTH] for the
          * shortest valid length.
          */
@@ -240,6 +262,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * @throws IbanParseException describing why the parts were rejected.
          */
         @Throws(IbanParseException::class)
+        @JvmStatic
         fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb =
                 StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH)

@@ -17,6 +17,7 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public fun compareTo (Lnl/bijdorpstudio/kiban/Iban;)I
+	public static final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBankIdentifier ()Ljava/lang/String;
 	public final fun getBranchIdentifier ()Ljava/lang/String;
@@ -27,12 +28,14 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public fun hashCode ()I
 	public final fun isInSwiftRegistry ()Z
 	public final fun isSEPA ()Z
+	public static final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class nl/bijdorpstudio/kiban/Iban$Companion {
 	public final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public final fun invoke (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
+	public final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 }
 
 public final class nl/bijdorpstudio/kiban/IbanKt {
