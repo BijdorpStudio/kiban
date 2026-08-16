@@ -47,7 +47,6 @@ public abstract class nl/bijdorpstudio/kiban/IbanParseException : java/lang/Ille
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed : nl/bijdorpstudio/kiban/IbanParseException {
-	public fun <init> (Ljava/lang/String;Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;Ljava/lang/String;)V
 	public final fun getKind ()Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 }
 
@@ -65,16 +64,13 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind : ja
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$UnknownCountryCode : nl/bijdorpstudio/kiban/IbanParseException {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun getCountryCode ()Ljava/lang/String;
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$WrongChecksum : nl/bijdorpstudio/kiban/IbanParseException {
-	public fun <init> (Ljava/lang/String;)V
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$WrongLength : nl/bijdorpstudio/kiban/IbanParseException {
-	public fun <init> (Ljava/lang/String;II)V
 	public final fun getActualLength ()I
 	public final fun getExpectedLength ()I
 }
