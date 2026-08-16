@@ -138,20 +138,21 @@ object CountryCodes {
         return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
     }
 
-    val knownCountryCodes: Collection<String>
-        /**
-         * Returns the known country codes.
-         *
-         * @return the collection of known country codes, upper case, in alphabetical order.
-         */
-        get() = COUNTRY_CODES.asList()
+    /**
+     * The known country codes, upper case, in alphabetical order.
+     *
+     * The list is a defensive, immutable copy of the library's reference data: it rejects every
+     * mutation attempt with an [UnsupportedOperationException], including through a cast to
+     * `MutableList`.
+     */
+    val knownCountryCodes: List<String> = buildList { addAll(COUNTRY_CODES) }
 
     /**
      * Returns whether the given string is a known country code.
      *
      * @param countryCode the string to evaluate.
      * @return `true` if `aCountryCode` is a two-letter, uppercase String present in
-     *   [.getKnownCountryCodes].
+     *   [knownCountryCodes].
      */
     fun isKnownCountryCode(countryCode: CharSequence): Boolean {
         return countryCode.length == 2 && indexOf(countryCode.toString()) >= 0

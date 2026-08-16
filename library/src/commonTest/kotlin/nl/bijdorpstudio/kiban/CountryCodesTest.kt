@@ -23,38 +23,47 @@ import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
-import de.infix.testBalloon.framework.core.TestConfig
-import de.infix.testBalloon.framework.core.TestPlatform
-import de.infix.testBalloon.framework.core.disable
-import de.infix.testBalloon.framework.core.testPlatform
 import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 /** Some tests for [CountryCodes]. */
 val CountryCodesTest by testSuite {
-    test(
-        "Known country codes should not be editable",
-        // JVM only. There, Collection and MutableCollection erase to the same type, so the cast
-        // is a runtime no-op and `add` reaches the fixed-size list backing `asList()`, which
-        // rejects it with UnsupportedOperationException. Every other target checks the cast and
-        // throws ClassCastException first — the collection is just as immutable there, but this
-        // test asserts the JVM's particular way of saying so.
-        testConfig =
-            if (testPlatform.type == TestPlatform.Type.Jvm) TestConfig else TestConfig.disable(),
-    ) {
+    test("Known country codes should not be editable") {
         // Not meant to be an exhaustive test, just a reminder to keep API consistent if
-        // implementation changes.
+        // implementation changes. The list is built by `buildList`, which rejects mutation on
+        // every target once built — so, unlike the array view it replaced, this holds outside
+        // the JVM too.
         @Suppress("UNCHECKED_CAST")
-        assertFailure { (CountryCodes.knownCountryCodes as MutableCollection<String>).add("ZZ") }
+        assertFailure { (CountryCodes.knownCountryCodes as MutableList<String>).add("ZZ") }
             .isInstanceOf<UnsupportedOperationException>()
+    }
+
+    test("Known country codes should not be editable in place") {
+        // A `set` through the cast is what an array view (`Array.asList()`) would have allowed on
+        // the JVM, corrupting the library's own reference data. The defensive copy rules it out.
+        @Suppress("UNCHECKED_CAST")
+        assertFailure { (CountryCodes.knownCountryCodes as MutableList<String>)[0] = "ZZ" }
+            .isInstanceOf<UnsupportedOperationException>()
+
+        assertThat(CountryCodes.knownCountryCodes.first()).isEqualTo("AD")
     }
 
     test("Known country codes should be in ascending order") {
         val raw = CountryCodes.knownCountryCodes
 
         assertThat(raw.sorted()).isEqualTo(raw)
+    }
+
+    test("Known country codes should be the same instance on every access") {
+        assertThat(CountryCodes.knownCountryCodes).isSameInstanceAs(CountryCodes.knownCountryCodes)
+    }
+
+    test("Known country codes should agree with isKnownCountryCode") {
+        assertThat(CountryCodes.knownCountryCodes.all { CountryCodes.isKnownCountryCode(it) })
+            .isTrue()
     }
 
     test("isKnownCountryCode should return false for empty string") {
