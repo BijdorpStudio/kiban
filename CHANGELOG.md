@@ -82,6 +82,20 @@
 
 **Documentation**
 
+* Settled the `String` versus `CharSequence` receiver question for `toIban()`, `toIbanOrNull()` and
+  `isValidIban()`, and wrote the reasoning down (#143). The extensions keep their `String`
+  receivers, while `Iban(...)`, `Iban.parse(...)`, `Iban.compose(...)`, `Modulo97` and
+  `CountryCodes` keep taking `CharSequence`: the extensions are the Kotlin-idiomatic sugar, where
+  `String` is both what the stdlib's own `toInt()`/`toBoolean()` conversions use and what
+  essentially every call site holds, and a `String` receiver is also the only one of the two that
+  survives Kotlin/Native's Objective-C export as a typed `NSString *` parameter of the `IbanKt`
+  facade — `CharSequence` has no Objective-C counterpart and erases to `id`, turning a compile
+  error at the Swift call site into a runtime cast failure. Callers holding a `StringBuilder` or an
+  Android `Editable` are not shut out, since `Iban(input)` and `Iban.parse(input)` accept those
+  directly. No API change, so no `apiDump`: this is the "keep it and say why" half of the decision
+  the issue asked for, recorded in the KDoc on `String.toIban` and in the README before the 1.0
+  freeze makes the choice permanent.
+
 * Cleaned up KDoc inherited from `java-iban` (#108). The `Iban` class documentation had its
   construction paragraph placed after an `@author` tag, which a KDoc block tag swallows — the
   published API docs rendered that paragraph as part of the Author field instead of as the class

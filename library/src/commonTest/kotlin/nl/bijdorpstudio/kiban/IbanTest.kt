@@ -119,6 +119,22 @@ val IbanTest by testSuite {
         assertThat(INVALID_IBAN.isValidIban()).isFalse()
     }
 
+    // The extensions take a String receiver while invoke, compose, Modulo97 and CountryCodes take
+    // a CharSequence (#143). The asymmetry is deliberate, so these two lock in both halves of it:
+    // a non-String CharSequence parses through invoke, and it does so identically to the String
+    // the extensions would have been handed.
+    test("Invoke should accept a CharSequence that is not a String") {
+        val builder: CharSequence = StringBuilder(VALID_IBAN)
+
+        assertThat(Iban(builder).plain).isEqualTo(VALID_IBAN)
+    }
+
+    test("Invoke should treat a CharSequence exactly as the String extension does") {
+        val builder: CharSequence = StringBuilder("NL03 ABNA 0143 2674 69")
+
+        assertThat(Iban(builder)).isEqualTo(builder.toString().toIban())
+    }
+
     for (input in rejectionKindInputs + VALID_IBAN) {
         test("isValidIban and toIbanOrNull should agree with invoke for '$input'") {
             val expectedSuccess = runCatching { Iban(input) }.isSuccess
