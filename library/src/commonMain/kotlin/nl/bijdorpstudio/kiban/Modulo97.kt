@@ -16,7 +16,7 @@
 package nl.bijdorpstudio.kiban
 
 /** Calculates the modulo 97 checksum used in IBAN numbers (and some other entities). */
-object Modulo97 {
+public object Modulo97 {
 
     /**
      * Calculates the raw MOD97 checksum for a given input.
@@ -40,7 +40,7 @@ object Modulo97 {
      * @see [calculateCheckDigits]
      * @see [verifyCheckDigits]
      */
-    fun checksum(input: CharSequence): Int {
+    public fun checksum(input: CharSequence): Int {
         if (!atLeastFiveNonSpaceCharacters(input)) {
             throw IllegalArgumentException(
                 "The input must be non-null and contain at least five non-space characters: $input"
@@ -68,7 +68,7 @@ object Modulo97 {
      *   also satisfy the criteria defined in [.checksum].
      * @return the check digits to be used at indices 2 and 3 to make the input MOD97 verifiable.
      */
-    fun calculateCheckDigits(input: CharSequence): Int {
+    public fun calculateCheckDigits(input: CharSequence): Int {
         if (input.length < 5 || input[2] != '0' || input[3] != '0') {
             throw IllegalArgumentException(
                 "The input must be non-null, have a minimum length of five characters, and the characters at indices 2 and 3 must be '0'. Was $input"
@@ -86,7 +86,7 @@ object Modulo97 {
      * @throws [IllegalArgumentException] if the country code is not two characters or contains a
      *   space character.
      */
-    fun calculateCheckDigits(countryCode: CharSequence, bban: CharSequence): Int {
+    public fun calculateCheckDigits(countryCode: CharSequence, bban: CharSequence): Int {
         if (countryCode.length != 2) {
             throw IllegalArgumentException("Country code should be length 2 but was $countryCode")
         }
@@ -105,7 +105,7 @@ object Modulo97 {
      * @param input the input to verify, it must meet the criteria defined in [checksum].
      * @return `true` if the input passes checksum verification, `false` otherwise.
      */
-    fun verifyCheckDigits(input: CharSequence): Boolean = checksum(input) == 1
+    public fun verifyCheckDigits(input: CharSequence): Boolean = checksum(input) == 1
 
     /**
      * Copies `src[srcPos...srcLen)` into `dest[destPos)` while applying character to numeric

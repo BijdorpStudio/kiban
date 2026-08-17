@@ -132,6 +132,16 @@
   gets the same treatment via `apiDump` — the dump diff being the thing a reviewer actually needs.
   Every added step is non-fatal: `ci` stays a usable required check whatever the reporting does.
 
+* Enabled Kotlin's explicit API mode (strict) for the library (#142). Every declaration in
+  `commonMain` and `jvmMain` that is part of the public API now says `public` out loud, and the
+  compiler rejects any future one that doesn't state its visibility. The point is post-1.0
+  maintenance: `apiCheck` catches a surface change once it has been written, but explicit API mode
+  makes the author state the intent while writing it, so nothing reaches the frozen surface by
+  omission. Nothing became public or stopped being public in the process — the change is
+  mechanical, and `apiCheck` passes against the existing dumps unchanged. Explicit return types
+  were already spelled out everywhere, so the diff is `public` modifiers only, and test sources
+  are exempt as usual.
+
 ## 0.5.0
 
 **Breaking changes**

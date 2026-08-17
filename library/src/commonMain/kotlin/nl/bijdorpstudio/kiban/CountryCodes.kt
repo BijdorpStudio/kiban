@@ -33,12 +33,12 @@ import nl.bijdorpstudio.kiban.CountryCodesData.SEPA
 import nl.bijdorpstudio.kiban.CountryCodesData.SWIFT
 
 /** Contains information about IBAN country codes. */
-object CountryCodes {
+public object CountryCodes {
     /** The length of the shortest IBAN among the known countries. */
-    val shortestIbanLength: Int
+    public val shortestIbanLength: Int
 
     /** The length of the longest IBAN among the known countries. */
-    val longestIbanLength: Int
+    public val longestIbanLength: Int
 
     init {
         var min = Int.MAX_VALUE
@@ -108,7 +108,7 @@ object CountryCodes {
      * @return the IBAN length for the given country, or null if the input is not a known,
      *   two-character country code.
      */
-    fun ibanLength(countryCode: CharSequence): Int? {
+    public fun ibanLength(countryCode: CharSequence): Int? {
         val index = indexOf(countryCode.toString())
         if (index > -1) {
             return COUNTRY_IBAN_LENGTHS[index] and REMOVE_METADATA_MASK
@@ -122,7 +122,7 @@ object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return true if SEPA, false if not.
      */
-    fun isSEPACountry(countryCode: CharSequence): Boolean {
+    public fun isSEPACountry(countryCode: CharSequence): Boolean {
         val index = indexOf(countryCode.toString())
         return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
     }
@@ -133,7 +133,7 @@ object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return true if our data is from the SWIFT IBAN Registry, false if not.
      */
-    fun isInSwiftRegistry(countryCode: CharSequence): Boolean {
+    public fun isInSwiftRegistry(countryCode: CharSequence): Boolean {
         val index = indexOf(countryCode.toString())
         return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
     }
@@ -145,7 +145,7 @@ object CountryCodes {
      * mutation attempt with an [UnsupportedOperationException], including through a cast to
      * `MutableList`.
      */
-    val knownCountryCodes: List<String> = buildList { addAll(COUNTRY_CODES) }
+    public val knownCountryCodes: List<String> = buildList { addAll(COUNTRY_CODES) }
 
     /**
      * Returns whether the given string is a known country code.
@@ -154,7 +154,7 @@ object CountryCodes {
      * @return `true` if `aCountryCode` is a two-letter, uppercase String present in
      *   [knownCountryCodes].
      */
-    fun isKnownCountryCode(countryCode: CharSequence): Boolean {
+    public fun isKnownCountryCode(countryCode: CharSequence): Boolean {
         return countryCode.length == 2 && indexOf(countryCode.toString()) >= 0
     }
 
@@ -163,7 +163,7 @@ object CountryCodes {
      *
      * @return the last update date of the reference data in this library.
      */
-    val lastUpdateDate: Instant
+    public val lastUpdateDate: Instant
         get() = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
     /**
@@ -171,5 +171,5 @@ object CountryCodes {
      *
      * @return revision information of the SWIFT IBAN Registry.
      */
-    const val lastUpdateRevision: String = LAST_UPDATE_REV
+    public const val lastUpdateRevision: String = LAST_UPDATE_REV
 }
