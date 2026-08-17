@@ -37,6 +37,11 @@ tapmoc {
 }
 
 kotlin {
+    // Every public declaration must state its visibility and return type deliberately, so nothing
+    // reaches the frozen API surface by omission. Applies to production source sets only; test
+    // sources are exempt.
+    explicitApi()
+
     jvm()
     android {
         namespace = "nl.bijdorpstudio.kiban"
