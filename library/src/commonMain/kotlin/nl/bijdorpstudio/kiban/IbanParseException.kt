@@ -29,8 +29,8 @@ package nl.bijdorpstudio.kiban
  *   here, because it is a character an IBAN cannot contain and is often the very reason for the
  *   rejection.
  */
-sealed class IbanParseException(
-    val input: String,
+public sealed class IbanParseException(
+    public val input: String,
     message: String,
 ) : IllegalArgumentException(message) {
 
@@ -40,15 +40,15 @@ sealed class IbanParseException(
      *
      * @property kind the specific structural problem detected.
      */
-    class Malformed
+    public class Malformed
     internal constructor(
         input: String,
-        val kind: Kind,
+        public val kind: Kind,
         message: String,
     ) : IbanParseException(input, message) {
 
         /** The structural problem that made the input malformed. */
-        enum class Kind {
+        public enum class Kind {
             /** The input is empty. */
             EMPTY,
 
@@ -84,10 +84,10 @@ sealed class IbanParseException(
      *
      * @property countryCode the two-letter country code that was not recognized.
      */
-    class UnknownCountryCode
+    public class UnknownCountryCode
     internal constructor(
         input: String,
-        val countryCode: String,
+        public val countryCode: String,
     ) : IbanParseException(input, "Unknown country code: $countryCode")
 
     /**
@@ -97,15 +97,15 @@ sealed class IbanParseException(
      * @property expectedLength the length registered for the country code of the input.
      * @property actualLength the length of the input.
      */
-    class WrongLength
+    public class WrongLength
     internal constructor(
         input: String,
-        val expectedLength: Int,
-        val actualLength: Int,
+        public val expectedLength: Int,
+        public val actualLength: Int,
     ) : IbanParseException(input, "Wrong length $actualLength for $input expected: $expectedLength")
 
     /** The input is structurally valid, but fails MOD-97 check digit verification. */
-    class WrongChecksum internal constructor(input: String) :
+    public class WrongChecksum internal constructor(input: String) :
         IbanParseException(input, "Wrong check sum for $input")
 }
 

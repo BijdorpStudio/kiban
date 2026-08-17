@@ -35,23 +35,23 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia:
  *   International Bank Account Number</a>
  */
-class Iban private constructor(internal val value: String) : Comparable<Iban> {
+public class Iban private constructor(internal val value: String) : Comparable<Iban> {
     /**
      * Whether or not this IBAN data is from the SWIFT IBAN Registry.
      *
      * @return true if from SWIFT IBAN Registry, false otherwise.
      */
-    val isInSwiftRegistry: Boolean
+    public val isInSwiftRegistry: Boolean
 
     /**
      * Whether or not this IBAN is of a SEPA participating country.
      *
      * @return true this IBAN is of a SEPA participating country, false otherwise.
      */
-    val isSEPA: Boolean
+    public val isSEPA: Boolean
 
     /** Pretty-printed value, lazily initialized. */
-    val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
+    public val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
 
     /**
      * Initializing constructor. Validation happens before construction, so this constructor cannot
@@ -63,7 +63,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         this.isSEPA = CountryCodes.isSEPACountry(countryCode)
     }
 
-    val countryCode: String
+    public val countryCode: String
         /**
          * Returns the Country Code embedded in the IBAN.
          *
@@ -76,7 +76,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
      *
      * @return the two check digits.
      */
-    val checkDigits: String
+    public val checkDigits: String
         get() = value.substring(2, 4)
 
     /**
@@ -84,7 +84,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
      *
      * @return the bank ID, or `null` if unknown for this country code.
      */
-    val bankIdentifier: String?
+    public val bankIdentifier: String?
         get() = CountryCodes.getBankIdentifier(this)
 
     /**
@@ -92,7 +92,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
      *
      * @return the branch ID, or `null` if unknown for this country code.
      */
-    val branchIdentifier: String?
+    public val branchIdentifier: String?
         get() = CountryCodes.getBranchIdentifier(this)
 
     /**
@@ -100,7 +100,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
      *
      * @return the unformatted IBAN number.
      */
-    val plain: String
+    public val plain: String
         get() = value
 
     override fun equals(other: Any?): Boolean {
@@ -123,7 +123,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
 
     override fun compareTo(other: Iban): Int = value.compareTo(other.value)
 
-    companion object {
+    public companion object {
 
         /**
          * Parses the given string into an IBAN object and confirms the check digits.
@@ -147,7 +147,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * @throws IbanParseException describing why the input was rejected.
          */
         @Throws(IbanParseException::class)
-        operator fun invoke(input: CharSequence): Iban =
+        public operator fun invoke(input: CharSequence): Iban =
             when (val rejection = validate(input)) {
                 null -> Iban(toPlain(input))
                 else -> throw rejection.toException()
@@ -171,14 +171,14 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          */
         @Throws(IbanParseException::class)
         @JvmStatic
-        fun parse(input: CharSequence): Iban = invoke(input)
+        public fun parse(input: CharSequence): Iban = invoke(input)
 
         /**
          * The length of the technically shortest possible IBAN. See
          * [CountryCodes.shortestIbanLength] for the shortest length any known country actually
          * uses.
          */
-        const val SHORTEST_POSSIBLE_IBAN_LENGTH: Int = 5
+        public const val SHORTEST_POSSIBLE_IBAN_LENGTH: Int = 5
 
         /**
          * Wraps an already-validated, space-stripped IBAN string, without paying for validation a
@@ -268,7 +268,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          */
         @Throws(IbanParseException::class)
         @JvmStatic
-        fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
+        public fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb =
                 StringBuilder(CountryCodes.longestIbanLength)
                     .append(countryCode)
@@ -356,7 +356,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
  * @see Iban.invoke
  */
 @Throws(IbanParseException::class)
-fun String.toIban(): Iban =
+public fun String.toIban(): Iban =
     when (val rejection = Iban.validate(this)) {
         // Must stay ofValidated, not Iban(...): this is a top-level function, so Iban(...) here
         // would resolve to invoke and re-run validate() on an input already known to be valid.
@@ -374,7 +374,7 @@ fun String.toIban(): Iban =
  * @return the parsed and validated IBAN object, or `null` if the input is in some way invalid.
  * @see Iban.invoke
  */
-fun String.toIbanOrNull(): Iban? =
+public fun String.toIbanOrNull(): Iban? =
     // Must stay ofValidated, not Iban(...): see the comment on toIban above.
     if (Iban.validate(this) == null) Iban.ofValidated(Iban.toPlain(this)) else null
 
@@ -384,7 +384,7 @@ fun String.toIbanOrNull(): Iban? =
  * The receiver is [String] rather than [CharSequence] by the same deliberate choice as [toIban],
  * documented there.
  */
-fun String.isValidIban(): Boolean = Iban.validate(this) == null
+public fun String.isValidIban(): Boolean = Iban.validate(this) == null
 
 /**
  * Bit 5 of an ASCII letter is its case bit: setting it maps `A`-`Z` onto `a`-`z` and clearing it
