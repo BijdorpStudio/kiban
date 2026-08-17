@@ -52,6 +52,20 @@
   type is binary-breaking on JVM (`getKnownCountryCodes` changes descriptor), which is why it lands
   before 1.0; Kotlin source that stored the result in a `Collection<String>` keeps compiling.
 
+**Additions**
+
+* Added `Iban.parse(input)`, a named alias for `Iban(input)`, and made it and `Iban.compose(...)`
+  `@JvmStatic` (#139). `Iban(input)` is `operator fun invoke` on the companion object, and Kotlin is
+  the only language with call syntax for it: Java reads it as `Iban.Companion.invoke(...)` and — as
+  `docs/9-swift-interop-review.md` confirmed against a real `Kiban.xcframework` — Swift reads it as
+  `Iban.companion.invoke(input:)`, which is why `samples/swift-console` avoided it. `parse` carries
+  the same `@Throws(IbanParseException::class)` contract and delegates straight to `invoke`, so
+  there is no second parsing path to keep in step; `@JvmStatic` puts `parse` and `compose` directly
+  on `Iban` for Java callers. The name matches the `java-iban` heritage and reads naturally next to
+  `String.toIban()`. Kotlin callers should keep using `Iban(input)`. Note for anyone still on the
+  0.4.0 API: the returning name is not the returning shape — 0.4.0's `Iban.parse` returned
+  `Result<Iban>`, this one returns `Iban` and throws.
+
 **Documentation**
 
 * Cleaned up KDoc inherited from `java-iban` (#108). The `Iban` class documentation had its

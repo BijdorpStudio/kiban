@@ -18,11 +18,13 @@ package nl.bijdorpstudio.kiban
 import assertk.all
 import assertk.assertFailure
 import assertk.assertThat
+import assertk.assertions.hasClass
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
@@ -346,8 +348,12 @@ val IbanTest by testSuite {
 
         assertFailure { Iban(tooLong) }
             .isInstanceOf<IbanParseException.WrongLength>()
-            .prop(IbanParseException.WrongLength::expectedLength)
-            .isEqualTo(18)
+            .all {
+                prop(IbanParseException.WrongLength::input).isEqualTo(tooLong)
+                prop(IbanParseException.WrongLength::expectedLength).isEqualTo(18)
+                prop(IbanParseException.WrongLength::actualLength).isEqualTo(tooLong.length)
+                hasMessage("Wrong length ${tooLong.length} for $tooLong expected: 18")
+            }
     }
 
     test("Invoke should reject checksum failure") {
@@ -361,6 +367,31 @@ val IbanTest by testSuite {
 
     test("Invoke failure should be an IllegalArgumentException") {
         assertFailure { Iban(INVALID_IBAN) }.isInstanceOf<IllegalArgumentException>()
+    }
+
+    // parse is a named alias for invoke, for the callers whose language has no invoke call syntax:
+    // Java reads Iban.Companion.invoke(...) and Swift Iban.companion.invoke(input:). Nothing about
+    // the parsing may differ between the two, so these assert that the alias agrees with invoke
+    // rather than testing the parser a second time.
+    test("Parse should accept valid input") {
+        assertThat(Iban.parse(VALID_IBAN)).isEqualTo(Iban(VALID_IBAN))
+    }
+
+    test("Parse should accept the pretty printed form") {
+        assertThat(Iban.parse("NL03 ABNA 0143 2674 69").plain).isEqualTo(VALID_IBAN)
+    }
+
+    for (input in rejectionKindInputs) {
+        test("Parse should reject '$input' exactly as invoke does") {
+            val fromInvoke = runCatching { Iban(input) }.exceptionOrNull()
+            assertThat(fromInvoke).isNotNull().isInstanceOf<IbanParseException>()
+
+            assertFailure { Iban.parse(input) }
+                .all {
+                    hasClass(fromInvoke!!::class)
+                    hasMessage(fromInvoke.message)
+                }
+        }
     }
 
     test("Compose should handle correct input") {

@@ -35,6 +35,7 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
 
         final fun compose(kotlin/CharSequence, kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.compose|compose(kotlin.CharSequence;kotlin.CharSequence){}[0]
         final fun invoke(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.invoke|invoke(kotlin.CharSequence){}[0]
+        final fun parse(kotlin/CharSequence): nl.bijdorpstudio.kiban/Iban // nl.bijdorpstudio.kiban/Iban.Companion.parse|parse(kotlin.CharSequence){}[0]
     }
 }
 
@@ -43,8 +44,6 @@ sealed class nl.bijdorpstudio.kiban/IbanParseException : kotlin/IllegalArgumentE
         final fun <get-input>(): kotlin/String // nl.bijdorpstudio.kiban/IbanParseException.input.<get-input>|<get-input>(){}[0]
 
     final class Malformed : nl.bijdorpstudio.kiban/IbanParseException { // nl.bijdorpstudio.kiban/IbanParseException.Malformed|null[0]
-        constructor <init>(kotlin/String, nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind, kotlin/String) // nl.bijdorpstudio.kiban/IbanParseException.Malformed.<init>|<init>(kotlin.String;nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind;kotlin.String){}[0]
-
         final val kind // nl.bijdorpstudio.kiban/IbanParseException.Malformed.kind|{}kind[0]
             final fun <get-kind>(): nl.bijdorpstudio.kiban/IbanParseException.Malformed.Kind // nl.bijdorpstudio.kiban/IbanParseException.Malformed.kind.<get-kind>|<get-kind>(){}[0]
 
@@ -66,19 +65,13 @@ sealed class nl.bijdorpstudio.kiban/IbanParseException : kotlin/IllegalArgumentE
     }
 
     final class UnknownCountryCode : nl.bijdorpstudio.kiban/IbanParseException { // nl.bijdorpstudio.kiban/IbanParseException.UnknownCountryCode|null[0]
-        constructor <init>(kotlin/String, kotlin/String) // nl.bijdorpstudio.kiban/IbanParseException.UnknownCountryCode.<init>|<init>(kotlin.String;kotlin.String){}[0]
-
         final val countryCode // nl.bijdorpstudio.kiban/IbanParseException.UnknownCountryCode.countryCode|{}countryCode[0]
             final fun <get-countryCode>(): kotlin/String // nl.bijdorpstudio.kiban/IbanParseException.UnknownCountryCode.countryCode.<get-countryCode>|<get-countryCode>(){}[0]
     }
 
-    final class WrongChecksum : nl.bijdorpstudio.kiban/IbanParseException { // nl.bijdorpstudio.kiban/IbanParseException.WrongChecksum|null[0]
-        constructor <init>(kotlin/String) // nl.bijdorpstudio.kiban/IbanParseException.WrongChecksum.<init>|<init>(kotlin.String){}[0]
-    }
+    final class WrongChecksum : nl.bijdorpstudio.kiban/IbanParseException // nl.bijdorpstudio.kiban/IbanParseException.WrongChecksum|null[0]
 
     final class WrongLength : nl.bijdorpstudio.kiban/IbanParseException { // nl.bijdorpstudio.kiban/IbanParseException.WrongLength|null[0]
-        constructor <init>(kotlin/String, kotlin/Int, kotlin/Int) // nl.bijdorpstudio.kiban/IbanParseException.WrongLength.<init>|<init>(kotlin.String;kotlin.Int;kotlin.Int){}[0]
-
         final val actualLength // nl.bijdorpstudio.kiban/IbanParseException.WrongLength.actualLength|{}actualLength[0]
             final fun <get-actualLength>(): kotlin/Int // nl.bijdorpstudio.kiban/IbanParseException.WrongLength.actualLength.<get-actualLength>|<get-actualLength>(){}[0]
         final val expectedLength // nl.bijdorpstudio.kiban/IbanParseException.WrongLength.expectedLength|{}expectedLength[0]
