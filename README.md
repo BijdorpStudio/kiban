@@ -130,7 +130,7 @@ before parsing if your input layer can produce them.
     Modulo97.calculateCheckDigits( "XX", "X" ) // 72
 
     // Get the expected IBAN length for a country code:
-    val expectedLength: Int? = CountryCodes.getLength( "DK" ) // 18
+    val expectedLength: Int? = CountryCodes.ibanLength( "DK" ) // 18
 
     // Get the Bank Identifier and Branch Identifier:
     val bankId: String? = iban.bankIdentifier

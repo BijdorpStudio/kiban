@@ -170,10 +170,11 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         fun parse(input: CharSequence): Iban = invoke(input)
 
         /**
-         * The technically shortest possible IBAN. See [CountryCodes.SHORTEST_IBAN_LENGTH] for the
-         * shortest valid length.
+         * The length of the technically shortest possible IBAN. See
+         * [CountryCodes.shortestIbanLength] for the shortest length any known country actually
+         * uses.
          */
-        const val SHORTEST_POSSIBLE_IBAN: Int = 5
+        const val SHORTEST_POSSIBLE_IBAN_LENGTH: Int = 5
 
         /**
          * Wraps an already-validated, space-stripped IBAN string, without paying for validation a
@@ -204,7 +205,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
                 )
             }
             val value = toPlain(input)
-            if (value.length < SHORTEST_POSSIBLE_IBAN) {
+            if (value.length < SHORTEST_POSSIBLE_IBAN_LENGTH) {
                 return Rejection.Malformed(value, Kind.TOO_SHORT)
             }
             if (!(value[2].isAsciiDigit() && value[3].isAsciiDigit())) {
@@ -212,7 +213,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
             }
             val countryCode: String = value.substring(0, 2)
             val expectedLength: Int =
-                CountryCodes.getLength(countryCode)
+                CountryCodes.ibanLength(countryCode)
                     ?: return if (isKnownCountryCodeInWrongCase(countryCode)) {
                         Rejection.Malformed(value, Kind.NON_UPPER_CASE_COUNTRY_CODE)
                     } else {
@@ -265,7 +266,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
         @JvmStatic
         fun compose(countryCode: CharSequence, bban: CharSequence): Iban {
             val sb =
-                StringBuilder(CountryCodes.LONGEST_IBAN_LENGTH)
+                StringBuilder(CountryCodes.longestIbanLength)
                     .append(countryCode)
                     .append("00")
                     .append(bban)
@@ -289,8 +290,8 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * normalizes — but it deserves a better diagnosis than "unknown country code", because the
          * country is known.
          *
-         * Only called once the code has already failed the [CountryCodes.getLength] lookup, so both
-         * early returns keep a doomed input from paying for a second binary search.
+         * Only called once the code has already failed the [CountryCodes.ibanLength] lookup, so
+         * both early returns keep a doomed input from paying for a second binary search.
          */
         private fun isKnownCountryCodeInWrongCase(countryCode: String): Boolean {
             val first: Char = countryCode[0]
@@ -299,7 +300,7 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
             // An all-upper-case code that failed the lookup is genuinely unknown: upper-casing it
             // cannot change the outcome.
             if (!first.isAsciiLowerCase() && !second.isAsciiLowerCase()) return false
-            return CountryCodes.getLength(
+            return CountryCodes.ibanLength(
                 charArrayOf(first.uppercaseAscii(), second.uppercaseAscii()).concatToString()
             ) != null
         }

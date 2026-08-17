@@ -52,6 +52,20 @@
   type is binary-breaking on JVM (`getKnownCountryCodes` changes descriptor), which is why it lands
   before 1.0; Kotlin source that stored the result in a `Collection<String>` keeps compiling.
 
+* Constant and accessor names in `CountryCodes` and `Iban` were settled before the API freeze
+  (#141). `Iban.SHORTEST_POSSIBLE_IBAN` is now `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH`,
+  `CountryCodes.SHORTEST_IBAN_LENGTH` / `CountryCodes.LONGEST_IBAN_LENGTH` are now
+  `CountryCodes.shortestIbanLength` / `CountryCodes.longestIbanLength`, and
+  `CountryCodes.getLength(cc)` is now `CountryCodes.ibanLength(cc)`. The three old length names read
+  as if they held an IBAN rather than a number of characters, and `getLength` did not say the length
+  of what. The `CountryCodes` pair also had the Kotlin naming convention inverted — SCREAMING_SNAKE
+  non-`const` `val`s next to a lowerCamel `const val lastUpdateRevision` — which surfaced on the JVM
+  as `getSHORTEST_IBAN_LENGTH()` / `getLONGEST_IBAN_LENGTH()`; lowerCamel makes them
+  `getShortestIbanLength()` / `getLongestIbanLength()` and matches every other member of the object
+  (`lastUpdateDate`, `lastUpdateRevision`, `knownCountryCodes`). `Iban`'s constant stays
+  SCREAMING_SNAKE, which is the convention for a `const val`. Renaming after 1.0 would be breaking,
+  so it happens now; every break is a compile error with a mechanical fix.
+
 **Additions**
 
 * Added `Iban.parse(input)`, a named alias for `Iban(input)`, and made it and `Iban.compose(...)`

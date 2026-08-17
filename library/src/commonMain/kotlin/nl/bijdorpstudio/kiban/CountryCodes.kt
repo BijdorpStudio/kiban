@@ -34,11 +34,11 @@ import nl.bijdorpstudio.kiban.CountryCodesData.SWIFT
 
 /** Contains information about IBAN country codes. */
 object CountryCodes {
-    /** The shortest known valid IBAN. */
-    val SHORTEST_IBAN_LENGTH: Int
+    /** The length of the shortest IBAN among the known countries. */
+    val shortestIbanLength: Int
 
-    /** The longest known valid IBAN. */
-    val LONGEST_IBAN_LENGTH: Int
+    /** The length of the longest IBAN among the known countries. */
+    val longestIbanLength: Int
 
     init {
         var min = Int.MAX_VALUE
@@ -52,8 +52,8 @@ object CountryCodes {
                 min = length
             }
         }
-        SHORTEST_IBAN_LENGTH = min
-        LONGEST_IBAN_LENGTH = max
+        shortestIbanLength = min
+        longestIbanLength = max
     }
 
     /**
@@ -108,7 +108,7 @@ object CountryCodes {
      * @return the IBAN length for the given country, or null if the input is not a known,
      *   two-character country code.
      */
-    fun getLength(countryCode: CharSequence): Int? {
+    fun ibanLength(countryCode: CharSequence): Int? {
         val index = indexOf(countryCode.toString())
         if (index > -1) {
             return COUNTRY_IBAN_LENGTHS[index] and REMOVE_METADATA_MASK

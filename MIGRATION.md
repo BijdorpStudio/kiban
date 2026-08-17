@@ -31,7 +31,7 @@ earlier — there are no replacements to reach for beyond what's listed here.
 | `iban.toPlainString()` | `iban.plain` |
 | `CountryCodes.getBankIdentifier(iban)` | `iban.bankIdentifier` |
 | `CountryCodes.getBranchIdentifier(iban)` | `iban.branchIdentifier` |
-| `CountryCodes.getLengthForCountryCode(cc)` | `CountryCodes.getLength(cc) ?: -1` |
+| `CountryCodes.getLengthForCountryCode(cc)` | `CountryCodes.ibanLength(cc) ?: -1` |
 | `CountryCodes.lastUpdateDateString` | `CountryCodes.lastUpdateDate` |
 
 `runCatching { Iban(s) }` reproduces the old `Result`-returning behaviour exactly, for anyone who wants it back
@@ -116,9 +116,17 @@ ground, and `?:` replaces `orElse`.
 
 | Before | Now |
 | --- | --- |
-| `CountryCodes.getLengthForCountryCode(cc)` → `-1` when unknown | `CountryCodes.getLength(cc)` → `Int?`, `null` when unknown |
+| `CountryCodes.getLengthForCountryCode(cc)` → `-1` when unknown | `CountryCodes.ibanLength(cc)` → `Int?`, `null` when unknown |
 | `CountryCodes.LAST_UPDATE_DATE` / `lastUpdateDateString` | `CountryCodes.lastUpdateDate` → `kotlin.time.Instant` |
 | `CountryCodes.LAST_UPDATE_REV` | `CountryCodes.lastUpdateRevision` |
+| `CountryCodes.SHORTEST_IBAN_LENGTH` *(kiban 0.5.0)* | `CountryCodes.shortestIbanLength` |
+| `CountryCodes.LONGEST_IBAN_LENGTH` *(kiban 0.5.0)* | `CountryCodes.longestIbanLength` |
+| `CountryCodes.getLength(cc)` *(kiban 0.5.0)* | `CountryCodes.ibanLength(cc)` |
+
+The three names marked *(kiban 0.5.0)* were renamed in 0.6.0, together with
+`Iban.SHORTEST_POSSIBLE_IBAN`, which is now `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH`. All four named a
+length without saying so, and the two `CountryCodes` lengths additionally surfaced on the JVM as
+`getSHORTEST_IBAN_LENGTH()` / `getLONGEST_IBAN_LENGTH()`.
 | `CountryCodes.isKnownCountryCode(cc)` | unchanged |
 | `CountryCodes.isSEPACountry(cc)` | unchanged |
 

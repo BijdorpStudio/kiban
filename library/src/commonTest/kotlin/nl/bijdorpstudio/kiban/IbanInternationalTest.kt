@@ -65,7 +65,7 @@ val IbanInternationalTest by testSuite {
 
     for (testData in countriesTestData) {
         test("Get length for country code should return correct value for ${testData.name}") {
-            val lengthForCountryCode = CountryCodes.getLength(testData.plain.substring(0, 2)) ?: -1
+            val lengthForCountryCode = CountryCodes.ibanLength(testData.plain.substring(0, 2)) ?: -1
             assertThat(lengthForCountryCode).isEqualTo(testData.plain.length)
         }
     }
