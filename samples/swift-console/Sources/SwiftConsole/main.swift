@@ -92,7 +92,7 @@ print(
 )
 print("calculateCheckDigits(XX, X): \(Modulo97.shared.calculateCheckDigits(countryCode: "XX", bban: "X"))")
 
-print("getLength(DK): \(String(describing: CountryCodes.shared.getLength(countryCode: "DK")))")
+print("ibanLength(DK): \(String(describing: CountryCodes.shared.ibanLength(countryCode: "DK")))")
 
 print("bankIdentifier: \(String(describing: iban.bankIdentifier))")
 print("branchIdentifier: \(String(describing: iban.branchIdentifier))")

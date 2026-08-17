@@ -55,7 +55,7 @@ sealed class IbanParseException(
             /** The input begins or ends in a character that cannot occur in an IBAN. */
             INVALID_BOUNDARY_CHARACTER,
 
-            /** The input is shorter than [Iban.SHORTEST_POSSIBLE_IBAN]. */
+            /** The input is shorter than [Iban.SHORTEST_POSSIBLE_IBAN_LENGTH]. */
             TOO_SHORT,
 
             /** The characters at index 2 and 3 are not both ASCII digits. */

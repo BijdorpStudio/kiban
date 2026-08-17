@@ -20,6 +20,7 @@ import assertk.assertThat
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
@@ -78,8 +79,24 @@ val CountryCodesTest by testSuite {
         assertThat(CountryCodes.isKnownCountryCode("NL")).isTrue()
     }
 
-    test("getLength returns null for unknown country code") {
-        assertThat(CountryCodes.getLength("XX")).isNull()
+    test("ibanLength returns null for unknown country code") {
+        assertThat(CountryCodes.ibanLength("XX")).isNull()
+    }
+
+    test("ibanLength returns the registered length for a known country code") {
+        assertThat(CountryCodes.ibanLength("NL")).isEqualTo(18)
+    }
+
+    test("shortest and longest IBAN lengths bound every known country") {
+        val lengths = CountryCodes.knownCountryCodes.map { CountryCodes.ibanLength(it) }
+
+        assertThat(lengths.minOf { it ?: 0 }).isEqualTo(CountryCodes.shortestIbanLength)
+        assertThat(lengths.maxOf { it ?: 0 }).isEqualTo(CountryCodes.longestIbanLength)
+    }
+
+    test("shortest known IBAN length is not shorter than the technical minimum") {
+        assertThat(CountryCodes.shortestIbanLength)
+            .isGreaterThanOrEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH)
     }
 
     test("lastUpdateDate should not be null") {

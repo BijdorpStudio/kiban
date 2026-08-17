@@ -36,7 +36,7 @@ internal val countriesTestData = countryTestData.sortedBy { it.name }
 val CountryCodesParameterizedTest by testSuite {
     for (testData in countriesTestData) {
         test("Length for ${testData.name} should return correct value") {
-            val lengthForCountryCode = CountryCodes.getLength(testData.plain.substring(0, 2)) ?: -1
+            val lengthForCountryCode = CountryCodes.ibanLength(testData.plain.substring(0, 2)) ?: -1
             assertThat(lengthForCountryCode).isEqualTo(testData.plain.length)
         }
     }

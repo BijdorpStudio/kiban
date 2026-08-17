@@ -86,8 +86,8 @@ fun main() {
     println("calculateCheckDigits(XX, X): ${Modulo97.calculateCheckDigits("XX", "X")}") // 72
 
     // Get the expected IBAN length for a country code:
-    val expectedLength: Int? = CountryCodes.getLength("DK") // 18
-    println("getLength(DK): $expectedLength")
+    val expectedLength: Int? = CountryCodes.ibanLength("DK") // 18
+    println("ibanLength(DK): $expectedLength")
 
     // Get the Bank Identifier and Branch Identifier:
     println("bankIdentifier: ${iban.bankIdentifier}")
