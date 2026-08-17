@@ -144,6 +144,12 @@ programmer-supplied, so a bad one is a contract violation rather than user input
 out-parameter and Swift sees a normal `throws` function instead of the process aborting on an
 unannotated exception.
 
+`Iban(input)` is `operator fun invoke` on the companion object, which only Kotlin has call syntax
+for: Java reads it as `Iban.Companion.invoke(...)` and Swift as `Iban.companion.invoke(input:)`.
+For those callers there is `Iban.parse(input)`, a named alias that parses identically, and
+`Iban.compose(...)` is `@JvmStatic` for the same reason. Kotlin callers should keep using
+`Iban(input)`.
+
 Migrating from `java-iban`, from kiban 0.3.0 and earlier, or from the `Result`-returning 0.4.0 API?
 See [MIGRATION.md](MIGRATION.md).
 

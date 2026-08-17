@@ -196,3 +196,20 @@ on `feature/issue-100-strict-throwing-api` via `ios-interop-verify.yml`, buildin
   gets no special Swift-init treatment here, which is why `samples/swift-console` calls the
   top-level `IbanKt.toIban(...)` for its throwing-path demo instead of guessing at `Iban(...)`
   syntax.
+
+## 0.6.0 follow-up: a named `parse`, and a probe for the typed-downcast question (#139)
+
+The `Iban.companion.invoke(input:)` shape above is now avoidable. `Iban.parse(input)` is a named
+alias for `Iban(input)` carrying the same `@Throws(IbanParseException::class)` contract, so Swift
+reads `Iban.companion.parse(input:)` and Java reads `Iban.parse(...)` (`@JvmStatic`, as is
+`Iban.compose(...)`). No `@ObjCName` was added: the default export already yields `parse(input:)`,
+and the one thing a Swift caller would want renamed away — the generated `companion` property —
+isn't something `@ObjCName` can reach. If a run of `ios-interop-verify.yml` shows otherwise, the
+generated header is the evidence to add it on.
+
+`samples/swift-console` now also carries a probe for the question left open above: whether
+`error.userInfo["KotlinException"]` downcasts to the real `IbanParseException` subtype, or only
+yields a description string. It prints the outcome either way rather than asserting one, so a
+`workflow_dispatch` run of `ios-interop-verify.yml` answers it in the job log. **The answer is not
+recorded here yet** — no macOS/Xcode host was available when the probe was written, so it is
+written but unrun. Record it here once that run happens.

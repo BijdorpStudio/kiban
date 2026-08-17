@@ -17,7 +17,7 @@ earlier — there are no replacements to reach for beyond what's listed here.
 
 | From | To |
 | --- | --- |
-| `Iban.parse(s)` | `Iban(s)` |
+| `Iban.parse(s)` | `Iban(s)` — 0.6.0 brings the name back, but it returns `Iban` and throws, it does not return `Result<Iban>` |
 | `Iban.parse(s).getOrThrow()` | `Iban(s)` |
 | `Iban.parse(s).getOrNull()` | `s.toIbanOrNull()` |
 | `Iban.parse(s).exceptionOrNull()` | `try { Iban(s) } catch (e: IbanParseException) { … }` |
