@@ -150,6 +150,15 @@ For those callers there is `Iban.parse(input)`, a named alias that parses identi
 `Iban.compose(...)` is `@JvmStatic` for the same reason. Kotlin callers should keep using
 `Iban(input)`.
 
+`Iban(...)`, `Iban.parse(...)`, `Iban.compose(...)`, `Modulo97` and `CountryCodes` all take
+`CharSequence`, while `toIban()`, `toIbanOrNull()` and `isValidIban()` are extensions on `String`.
+That split is deliberate. The extensions are the Kotlin sugar, and Kotlin's own conversion
+extensions (`toInt()`, `toBoolean()`) are declared on `String` too; a `String` receiver also exports
+as an `NSString *` parameter of the generated `IbanKt` facade, so `IbanKt.toIban(_:)` stays
+type-checked from Swift, where a `CharSequence` receiver would erase to an untyped `id`. If you hold
+something else — a `StringBuilder`, an Android `Editable` — `Iban(input)` and `Iban.parse(input)`
+take it as-is; for the exception-free pair, convert first (`builder.toString().toIbanOrNull()`).
+
 Migrating from `java-iban`, from kiban 0.3.0 and earlier, or from the `Result`-returning 0.4.0 API?
 See [MIGRATION.md](MIGRATION.md).
 

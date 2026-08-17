@@ -137,6 +137,10 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
          * anywhere, tabs and non-breaking spaces included. Trim before parsing if your input layer
          * can produce them.
          *
+         * The input is a [CharSequence], so a `StringBuilder` or an Android `Editable` parses
+         * without an intermediate copy; [String.toIban] is the equivalent sugar for the [String]
+         * that most call sites hold.
+         *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
          * @return the parsed and validated IBAN object.
@@ -329,6 +333,24 @@ class Iban private constructor(internal val value: String) : Comparable<Iban> {
 /**
  * Parses the given string into an IBAN object and confirms the check digits.
  *
+ * The receiver is deliberately [String] and not [CharSequence], even though [Iban.invoke],
+ * [Iban.compose], [Modulo97] and [CountryCodes] all accept any [CharSequence]. The asymmetry is the
+ * decision, not an oversight:
+ * * These three extensions are the Kotlin-idiomatic sugar, and Kotlin's own conversion extensions —
+ *   `toInt()`, `toLong()`, `toBoolean()` — are declared on [String] too. Reading
+ *   `"NL91ABNA0417164300".toIban()` as a peer of `"42".toInt()` is the whole point of their
+ *   existence.
+ * * A [String] receiver exports as an `NSString *` parameter of the generated `IbanKt` facade, so
+ *   `IbanKt.toIban(_:)` stays type-checked at the Swift call site. A [CharSequence] receiver has no
+ *   Objective-C counterpart and erases to an untyped `id`, which moves the mistake of passing the
+ *   wrong thing from compile time to a runtime cast failure.
+ *
+ * Callers holding something else — a `StringBuilder`, an Android `Editable`, a slice of a larger
+ * buffer — are not shut out: [Iban.invoke] and [Iban.parse] take a [CharSequence] directly and
+ * parse identically. The exception-free pair has no [CharSequence] counterpart, so
+ * `builder.toString().toIbanOrNull()` is the way there — one copy of input that validation
+ * materializes into a [String] internally regardless.
+ *
  * @return the parsed and validated IBAN object.
  * @throws IbanParseException describing why the input was rejected.
  * @see Iban.invoke
@@ -346,6 +368,9 @@ fun String.toIban(): Iban =
  * Parses the given string into an IBAN object and confirms the check digits, discarding the failure
  * detail.
  *
+ * The receiver is [String] rather than [CharSequence] by the same deliberate choice as [toIban],
+ * documented there.
+ *
  * @return the parsed and validated IBAN object, or `null` if the input is in some way invalid.
  * @see Iban.invoke
  */
@@ -353,7 +378,12 @@ fun String.toIbanOrNull(): Iban? =
     // Must stay ofValidated, not Iban(...): see the comment on toIban above.
     if (Iban.validate(this) == null) Iban.ofValidated(Iban.toPlain(this)) else null
 
-/** Returns whether the given string is a valid IBAN. */
+/**
+ * Returns whether the given string is a valid IBAN.
+ *
+ * The receiver is [String] rather than [CharSequence] by the same deliberate choice as [toIban],
+ * documented there.
+ */
 fun String.isValidIban(): Boolean = Iban.validate(this) == null
 
 /**
