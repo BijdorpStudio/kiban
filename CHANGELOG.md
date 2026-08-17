@@ -42,6 +42,16 @@
   so `when` statements over `Malformed.kind` that were exhaustive will need a branch for it. An
   unknown country code that also happens to be lower case is still an `UnknownCountryCode`.
 
+* `CountryCodes.knownCountryCodes` is now typed `List<String>` instead of `Collection<String>`
+  (#140). Alphabetical order was already part of the documented contract, so the type now says so,
+  and callers get indexed access without a copy. The property is also a defensive, immutable copy
+  built once, rather than a fresh `Array.asList()` view per access: the old view shared storage with
+  the library's own reference data, so a `MutableList` cast could `set` an entry and corrupt the
+  registry for the rest of the process — it now rejects every mutation with
+  `UnsupportedOperationException`, on every target rather than only on the JVM. Narrowing the return
+  type is binary-breaking on JVM (`getKnownCountryCodes` changes descriptor), which is why it lands
+  before 1.0; Kotlin source that stored the result in a `Collection<String>` keeps compiling.
+
 **Additions**
 
 * Added `Iban.parse(input)`, a named alias for `Iban(input)`, and made it and `Iban.compose(...)`

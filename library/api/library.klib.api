@@ -88,7 +88,7 @@ final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/Cou
     final val SHORTEST_IBAN_LENGTH // nl.bijdorpstudio.kiban/CountryCodes.SHORTEST_IBAN_LENGTH|{}SHORTEST_IBAN_LENGTH[0]
         final fun <get-SHORTEST_IBAN_LENGTH>(): kotlin/Int // nl.bijdorpstudio.kiban/CountryCodes.SHORTEST_IBAN_LENGTH.<get-SHORTEST_IBAN_LENGTH>|<get-SHORTEST_IBAN_LENGTH>(){}[0]
     final val knownCountryCodes // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes|{}knownCountryCodes[0]
-        final fun <get-knownCountryCodes>(): kotlin.collections/Collection<kotlin/String> // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes.<get-knownCountryCodes>|<get-knownCountryCodes>(){}[0]
+        final fun <get-knownCountryCodes>(): kotlin.collections/List<kotlin/String> // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes.<get-knownCountryCodes>|<get-knownCountryCodes>(){}[0]
     final val lastUpdateDate // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate|{}lastUpdateDate[0]
         final fun <get-lastUpdateDate>(): kotlin.time/Instant // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateDate.<get-lastUpdateDate>|<get-lastUpdateDate>(){}[0]
 

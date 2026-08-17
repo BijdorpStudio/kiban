@@ -1,7 +1,7 @@
 public final class nl/bijdorpstudio/kiban/CountryCodes {
 	public static final field INSTANCE Lnl/bijdorpstudio/kiban/CountryCodes;
 	public static final field lastUpdateRevision Ljava/lang/String;
-	public final fun getKnownCountryCodes ()Ljava/util/Collection;
+	public final fun getKnownCountryCodes ()Ljava/util/List;
 	public final fun getLONGEST_IBAN_LENGTH ()I
 	public final fun getLastUpdateDate ()Lkotlin/time/Instant;
 	public final fun getLength (Ljava/lang/CharSequence;)Ljava/lang/Integer;
