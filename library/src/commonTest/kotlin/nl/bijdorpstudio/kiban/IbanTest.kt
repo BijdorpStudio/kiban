@@ -346,8 +346,12 @@ val IbanTest by testSuite {
 
         assertFailure { Iban(tooLong) }
             .isInstanceOf<IbanParseException.WrongLength>()
-            .prop(IbanParseException.WrongLength::expectedLength)
-            .isEqualTo(18)
+            .all {
+                prop(IbanParseException.WrongLength::input).isEqualTo(tooLong)
+                prop(IbanParseException.WrongLength::expectedLength).isEqualTo(18)
+                prop(IbanParseException.WrongLength::actualLength).isEqualTo(tooLong.length)
+                hasMessage("Wrong length ${tooLong.length} for $tooLong expected: 18")
+            }
     }
 
     test("Invoke should reject checksum failure") {
