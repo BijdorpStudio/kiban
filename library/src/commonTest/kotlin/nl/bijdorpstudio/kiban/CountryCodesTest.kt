@@ -17,6 +17,7 @@ package nl.bijdorpstudio.kiban
 
 import assertk.assertFailure
 import assertk.assertThat
+import assertk.assertions.endsWith
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
@@ -28,6 +29,7 @@ import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 /** Some tests for [CountryCodes]. */
@@ -106,6 +108,31 @@ val CountryCodesTest by testSuite {
                 start = Instant.DISTANT_PAST,
                 end = Clock.System.now(),
             )
+    }
+
+    // The midnight-UTC encoding of lastUpdateDate is a frozen part of the public contract (#144):
+    // a registry release is dated to the day, and with no LocalDate in the standard library the
+    // date is carried as the instant at 00:00:00Z. Callers are documented to rely on that, so it
+    // is pinned here rather than left as an implementation detail of the getter.
+    test("lastUpdateDate is the registry date at exactly midnight UTC") {
+        val lastUpdateDate = CountryCodes.lastUpdateDate
+
+        assertThat(lastUpdateDate.nanosecondsOfSecond).isEqualTo(0)
+        assertThat(lastUpdateDate.epochSeconds % 1.days.inWholeSeconds).isEqualTo(0L)
+    }
+
+    test("lastUpdateDate renders as an ISO-8601 instant and round-trips") {
+        val rendered = CountryCodes.lastUpdateDate.toString()
+
+        assertThat(rendered).endsWith("T00:00:00Z")
+        assertThat(Instant.parse(rendered)).isEqualTo(CountryCodes.lastUpdateDate)
+    }
+
+    test("lastUpdateDate is a stable value across reads") {
+        // The property is a getter that re-parses on every call, so equality across two reads is
+        // worth asserting: an Instant is a value, and callers may compare results of separate
+        // reads.
+        assertThat(CountryCodes.lastUpdateDate).isEqualTo(CountryCodes.lastUpdateDate)
     }
 
     test("lastUpdateRevision should not be null") {

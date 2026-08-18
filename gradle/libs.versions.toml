@@ -12,6 +12,9 @@ junit = "4.13.2"
 kotlin = "2.4.10"
 kotlinx-binary-compatibility-validator = "0.18.1"
 # @keep this is library kotlin compatibility version
+# Do not lower below 2.3.0: kotlin.time.Instant (CountryCodes.lastUpdateDate) is only a
+# non-experimental stdlib declaration from 2.3, so a lower floor turns a frozen public API
+# into one that demands @OptIn from callers. See docs/144-instant-api-stability.md.
 kotlin-version = "2.3.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"

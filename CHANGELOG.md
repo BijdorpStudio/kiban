@@ -82,6 +82,15 @@
 
 **Documentation**
 
+* Documented that kiban requires **Kotlin 2.3.0 or newer**, and that
+  `CountryCodes.lastUpdateDate` carries the registry date as the instant at midnight UTC (#144).
+  Neither is a behaviour change; both were true already and now say so, because both are things a
+  caller can be caught out by. `kotlin.time.Instant` only becomes a non-experimental stdlib type
+  at 2.3, so a consumer compiling below that `apiVersion` is asked to opt in to read that one
+  property; and the midnight-UTC encoding is contract, not an implementation detail of the getter.
+  The investigation behind freezing `Instant` into the 1.0 API is in
+  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+
 * Settled the `String` versus `CharSequence` receiver question for `toIban()`, `toIbanOrNull()` and
   `isValidIban()`, and wrote the reasoning down (#143). The extensions keep their `String`
   receivers, while `Iban(...)`, `Iban.parse(...)`, `Iban.compose(...)`, `Modulo97` and

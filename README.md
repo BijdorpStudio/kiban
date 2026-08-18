@@ -51,6 +51,13 @@ kotlin {
 
 Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser), iOS, macOS, watchOS, tvOS, `linuxX64`, `linuxArm64`, and `mingwX64`.
 
+Requires **Kotlin 2.3.0 or newer**. One API depends on that floor rather than merely being
+built against it: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the
+standard library only makes non-experimental from 2.3. Consumers compiling with an
+`apiVersion` below 2.3 can use the rest of the library, but reading that one property will ask
+them for `@OptIn(kotlin.time.ExperimentalTime::class)`. See
+[docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+
 ## Use
 
 Parsing is strict: invalid input throws a typed `IbanParseException`, so you don't need to unwrap a
