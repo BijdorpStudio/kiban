@@ -66,6 +66,20 @@
   SCREAMING_SNAKE, which is the convention for a `const val`. Renaming after 1.0 would be breaking,
   so it happens now; every break is a compile error with a mechanical fix.
 
+**Fixes**
+
+* `Iban.compose` now diagnoses a malformed country code as the structural problem it is (#146). It
+  assembled `countryCode + "00" + bban` and handed that to the one-argument
+  `Modulo97.calculateCheckDigits`, which only checks that the characters at indices 2 and 3 are
+  `'0'` — so a country code that is not exactly two characters bypassed the two-argument overload's
+  country code validation. Where the BBAN happened to start with a `'0'`, as in
+  `Iban.compose("N", "0417164300...")`, the check digits were computed against the wrong indices and
+  the failure surfaced later as an `UnknownCountryCode` assembled out of BBAN bytes, rather than the
+  `Malformed(INVALID_STRUCTURE)` that `Kind.INVALID_STRUCTURE` documents. `compose` now delegates to
+  `Modulo97.calculateCheckDigits(countryCode, bban)`, which validates the country code before the
+  check digit input is built. Input that composed successfully before still does; only the diagnosis
+  of already-failing input changes.
+
 **Additions**
 
 * Added `Iban.parse(input)`, a named alias for `Iban(input)`, and made it and `Iban.compose(...)`

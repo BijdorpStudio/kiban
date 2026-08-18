@@ -276,7 +276,10 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                     .append(bban)
             val checkDigits =
                 try {
-                    Modulo97.calculateCheckDigits(sb)
+                    // The two-arg overload validates the country code before assembling the
+                    // check digit input. The one-arg overload would compute against the wrong
+                    // indices when the country code is not exactly two characters.
+                    Modulo97.calculateCheckDigits(countryCode, bban)
                 } catch (e: IllegalArgumentException) {
                     throw IbanParseException.Malformed(
                         toPlain(sb),
