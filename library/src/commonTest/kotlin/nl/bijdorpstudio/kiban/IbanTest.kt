@@ -437,6 +437,25 @@ val IbanTest by testSuite {
             .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
     }
 
+    // A country code that is not exactly two characters used to slip past the one-arg
+    // Modulo97.calculateCheckDigits, which inspects indices 2 and 3 rather than the country code.
+    // With a BBAN starting in '0' the check digits were then computed against the wrong indices
+    // and the failure surfaced later as an UnknownCountryCode built from BBAN bytes, instead of
+    // the structural rejection it is.
+    for ((description, countryCode) in
+        listOf(
+            "one character" to "N",
+            "three characters" to "NLD",
+            "a space" to "N ",
+        )) {
+        test("Compose should reject a country code of $description as malformed") {
+            assertFailure { Iban.compose(countryCode = countryCode, bban = "01234567890123") }
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
+        }
+    }
+
     test("Compose should reject unknown country code") {
         assertFailure { Iban.compose(countryCode = "XX", bban = VALID_IBAN.substring(4)) }
             .isInstanceOf<IbanParseException.UnknownCountryCode>()
