@@ -82,6 +82,13 @@
 
 **Documentation**
 
+* Stated in the README that the `js` and `wasmJs` artifacts are for Kotlin/JS and Kotlin/Wasm
+  consumers only (#145). No declaration in the library carries `@JsExport`, so nothing is reachable
+  from hand-written JavaScript and no TypeScript definitions are generated, and the artifacts go to
+  Maven Central as klibs rather than to npm. All of that was already true; it now reads as the
+  scope boundary it is. Exporting to plain JS remains additive and can follow after 1.0 if it is
+  wanted, whereas withdrawing an export surface could not.
+
 * Documented that kiban requires **Kotlin 2.3.0 or newer**, and that
   `CountryCodes.lastUpdateDate` carries the registry date as the instant at midnight UTC (#144).
   Neither is a behaviour change; both were true already and now say so, because both are things a
