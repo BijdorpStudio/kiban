@@ -51,6 +51,16 @@ kotlin {
 
 Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser), iOS, macOS, watchOS, tvOS, `linuxX64`, `linuxArm64`, and `mingwX64`.
 
+The `js` and `wasmJs` artifacts serve **Kotlin/JS and Kotlin/Wasm consumers**, not plain
+JavaScript or TypeScript ones. Nothing in the library is annotated `@JsExport`, so none of its
+declarations are reachable from hand-written JavaScript, and no TypeScript definitions are
+generated for them; the artifacts are published to Maven Central as Kotlin klibs for a Gradle
+build to resolve, not to npm. That is a deliberate scope boundary rather than an omission:
+`@JsExport` accepts only a subset of Kotlin types, and once names, overloads and nullability are
+visible to JavaScript they become a second frozen contract to maintain alongside the Kotlin one.
+Exporting to plain JS stays possible as a purely additive change after 1.0 if there is demand for
+it — withdrawing it again would not be.
+
 Requires **Kotlin 2.3.0 or newer**. One API depends on that floor rather than merely being
 built against it: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the
 standard library only makes non-experimental from 2.3. Consumers compiling with an
