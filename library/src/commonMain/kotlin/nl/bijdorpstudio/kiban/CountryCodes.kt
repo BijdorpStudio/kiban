@@ -161,13 +161,24 @@ public object CountryCodes {
     /**
      * Returns the date that the IBAN reference data was last updated.
      *
+     * The SWIFT IBAN Registry dates its releases to the day, so the value carried here is a date,
+     * not a moment. With no `LocalDate` in the standard library and a zero-dependency constraint
+     * that rules out `kotlinx-datetime`, it is encoded as the [Instant] at midnight UTC on that
+     * date. That encoding is part of the contract: the returned instant always has a zero
+     * time-of-day component and renders as `yyyy-mm-ddT00:00:00Z`. Read the date off it, not the
+     * time of day, and do not read a local calendar date off it in a non-UTC zone.
+     *
+     * [Instant] is safe to depend on here: it is a stable, non-experimental standard library type
+     * from Kotlin 2.3 onwards, which is also this library's minimum supported Kotlin version. See
+     * `docs/144-instant-api-stability.md` for the analysis behind freezing it into the API.
+     *
      * @return the last update date of the reference data in this library.
      */
     public val lastUpdateDate: Instant
         get() = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
     /**
-     * Returns the version information of the SWIFT IBAN Registry used on [.lastUpdateDate].
+     * Returns the version information of the SWIFT IBAN Registry used on [lastUpdateDate].
      *
      * @return revision information of the SWIFT IBAN Registry.
      */
