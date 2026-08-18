@@ -29,9 +29,8 @@ import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
-
-private const val SECONDS_PER_DAY = 24L * 60 * 60
 
 /** Some tests for [CountryCodes]. */
 val CountryCodesTest by testSuite {
@@ -119,7 +118,7 @@ val CountryCodesTest by testSuite {
         val lastUpdateDate = CountryCodes.lastUpdateDate
 
         assertThat(lastUpdateDate.nanosecondsOfSecond).isEqualTo(0)
-        assertThat(lastUpdateDate.epochSeconds % SECONDS_PER_DAY).isEqualTo(0L)
+        assertThat(lastUpdateDate.epochSeconds % 1.days.inWholeSeconds).isEqualTo(0L)
     }
 
     test("lastUpdateDate renders as an ISO-8601 instant and round-trips") {

@@ -82,18 +82,13 @@
 
 **Documentation**
 
-* Confirmed `kotlin.time.Instant` is safe to freeze into the 1.0 API and kept
-  `CountryCodes.lastUpdateDate` as-is (#144). The stdlib declaration carries `@SinceKotlin("2.3")`
-  and `@WasExperimental(ExperimentalTime::class)` but not `@ExperimentalTime`, so it is stable at
-  the Kotlin 2.3.0 compatibility level the build pins — verified by the library compiling clean
-  with an empty `optIn` list, and by dropping the pin to 2.2, which fails with exactly the opt-in
-  error the type's annotations predict. The rejected alternative was exposing the date as a
-  `String` alongside; `lastUpdateDateString` was deliberately removed in favour of the typed
-  property, and `lastUpdateDate.toString()` already yields the ISO-8601 form. Two consequences are
-  now written down rather than implied: the Kotlin floor cannot drop below 2.3.0 while this
-  property exists (a consumer compiling at a lower `apiVersion` would be asked to opt in to read
-  it), and the midnight-UTC encoding of the registry date is contract, not an implementation
-  detail — both are pinned by tests and documented on the property. See
+* Documented that kiban requires **Kotlin 2.3.0 or newer**, and that
+  `CountryCodes.lastUpdateDate` carries the registry date as the instant at midnight UTC (#144).
+  Neither is a behaviour change; both were true already and now say so, because both are things a
+  caller can be caught out by. `kotlin.time.Instant` only becomes a non-experimental stdlib type
+  at 2.3, so a consumer compiling below that `apiVersion` is asked to opt in to read that one
+  property; and the midnight-UTC encoding is contract, not an implementation detail of the getter.
+  The investigation behind freezing `Instant` into the 1.0 API is in
   [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
 
 * Settled the `String` versus `CharSequence` receiver question for `toIban()`, `toIbanOrNull()` and
