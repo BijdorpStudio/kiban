@@ -9,6 +9,8 @@
 final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kiban/Iban> { // nl.bijdorpstudio.kiban/Iban|null[0]
     final val bankIdentifier // nl.bijdorpstudio.kiban/Iban.bankIdentifier|{}bankIdentifier[0]
         final fun <get-bankIdentifier>(): kotlin/String? // nl.bijdorpstudio.kiban/Iban.bankIdentifier.<get-bankIdentifier>|<get-bankIdentifier>(){}[0]
+    final val bban // nl.bijdorpstudio.kiban/Iban.bban|{}bban[0]
+        final fun <get-bban>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.bban.<get-bban>|<get-bban>(){}[0]
     final val branchIdentifier // nl.bijdorpstudio.kiban/Iban.branchIdentifier|{}branchIdentifier[0]
         final fun <get-branchIdentifier>(): kotlin/String? // nl.bijdorpstudio.kiban/Iban.branchIdentifier.<get-branchIdentifier>|<get-branchIdentifier>(){}[0]
     final val checkDigits // nl.bijdorpstudio.kiban/Iban.checkDigits|{}checkDigits[0]

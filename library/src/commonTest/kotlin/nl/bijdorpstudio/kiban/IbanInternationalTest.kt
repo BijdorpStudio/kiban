@@ -52,6 +52,14 @@ val IbanInternationalTest by testSuite {
     }
 
     for (testData in countriesTestData) {
+        test("Compose should round trip through the accessors for ${testData.name}") {
+            val iban = Iban(testData.plain)
+
+            assertThat(Iban.compose(iban.countryCode, iban.bban)).isEqualTo(iban)
+        }
+    }
+
+    for (testData in countriesTestData) {
         test("Check is registered IBAN for ${testData.name}") {
             assertThat(Iban(testData.plain).isInSwiftRegistry).isEqualTo(testData.swift)
         }

@@ -152,6 +152,9 @@ before parsing if your input layer can produce them.
     // Get the Bank Identifier and Branch Identifier:
     val bankId: String? = iban.bankIdentifier
     val branchId: String? = iban.branchIdentifier
+
+    // Get the BBAN, the counterpart of what Iban.compose() takes:
+    val bban: String = iban.bban // round trips: Iban.compose( iban.countryCode, iban.bban )
 ```
 
 `Modulo97` is the one part of the library that still throws unconditionally: its inputs are
