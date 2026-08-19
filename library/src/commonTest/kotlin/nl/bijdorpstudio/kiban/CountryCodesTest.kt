@@ -23,6 +23,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isLessThan
 import assertk.assertions.isLessThanOrEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
@@ -83,6 +84,37 @@ val CountryCodesTest by testSuite {
 
     test("isKnownCountryCode should return true for existing country code") {
         assertThat(CountryCodes.isKnownCountryCode("NL")).isTrue()
+    }
+
+    // indexOf backs every country code lookup in the library, so its contract — the index when
+    // found, the inverted insertion point when not — is pinned here directly, independently of
+    // the public methods that read it.
+    test("indexOf finds every known country code at its own position") {
+        val codes = CountryCodes.knownCountryCodes
+
+        codes.forEachIndexed { index, code ->
+            assertThat(CountryCodes.indexOf(code)).isEqualTo(index)
+        }
+    }
+
+    for (absent in listOf("AA", "NK", "ZZ")) {
+        test("indexOf returns the inverted insertion point for unknown country code '$absent'") {
+            val codes = CountryCodes.knownCountryCodes
+            assertThat(codes.contains(absent)).isFalse()
+
+            val insertionPoint = codes.count { it < absent }
+
+            assertThat(CountryCodes.indexOf(absent)).isEqualTo(-(insertionPoint + 1))
+        }
+    }
+
+    test("indexOf rejects input that is not a country code") {
+        // Lower case, wrong length and empty input all have to come back negative rather than
+        // matching a prefix or running off the end of the array.
+        assertThat(CountryCodes.indexOf("")).isLessThan(0)
+        assertThat(CountryCodes.indexOf("nl")).isLessThan(0)
+        assertThat(CountryCodes.indexOf("N")).isLessThan(0)
+        assertThat(CountryCodes.indexOf("NLX")).isLessThan(0)
     }
 
     test("ibanLength returns null for unknown country code") {

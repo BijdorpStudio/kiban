@@ -27,6 +27,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import assertk.assertions.prop
 import de.infix.testBalloon.framework.core.testSuite
@@ -168,7 +169,7 @@ val IbanTest by testSuite {
         assertFailure { Iban("") }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.EMPTY)
+            .isEqualTo(IbanParseException.Malformed.Kind.Empty)
     }
 
     test("Invoke should reject invalid input") {
@@ -176,8 +177,8 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-                hasMessage("Input begins or ends in an invalid character: Shenanigans!")
+                    .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
+                hasMessage("Input ends with an invalid character '!': Shenanigans!")
             }
     }
 
@@ -186,8 +187,8 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-                hasMessage("Input begins or ends in an invalid character:  $VALID_IBAN")
+                    .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
+                hasMessage("Input begins with an invalid character ' ': $VALID_IBAN")
             }
     }
 
@@ -196,13 +197,23 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
-                hasMessage("Input begins or ends in an invalid character: $VALID_IBAN ")
+                    .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
+                hasMessage("Input ends with an invalid character ' ': $VALID_IBAN")
             }
     }
 
     test("Invoke should accept the pretty printed form") {
         assertThat(Iban("NL03 ABNA 0143 2674 69").plain).isEqualTo(VALID_IBAN)
+    }
+
+    // pretty is initialized lazily in PUBLICATION mode, so an Iban stays safe to share between
+    // threads: racing readers may each compute the value, but only one is published and every
+    // read afterwards returns that one. Memoization is what is observable from a single thread.
+    test("Pretty should be memoized and identical across reads") {
+        val iban = Iban(VALID_IBAN)
+
+        assertThat(iban.pretty).isEqualTo("NL03 ABNA 0143 2674 69")
+        assertThat(iban.pretty).isSameInstanceAs(iban.pretty)
     }
 
     // The ASCII space is grouping, every other whitespace character is just a character an IBAN
@@ -213,28 +224,28 @@ val IbanTest by testSuite {
             assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, whitespace.toString())) }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
         }
 
         test("Invoke should reject a substituted $label") {
             assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, whitespace.toString())) }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
         }
 
         test("Invoke should reject a leading $label") {
             assertFailure { Iban("$whitespace$VALID_IBAN") }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
         }
 
         test("Invoke should reject a trailing $label") {
             assertFailure { Iban("$VALID_IBAN$whitespace") }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
         }
     }
 
@@ -244,7 +255,7 @@ val IbanTest by testSuite {
         assertFailure { Iban("NL91\tABNA 0417164300") }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+            .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
     }
 
     test("Invoke should reject a wrong length input by its invalid character, not its length") {
@@ -252,9 +263,61 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
-                hasMessage("Invalid character '_' in ${VALID_IBAN.replaceRange(4, 4, "_")}")
+                    .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
+                hasMessage(
+                    "Invalid character '_' at index 4 in ${VALID_IBAN.replaceRange(4, 4, "_")}"
+                )
             }
+    }
+
+    // The point of the typed kinds: a caller can read what went wrong off the rejection instead
+    // of parsing the message for it. These pin the payload the parser attaches at each site.
+    test("Invoke should name the offending character of a leading boundary rejection") {
+        assertFailure { Iban(" $VALID_IBAN") }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidBoundaryCharacter(' ', true))
+    }
+
+    test("Invoke should name the offending character of a trailing boundary rejection") {
+        assertFailure { Iban("$VALID_IBAN\t") }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidBoundaryCharacter('\t', false))
+    }
+
+    test("Invoke should report the first end when both ends are invalid") {
+        assertFailure { Iban(" $VALID_IBAN!") }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidBoundaryCharacter(' ', true))
+    }
+
+    test("Invoke should name the offending character and index of a substituted character") {
+        // Substituting keeps the length correct, so this is the rejection Modulo97 raises and
+        // the parser then attributes to a character.
+        assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, "_")) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidCharacter('_', 6))
+    }
+
+    test("Invoke should name the offending character and index of an inserted character") {
+        // Inserting makes the input a character too long, so this is the rejection the length
+        // branch attributes to a character. Both branches have to agree on the payload.
+        assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, "_")) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidCharacter('_', 4))
+    }
+
+    test("Invoke should index the offending character in the plain input, spaces removed") {
+        // The index is into the input the exception carries, which has the grouping spaces
+        // stripped -- not into the pretty-printed input the caller handed over.
+        assertFailure { Iban("NL03 ABNA 0143 26_4 69") }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.InvalidCharacter('_', 14))
     }
 
     test("Invoke should reject too short input") {
@@ -262,7 +325,7 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+                    .isEqualTo(IbanParseException.Malformed.Kind.TooShort)
                 hasMessage("Length is too short to be an IBAN: NL03")
             }
     }
@@ -272,7 +335,7 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
+                    .isEqualTo(IbanParseException.Malformed.Kind.NonNumericCheckDigits)
                 hasMessage("Characters at index 2 and 3 not both numeric. NLAB0143267469")
             }
     }
@@ -283,7 +346,7 @@ val IbanTest by testSuite {
         assertFailure { Iban(invalidCharacter) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+            .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
     }
 
     // The ASCII letter test folds the case bit before comparing, so the characters that sit
@@ -293,7 +356,7 @@ val IbanTest by testSuite {
             assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, punctuation.toString())) }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
         }
     }
 
@@ -301,7 +364,7 @@ val IbanTest by testSuite {
         assertFailure { Iban(FULLWIDTH_CHECK_DIGITS) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS)
+            .isEqualTo(IbanParseException.Malformed.Kind.NonNumericCheckDigits)
     }
 
     for ((label, replacement) in
@@ -314,7 +377,7 @@ val IbanTest by testSuite {
             assertFailure { Iban(VALID_IBAN.replaceRange(8, 9, replacement)) }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidCharacter>()
         }
     }
 
@@ -327,7 +390,7 @@ val IbanTest by testSuite {
             assertFailure { Iban(VALID_IBAN.replaceRange(0, 1, replacement)) }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidBoundaryCharacter>()
         }
     }
 
@@ -336,7 +399,7 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed>()
             .all {
                 prop(IbanParseException.Malformed::kind)
-                    .isEqualTo(IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE)
+                    .isEqualTo(IbanParseException.Malformed.Kind.NonUpperCaseCountryCode)
                 hasMessage("Country code is not upper case: nl. ${VALID_IBAN.lowercase()}")
             }
     }
@@ -345,7 +408,7 @@ val IbanTest by testSuite {
         assertFailure { Iban(VALID_IBAN.replaceRange(1, 2, "l")) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE)
+            .isEqualTo(IbanParseException.Malformed.Kind.NonUpperCaseCountryCode)
     }
 
     test("Invoke should still report an unknown country code that is lower case as unknown") {
@@ -439,7 +502,7 @@ val IbanTest by testSuite {
         assertFailure { Iban.compose(countryCode = "potato", bban = VALID_IBAN.substring(4)) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
+            .isInstanceOf<IbanParseException.Malformed.Kind.InvalidStructure>()
     }
 
     // A country code that is not exactly two characters used to slip past the one-arg
@@ -457,8 +520,19 @@ val IbanTest by testSuite {
             assertFailure { Iban.compose(countryCode = countryCode, bban = "01234567890123") }
                 .isInstanceOf<IbanParseException.Malformed>()
                 .prop(IbanParseException.Malformed::kind)
-                .isEqualTo(IbanParseException.Malformed.Kind.INVALID_STRUCTURE)
+                .isInstanceOf<IbanParseException.Malformed.Kind.InvalidStructure>()
         }
+    }
+
+    test("Compose should carry the reason it could not assemble the parts") {
+        assertFailure { Iban.compose(countryCode = "potato", bban = VALID_IBAN.substring(4)) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(
+                IbanParseException.Malformed.Kind.InvalidStructure(
+                    "Country code should be length 2 but was potato"
+                )
+            )
     }
 
     test("Compose should reject unknown country code") {
@@ -528,7 +602,7 @@ val IbanTest by testSuite {
         assertFailure { Iban(tooShort) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
-            .isEqualTo(IbanParseException.Malformed.Kind.TOO_SHORT)
+            .isEqualTo(IbanParseException.Malformed.Kind.TooShort)
     }
 
     test("Input at SHORTEST_POSSIBLE_IBAN_LENGTH should get past the length check") {

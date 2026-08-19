@@ -59,11 +59,28 @@ public object CountryCodes {
     /**
      * Returns the index of the given country code by binary search.
      *
+     * Searches [COUNTRY_CODES] directly rather than through `asList().binarySearch(..)`: every
+     * lookup on the parse path goes through here, and the list wrapper is an allocation per call
+     * that buys nothing.
+     *
      * @param countryCode a country code.
-     * @return the array index, or -1.
+     * @return the array index, or the inverted insertion point (`-(insertionPoint + 1)`, always
+     *   negative) if the country code is not present.
      */
-    internal fun indexOf(countryCode: String): Int =
-        COUNTRY_CODES.asList().binarySearch(countryCode)
+    internal fun indexOf(countryCode: String): Int {
+        var low = 0
+        var high = COUNTRY_CODES.size - 1
+        while (low <= high) {
+            val mid = (low + high) ushr 1
+            val comparison = COUNTRY_CODES[mid].compareTo(countryCode)
+            when {
+                comparison < 0 -> low = mid + 1
+                comparison > 0 -> high = mid - 1
+                else -> return mid
+            }
+        }
+        return -(low + 1)
+    }
 
     /**
      * Returns the bank identifier from the given IBAN, if available.

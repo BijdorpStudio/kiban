@@ -50,8 +50,15 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      */
     public val isSEPA: Boolean
 
-    /** Pretty-printed value, lazily initialized. */
-    public val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
+    /**
+     * Pretty-printed value, lazily initialized.
+     *
+     * [LazyThreadSafetyMode.PUBLICATION] rather than [LazyThreadSafetyMode.NONE]: an [Iban] is an
+     * immutable value type meant to be shared freely between threads, so its lazy initialization
+     * has to be safe under concurrent access. Racing initializers can each compute the value, but
+     * only one result is published, and every reader sees that same string.
+     */
+    public val pretty: String by lazy(LazyThreadSafetyMode.PUBLICATION) { addSpaces(value) }
 
     /**
      * Initializing constructor. Validation happens before construction, so this constructor cannot
@@ -210,27 +217,36 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          */
         internal fun validate(input: CharSequence): Rejection? {
             if (input.isEmpty()) {
-                return Rejection.Malformed("", Kind.EMPTY)
+                return Rejection.Malformed("", Kind.Empty)
             }
-            if (!input.first().isAsciiLetterOrDigit() || !input.last().isAsciiLetterOrDigit()) {
+            // Reported one end at a time so the rejection can name the character that caused it.
+            // The first end wins when both are invalid, which is the end a reader looks at first.
+            val firstCharacter = input.first()
+            if (!firstCharacter.isAsciiLetterOrDigit()) {
                 return Rejection.Malformed(
                     toPlain(input),
-                    Kind.INVALID_BOUNDARY_CHARACTER,
-                    "Input begins or ends in an invalid character: $input",
+                    Kind.InvalidBoundaryCharacter(firstCharacter, atStart = true),
+                )
+            }
+            val lastCharacter = input.last()
+            if (!lastCharacter.isAsciiLetterOrDigit()) {
+                return Rejection.Malformed(
+                    toPlain(input),
+                    Kind.InvalidBoundaryCharacter(lastCharacter, atStart = false),
                 )
             }
             val value = toPlain(input)
             if (value.length < SHORTEST_POSSIBLE_IBAN_LENGTH) {
-                return Rejection.Malformed(value, Kind.TOO_SHORT)
+                return Rejection.Malformed(value, Kind.TooShort)
             }
             if (!(value[2].isAsciiDigit() && value[3].isAsciiDigit())) {
-                return Rejection.Malformed(value, Kind.NON_NUMERIC_CHECK_DIGITS)
+                return Rejection.Malformed(value, Kind.NonNumericCheckDigits)
             }
             val countryCode: String = value.substring(0, 2)
             val expectedLength: Int =
                 CountryCodes.ibanLength(countryCode)
                     ?: return if (isKnownCountryCodeInWrongCase(countryCode)) {
-                        Rejection.Malformed(value, Kind.NON_UPPER_CASE_COUNTRY_CODE)
+                        Rejection.Malformed(value, Kind.NonUpperCaseCountryCode)
                     } else {
                         Rejection.UnknownCountryCode(value, countryCode)
                     }
@@ -242,13 +258,9 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                 // Modulo97; without this the two paths would blame different things for the same
                 // mistake. Deliberately not hoisted above the length comparison: the scan is
                 // wasted work for the valid input that is the hot path here.
-                val invalidCharacterIndex: Int = value.indexOfFirst { !it.isAsciiLetterOrDigit() }
-                if (invalidCharacterIndex >= 0) {
-                    return Rejection.Malformed(
-                        value,
-                        Kind.INVALID_CHARACTER,
-                        "Invalid character '${value[invalidCharacterIndex]}' in $value",
-                    )
+                val invalidCharacter = invalidCharacterIn(value)
+                if (invalidCharacter != null) {
+                    return Rejection.Malformed(value, invalidCharacter)
                 }
                 return Rejection.WrongLength(value, expectedLength, value.length)
             }
@@ -256,10 +268,14 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                 try {
                     Modulo97.checksum(value)
                 } catch (e: IllegalArgumentException) {
+                    // Modulo97 rejects an input for a character outside the IBAN character set,
+                    // which the scan names, or for holding fewer than five non-space characters,
+                    // which cannot happen here: the length was already matched against the
+                    // country's registered length. The elvis is what keeps this total.
                     return Rejection.Malformed(
                         value,
-                        Kind.INVALID_CHARACTER,
-                        e.message ?: "Invalid character in $value",
+                        invalidCharacterIn(value)
+                            ?: Kind.InvalidStructure(e.message ?: "Cannot checksum $value"),
                     )
                 }
             if (calculatedChecksum != 1) {
@@ -294,12 +310,23 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                 } catch (e: IllegalArgumentException) {
                     throw IbanParseException.Malformed(
                         toPlain(sb),
-                        Kind.INVALID_STRUCTURE,
-                        e.message ?: "Cannot calculate check digits for $sb",
+                        Kind.InvalidStructure(e.message ?: "Cannot calculate check digits for $sb"),
                     )
                 }
             sb.setRange(2, 4, checkDigits.toString().padStart(2, '0'))
             return invoke(sb)
+        }
+
+        /**
+         * The [Kind.InvalidCharacter] naming the first character of [value] that the IBAN character
+         * set does not contain, or `null` when every character is in it.
+         *
+         * @param value a plain input, with the grouping spaces already removed, so that a space
+         *   found here is as invalid as any other character outside the set.
+         */
+        private fun invalidCharacterIn(value: String): Kind.InvalidCharacter? {
+            val index: Int = value.indexOfFirst { !it.isAsciiLetterOrDigit() }
+            return if (index >= 0) Kind.InvalidCharacter(value[index], index) else null
         }
 
         /**
