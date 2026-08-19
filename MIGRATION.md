@@ -48,6 +48,11 @@ locally without touching the public API.
 | `IBANFields` | removed — use `Iban.bankIdentifier` / `Iban.branchIdentifier` |
 | `IBANFieldsCompat` | never ported |
 
+The `IBAN` alias is JVM-only: it is declared in the library's `jvmMain` source set, so Kotlin code
+compiled for the JVM (or for Android) sees it, while `commonMain` and the non-JVM targets see only
+`Iban`. It stays in 1.0 — a typealias is erased at compile time, so it costs nothing to carry —
+but new code should be written against `Iban`.
+
 ## Parsing
 
 `Iban(input)` — or the `invoke` operator's spelling, `Iban.invoke(input)` — is the primary entry point. It
