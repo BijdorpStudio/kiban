@@ -15,68 +15,76 @@
 */
 package nl.bijdorpstudio.kiban
 
-import assertk.assertFailure
 import assertk.assertThat
-import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
-import assertk.assertions.messageContains
+import assertk.assertions.prop
 import de.infix.testBalloon.framework.core.testSuite
 import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 
-/** The default wording each remaining kind carries when no detail is supplied. */
-private val DEFAULT_MESSAGES =
-    mapOf(
-        Kind.EMPTY to "Input is empty",
-        Kind.TOO_SHORT to "Length is too short to be an IBAN: $VALID_IBAN",
-        Kind.NON_NUMERIC_CHECK_DIGITS to
-            "Characters at index 2 and 3 not both numeric. $VALID_IBAN",
-        Kind.NON_UPPER_CASE_COUNTRY_CODE to
-            "Country code is not upper case: ${VALID_IBAN.take(2)}. $VALID_IBAN",
+/**
+ * Every kind paired with the message the exception built from it carries. Exhaustive by
+ * construction: the guard test at the bottom fails if a kind is added without an entry here.
+ */
+private val messages: List<Pair<Kind, String>> =
+    listOf(
+        Kind.Empty to "Input is empty",
+        Kind.TooShort to "Length is too short to be an IBAN: $VALID_IBAN",
+        Kind.NonNumericCheckDigits to "Characters at index 2 and 3 not both numeric. $VALID_IBAN",
+        Kind.NonUpperCaseCountryCode to "Country code is not upper case: NL. $VALID_IBAN",
+        Kind.InvalidBoundaryCharacter(' ', atStart = true) to
+            "Input begins with an invalid character ' ': $VALID_IBAN",
+        Kind.InvalidBoundaryCharacter('!', atStart = false) to
+            "Input ends with an invalid character '!': $VALID_IBAN",
+        Kind.InvalidCharacter('_', 6) to "Invalid character '_' at index 6 in $VALID_IBAN",
+        Kind.InvalidStructure("Country code should be length 2 but was XYZ") to
+            "Country code should be length 2 but was XYZ",
     )
-
-/** The kinds that carry no default wording and so have to be given a detail message. */
-private val KINDS_REQUIRING_DETAIL =
-    listOf(Kind.INVALID_BOUNDARY_CHARACTER, Kind.INVALID_CHARACTER, Kind.INVALID_STRUCTURE)
 
 /** Tests for the internal [Rejection] type behind the non-throwing validation paths. */
 val RejectionTest by testSuite {
-    // The detail requirement is an invariant of the rejection, not of the exception built from
-    // it: a rejection that breaks it has to fail where it is constructed, not later on a
-    // materialization path that isValidIban and toIbanOrNull never take.
-    for (kind in KINDS_REQUIRING_DETAIL) {
-        test("Malformed rejection of kind $kind without a detail fails at construction") {
-            assertFailure { Rejection.Malformed(VALID_IBAN, kind) }
-                .isInstanceOf<IllegalArgumentException>()
-                .messageContains("must supply a detail message")
-        }
-
-        test("Malformed rejection of kind $kind carries its detail into the exception") {
-            val rejection = Rejection.Malformed(VALID_IBAN, kind, "Something specific")
-
-            assertThat(rejection.toException()).hasMessage("Something specific")
-        }
-    }
-
-    for ((kind, expectedMessage) in DEFAULT_MESSAGES) {
-        test("Malformed rejection of kind $kind builds its default message without a detail") {
+    // The wording is derived from the kind alone, so a kind that names a character or a reason
+    // needs no second channel to say it. There is no rejection that cannot describe itself, and
+    // no runtime check standing in for that: the sealed hierarchy makes it a property of the type.
+    for ((kind, expectedMessage) in messages) {
+        test("Malformed rejection of $kind describes itself") {
             val exception = Rejection.Malformed(VALID_IBAN, kind).toException()
 
-            assertThat(exception).isInstanceOf<IbanParseException.Malformed>()
-            assertThat((exception as IbanParseException.Malformed).kind).isEqualTo(kind)
-            assertThat(exception).hasMessage(expectedMessage)
+            assertThat(exception)
+                .isInstanceOf<IbanParseException.Malformed>()
+                .hasMessage(expectedMessage)
         }
 
-        test("Malformed rejection of kind $kind prefers an explicit detail over the default") {
-            val rejection = Rejection.Malformed(VALID_IBAN, kind, "Explicit detail")
+        test("Malformed rejection of $kind carries its kind into the exception unchanged") {
+            val exception = Rejection.Malformed(VALID_IBAN, kind).toException()
 
-            assertThat(rejection.toException()).hasMessage("Explicit detail")
+            assertThat(exception)
+                .isInstanceOf<IbanParseException.Malformed>()
+                .prop(IbanParseException.Malformed::kind)
+                .isEqualTo(kind)
         }
     }
 
-    test("Every malformed kind is covered by exactly one of the two groups") {
-        assertThat(KINDS_REQUIRING_DETAIL + DEFAULT_MESSAGES.keys)
-            .containsExactlyInAnyOrder(*Kind.entries.toTypedArray())
+    test("Every malformed kind has a message of its own") {
+        // A sealed hierarchy has no `entries`, so exhaustiveness is checked the way the compiler
+        // checks it: this `when` stops compiling when a kind is added, and the branch added to
+        // fix it has to name a kind that `messages` covers.
+        val covered =
+            messages
+                .map { (kind, _) ->
+                    when (kind) {
+                        Kind.Empty -> "Empty"
+                        Kind.TooShort -> "TooShort"
+                        Kind.NonNumericCheckDigits -> "NonNumericCheckDigits"
+                        Kind.NonUpperCaseCountryCode -> "NonUpperCaseCountryCode"
+                        is Kind.InvalidBoundaryCharacter -> "InvalidBoundaryCharacter"
+                        is Kind.InvalidCharacter -> "InvalidCharacter"
+                        is Kind.InvalidStructure -> "InvalidStructure"
+                    }
+                }
+                .toSet()
+
+        assertThat(covered.size).isEqualTo(7)
     }
 }

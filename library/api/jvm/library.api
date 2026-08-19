@@ -54,17 +54,72 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed : nl/bijd
 	public final fun getKind ()Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
 }
 
-public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind : java/lang/Enum {
-	public static final field EMPTY Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field INVALID_BOUNDARY_CHARACTER Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field INVALID_CHARACTER Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field INVALID_STRUCTURE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field NON_NUMERIC_CHECK_DIGITS Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field NON_UPPER_CASE_COUNTRY_CODE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static final field TOO_SHORT Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
-	public static fun values ()[Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind;
+public abstract class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$Empty : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$Empty;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public fun <init> (CZ)V
+	public final fun component1 ()C
+	public final fun component2 ()Z
+	public final fun copy (CZ)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;
+	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;CZILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAtStart ()Z
+	public final fun getCharacter ()C
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public fun <init> (CI)V
+	public final fun component1 ()C
+	public final fun component2 ()I
+	public final fun copy (CI)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;
+	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;CIILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharacter ()C
+	public final fun getIndex ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;
+	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;Ljava/lang/String;ILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$NonNumericCheckDigits : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$NonNumericCheckDigits;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$NonUpperCaseCountryCode : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$NonUpperCaseCountryCode;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$TooShort : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
+	public static final field INSTANCE Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$TooShort;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$UnknownCountryCode : nl/bijdorpstudio/kiban/IbanParseException {

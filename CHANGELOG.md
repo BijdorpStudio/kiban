@@ -4,6 +4,25 @@
 
 **Breaking changes**
 
+* `IbanParseException.Malformed.Kind` is a sealed class hierarchy instead of an enum (#148). The
+  kinds that could only ever be described in prose now carry that description as typed data:
+  `InvalidCharacter(character, index)`, `InvalidBoundaryCharacter(character, atStart)` and
+  `InvalidStructure(reason)`. A caller can react to a rejection — point at the character, count the
+  kinds it sees — instead of parsing `message` for it, and the library can no longer build a
+  malformed rejection that has nothing to say about itself: what used to be a runtime check when
+  the rejection was turned into an exception is now a property of the type at construction.
+
+  The entries are renamed accordingly (`EMPTY` becomes `Kind.Empty`, `TOO_SHORT` becomes
+  `Kind.TooShort`, and so on), and the enum-only surface goes with them: `Kind.entries`,
+  `Kind.values()` and `Kind.valueOf(String)` no longer exist, so code that enumerated the kinds
+  needs to list them itself. A `when` over `Malformed.kind` stays exhaustive without an `else`,
+  which is how most callers use it.
+
+  Two rejection messages are reworded to use what the kind now carries: a boundary rejection names
+  the character and the end it sits at ("Input begins with an invalid character ' ': ..."), and an
+  invalid-character rejection names its index ("Invalid character '_' at index 6 in ..."). Messages
+  are diagnostics, not contract, but tests that assert on them will need updating.
+
 * IBAN validation is now ASCII-only (#136). `Iban.validate` used `Char.isDigit()` and
   `Char.isLetterOrDigit()`, and `Modulo97.checksum` used `Char.isDigit()` — all Unicode-aware on
   every platform, as is `String.toLong`, which the checksum folds its buffer through. The effect was

@@ -38,44 +38,73 @@ public sealed class IbanParseException(
      * The input is not shaped like an IBAN at all: it is empty, too short, contains unsupported
      * characters or does not carry numeric check digits.
      *
-     * @property kind the specific structural problem detected.
+     * @property kind the specific structural problem detected, carrying whatever the parser knew
+     *   about it at the point of rejection.
      */
     public class Malformed
     internal constructor(
         input: String,
         public val kind: Kind,
-        message: String,
-    ) : IbanParseException(input, message) {
+    ) : IbanParseException(input, malformedMessage(input, kind)) {
 
-        /** The structural problem that made the input malformed. */
-        public enum class Kind {
+        /**
+         * The structural problem that made the input malformed.
+         *
+         * A sealed hierarchy rather than an enum: the problems that can name the offending
+         * character, or the reason behind them, carry it as typed data, so a caller can react to a
+         * rejection instead of parsing [message] for it. A `when` over this type is still
+         * exhaustive without an `else`, as it was over the enum.
+         */
+        public sealed class Kind {
             /** The input is empty. */
-            EMPTY,
-
-            /** The input begins or ends in a character that cannot occur in an IBAN. */
-            INVALID_BOUNDARY_CHARACTER,
+            public data object Empty : Kind()
 
             /** The input is shorter than [Iban.SHORTEST_POSSIBLE_IBAN_LENGTH]. */
-            TOO_SHORT,
+            public data object TooShort : Kind()
 
             /** The characters at index 2 and 3 are not both ASCII digits. */
-            NON_NUMERIC_CHECK_DIGITS,
+            public data object NonNumericCheckDigits : Kind()
 
             /**
              * The country code is a known IBAN country code, but is not written in upper case.
              * IBANs are upper case by definition, and kiban rejects rather than normalizes.
              */
-            NON_UPPER_CASE_COUNTRY_CODE,
+            public data object NonUpperCaseCountryCode : Kind()
 
-            /** The input contains a character outside the ASCII range `[A-Za-z0-9 ]`. */
-            INVALID_CHARACTER,
+            /**
+             * The input begins or ends in a character that cannot occur in an IBAN.
+             *
+             * @property character the offending character, as it stood in the input handed to the
+             *   parser. This includes the (ASCII 0x20) space, which groups a pretty-printed IBAN
+             *   everywhere except at its ends.
+             * @property atStart `true` when [character] is the first character of the input,
+             *   `false` when it is the last. When both ends are invalid, the first is reported.
+             */
+            public data class InvalidBoundaryCharacter(
+                public val character: Char,
+                public val atStart: Boolean,
+            ) : Kind()
+
+            /**
+             * The input contains a character outside the ASCII range `[A-Za-z0-9 ]`.
+             *
+             * @property character the offending character.
+             * @property index where it sits in [IbanParseException.input], which has the grouping
+             *   spaces removed. When more than one character is invalid, the first is reported.
+             */
+            public data class InvalidCharacter(
+                public val character: Char,
+                public val index: Int,
+            ) : Kind()
 
             /**
              * The parts handed to [Iban.compose] cannot be assembled into an IBAN, because they are
              * too short, carry unsupported characters, or because the country code is not exactly
              * two characters.
+             *
+             * @property reason what made the parts unusable.
              */
-            INVALID_STRUCTURE,
+            public data class InvalidStructure(public val reason: String) : Kind()
         }
     }
 
@@ -110,6 +139,30 @@ public sealed class IbanParseException(
 }
 
 /**
+ * The message an [IbanParseException.Malformed] carries for a given [kind].
+ *
+ * Total over the sealed hierarchy: a kind either has wording of its own or carries the detail its
+ * wording needs, so there is no way to build a malformed rejection that cannot describe itself.
+ * That used to be a runtime invariant, enforced only once a rejection was turned into an exception;
+ * the type system now holds it at the point of construction.
+ */
+private fun malformedMessage(input: String, kind: IbanParseException.Malformed.Kind): String =
+    when (kind) {
+        IbanParseException.Malformed.Kind.Empty -> "Input is empty"
+        IbanParseException.Malformed.Kind.TooShort -> "Length is too short to be an IBAN: $input"
+        IbanParseException.Malformed.Kind.NonNumericCheckDigits ->
+            "Characters at index 2 and 3 not both numeric. $input"
+        IbanParseException.Malformed.Kind.NonUpperCaseCountryCode ->
+            "Country code is not upper case: ${input.take(2)}. $input"
+        is IbanParseException.Malformed.Kind.InvalidBoundaryCharacter ->
+            "Input ${if (kind.atStart) "begins" else "ends"} with an invalid character " +
+                "'${kind.character}': $input"
+        is IbanParseException.Malformed.Kind.InvalidCharacter ->
+            "Invalid character '${kind.character}' at index ${kind.index} in $input"
+        is IbanParseException.Malformed.Kind.InvalidStructure -> kind.reason
+    }
+
+/**
  * A lightweight, non-throwing description of why an input was rejected by [Iban.validate].
  *
  * Carries the same information as [IbanParseException] without paying for a captured stack trace,
@@ -119,32 +172,7 @@ public sealed class IbanParseException(
  */
 internal sealed class Rejection(val input: String) {
 
-    class Malformed(
-        input: String,
-        val kind: IbanParseException.Malformed.Kind,
-        val detail: String? = null,
-    ) : Rejection(input) {
-        init {
-            require(detail != null || kind !in KINDS_REQUIRING_DETAIL) {
-                "$kind rejections must supply a detail message"
-            }
-        }
-
-        private companion object {
-            /**
-             * The kinds that have no useful default wording: which character, or which part, made
-             * the input invalid is only known at the point of rejection, so the caller has to say
-             * it. Checked when the rejection is built rather than when it is turned into an
-             * exception, a path a non-throwing validation may never take.
-             */
-            val KINDS_REQUIRING_DETAIL =
-                setOf(
-                    IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
-                    IbanParseException.Malformed.Kind.INVALID_CHARACTER,
-                    IbanParseException.Malformed.Kind.INVALID_STRUCTURE,
-                )
-        }
-    }
+    class Malformed(input: String, val kind: IbanParseException.Malformed.Kind) : Rejection(input)
 
     class UnknownCountryCode(input: String, val countryCode: String) : Rejection(input)
 
@@ -155,27 +183,9 @@ internal sealed class Rejection(val input: String) {
 
     fun toException(): IbanParseException =
         when (this) {
-            is Malformed ->
-                IbanParseException.Malformed(input, kind, detail ?: defaultMessage(kind))
+            is Malformed -> IbanParseException.Malformed(input, kind)
             is UnknownCountryCode -> IbanParseException.UnknownCountryCode(input, countryCode)
             is WrongLength -> IbanParseException.WrongLength(input, expectedLength, actualLength)
             is WrongChecksum -> IbanParseException.WrongChecksum(input)
-        }
-
-    private fun defaultMessage(kind: IbanParseException.Malformed.Kind): String =
-        when (kind) {
-            IbanParseException.Malformed.Kind.EMPTY -> "Input is empty"
-            IbanParseException.Malformed.Kind.TOO_SHORT ->
-                "Length is too short to be an IBAN: $input"
-            IbanParseException.Malformed.Kind.NON_NUMERIC_CHECK_DIGITS ->
-                "Characters at index 2 and 3 not both numeric. $input"
-            IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE ->
-                "Country code is not upper case: ${input.take(2)}. $input"
-            // Unreachable: Malformed rejects these at construction unless they carry a detail.
-            // A fallback rather than an error() keeps the invariant enforced in exactly one
-            // place, and the one place is not this one.
-            IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
-            IbanParseException.Malformed.Kind.INVALID_CHARACTER,
-            IbanParseException.Malformed.Kind.INVALID_STRUCTURE -> "Invalid IBAN: $input"
         }
 }
