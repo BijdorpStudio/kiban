@@ -26,6 +26,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import assertk.assertions.prop
 import de.infix.testBalloon.framework.core.testSuite
@@ -202,6 +203,16 @@ val IbanTest by testSuite {
 
     test("Invoke should accept the pretty printed form") {
         assertThat(Iban("NL03 ABNA 0143 2674 69").plain).isEqualTo(VALID_IBAN)
+    }
+
+    // pretty is initialized lazily in PUBLICATION mode, so an Iban stays safe to share between
+    // threads: racing readers may each compute the value, but only one is published and every
+    // read afterwards returns that one. Memoization is what is observable from a single thread.
+    test("Pretty should be memoized and identical across reads") {
+        val iban = Iban(VALID_IBAN)
+
+        assertThat(iban.pretty).isEqualTo("NL03 ABNA 0143 2674 69")
+        assertThat(iban.pretty).isSameInstanceAs(iban.pretty)
     }
 
     // The ASCII space is grouping, every other whitespace character is just a character an IBAN

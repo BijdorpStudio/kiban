@@ -50,8 +50,15 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      */
     public val isSEPA: Boolean
 
-    /** Pretty-printed value, lazily initialized. */
-    public val pretty: String by lazy(LazyThreadSafetyMode.NONE) { addSpaces(value) }
+    /**
+     * Pretty-printed value, lazily initialized.
+     *
+     * [LazyThreadSafetyMode.PUBLICATION] rather than [LazyThreadSafetyMode.NONE]: an [Iban] is an
+     * immutable value type meant to be shared freely between threads, so its lazy initialization
+     * has to be safe under concurrent access. Racing initializers can each compute the value, but
+     * only one result is published, and every reader sees that same string.
+     */
+    public val pretty: String by lazy(LazyThreadSafetyMode.PUBLICATION) { addSpaces(value) }
 
     /**
      * Initializing constructor. Validation happens before construction, so this constructor cannot

@@ -123,7 +123,28 @@ internal sealed class Rejection(val input: String) {
         input: String,
         val kind: IbanParseException.Malformed.Kind,
         val detail: String? = null,
-    ) : Rejection(input)
+    ) : Rejection(input) {
+        init {
+            require(detail != null || kind !in KINDS_REQUIRING_DETAIL) {
+                "$kind rejections must supply a detail message"
+            }
+        }
+
+        private companion object {
+            /**
+             * The kinds that have no useful default wording: which character, or which part, made
+             * the input invalid is only known at the point of rejection, so the caller has to say
+             * it. Checked when the rejection is built rather than when it is turned into an
+             * exception, a path a non-throwing validation may never take.
+             */
+            val KINDS_REQUIRING_DETAIL =
+                setOf(
+                    IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
+                    IbanParseException.Malformed.Kind.INVALID_CHARACTER,
+                    IbanParseException.Malformed.Kind.INVALID_STRUCTURE,
+                )
+        }
+    }
 
     class UnknownCountryCode(input: String, val countryCode: String) : Rejection(input)
 
@@ -150,9 +171,11 @@ internal sealed class Rejection(val input: String) {
                 "Characters at index 2 and 3 not both numeric. $input"
             IbanParseException.Malformed.Kind.NON_UPPER_CASE_COUNTRY_CODE ->
                 "Country code is not upper case: ${input.take(2)}. $input"
+            // Unreachable: Malformed rejects these at construction unless they carry a detail.
+            // A fallback rather than an error() keeps the invariant enforced in exactly one
+            // place, and the one place is not this one.
             IbanParseException.Malformed.Kind.INVALID_BOUNDARY_CHARACTER,
             IbanParseException.Malformed.Kind.INVALID_CHARACTER,
-            IbanParseException.Malformed.Kind.INVALID_STRUCTURE ->
-                error("$kind rejections must supply a detail message")
+            IbanParseException.Malformed.Kind.INVALID_STRUCTURE -> "Invalid IBAN: $input"
         }
 }
