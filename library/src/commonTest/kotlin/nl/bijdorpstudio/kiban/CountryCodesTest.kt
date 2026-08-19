@@ -24,6 +24,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isLessThan
+import assertk.assertions.isLessThanOrEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isSameInstanceAs
@@ -32,6 +33,9 @@ import de.infix.testBalloon.framework.core.testSuite
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
+
+/** The longest IBAN ISO 13616 permits, in characters. */
+private const val LONGEST_IBAN_LENGTH_ISO_13616 = 34
 
 /** Some tests for [CountryCodes]. */
 val CountryCodesTest by testSuite {
@@ -126,6 +130,29 @@ val CountryCodesTest by testSuite {
 
         assertThat(lengths.minOf { it ?: 0 }).isEqualTo(CountryCodes.shortestIbanLength)
         assertThat(lengths.maxOf { it ?: 0 }).isEqualTo(CountryCodes.longestIbanLength)
+    }
+
+    test("shortest known IBAN length is not longer than the longest") {
+        assertThat(CountryCodes.shortestIbanLength)
+            .isLessThanOrEqualTo(CountryCodes.longestIbanLength)
+    }
+
+    test("longest known IBAN length does not exceed the ISO 13616 maximum") {
+        // ISO 13616 caps an IBAN at 34 characters. A registry sync that produced anything longer
+        // would be a parser bug rather than a new country, and the length table is what every
+        // parse decision is made against.
+        assertThat(CountryCodes.longestIbanLength)
+            .isLessThanOrEqualTo(LONGEST_IBAN_LENGTH_ISO_13616)
+    }
+
+    test("shortest and longest IBAN lengths agree with the example IBANs") {
+        // Cross-checks the two bounds against real IBANs that parse, independently of
+        // ibanLength(): both read the same length table, so a table that drifted from the
+        // registry examples would go unnoticed by a test phrased in terms of ibanLength() alone.
+        val exampleLengths = countryTestData.map { it.plain.length }
+
+        assertThat(exampleLengths.min()).isEqualTo(CountryCodes.shortestIbanLength)
+        assertThat(exampleLengths.max()).isEqualTo(CountryCodes.longestIbanLength)
     }
 
     test("shortest known IBAN length is not shorter than the technical minimum") {

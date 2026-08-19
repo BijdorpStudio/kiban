@@ -20,6 +20,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasClass
 import assertk.assertions.hasMessage
+import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
@@ -547,6 +548,71 @@ val IbanTest by testSuite {
             )
         }
             .isInstanceOf<IbanParseException.WrongLength>()
+    }
+
+    test("Hash code contract should be satisfied") {
+        val x = Iban(VALID_IBAN)
+        val y = Iban(VALID_IBAN)
+
+        assertThat(x.hashCode(), "Equal objects have equal hash codes").isEqualTo(y.hashCode())
+        assertThat(x.hashCode(), "Repeated calls return the same hash code").isEqualTo(x.hashCode())
+    }
+
+    test("Hash code should ignore the formatting of the parsed input") {
+        // The two instances are equal because an Iban holds the plain form whichever spelling it
+        // was parsed from; the hash code has to follow, or an IBAN parsed from formatted input
+        // would fail to find its plain-input twin in a hash-based collection.
+        val plain = Iban(VALID_IBAN)
+        val formatted = Iban("NL03 ABNA 0143 2674 69")
+
+        assertThat(formatted).isEqualTo(plain)
+        assertThat(formatted.hashCode()).isEqualTo(plain.hashCode())
+    }
+
+    test("Equal IBANs should collapse in hash-based collections") {
+        val set = hashSetOf(Iban(VALID_IBAN), Iban("NL03 ABNA 0143 2674 69"))
+
+        assertThat(set).hasSize(1)
+        assertThat(hashMapOf(Iban(VALID_IBAN) to "Netherlands")[Iban("NL03 ABNA 0143 2674 69")])
+            .isEqualTo("Netherlands")
+    }
+
+    test("Hash code should agree with equals for every known country's example IBAN") {
+        for (testData in countryTestData) {
+            val fromPlain = Iban(testData.plain)
+            val fromPretty = Iban(testData.pretty)
+
+            assertThat(fromPretty, testData.name).isEqualTo(fromPlain)
+            assertThat(fromPretty.hashCode(), testData.name).isEqualTo(fromPlain.hashCode())
+        }
+    }
+
+    test("Shortest possible IBAN length should be the five characters ISO 13616 allows") {
+        // Two country characters, two check digits and at least one BBAN character. The constant
+        // is public and freezes at 1.0, so the value is pinned here rather than re-derived.
+        assertThat(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH).isEqualTo(5)
+    }
+
+    test(
+        "Input one character below SHORTEST_POSSIBLE_IBAN_LENGTH should be rejected as too short"
+    ) {
+        val tooShort = "NL03"
+
+        assertThat(tooShort.length).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH - 1)
+        assertFailure { Iban(tooShort) }
+            .isInstanceOf<IbanParseException.Malformed>()
+            .prop(IbanParseException.Malformed::kind)
+            .isEqualTo(IbanParseException.Malformed.Kind.TooShort)
+    }
+
+    test("Input at SHORTEST_POSSIBLE_IBAN_LENGTH should get past the length check") {
+        // "XX00A" is not an IBAN, but it is long enough to be one: the rejection has to come from
+        // the unknown country code rather than from the length. That is what makes the constant
+        // the boundary it claims to be, rather than a number the parser never consults.
+        val atMinimum = "XX00A"
+
+        assertThat(atMinimum.length).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH)
+        assertFailure { Iban(atMinimum) }.isInstanceOf<IbanParseException.UnknownCountryCode>()
     }
 
     test("Equals contract should be satisfied") {

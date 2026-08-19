@@ -145,6 +145,14 @@
   the issue asked for, recorded in the KDoc on `String.toIban` and in the README before the 1.0
   freeze makes the choice permanent.
 
+* Settled the JVM-only `typealias IBAN = Iban` for 1.0 and wrote its scope into the KDoc and the
+  migration guide (#149). The alias lives in `jvmMain`, so `commonMain` and every non-JVM target
+  see only `Iban` — deliberate, since `java-iban` is a JVM library and the only way to surface the
+  name in common code would be an `expect`/`actual` pair that puts a spelling convenience into the
+  multiplatform API. It stays: a typealias is erased at compile time, so it generates no class,
+  adds nothing to the API dump and costs nothing to carry, while dropping it would break source
+  compatibility for exactly the migrating callers it exists for. New code should write `Iban`.
+
 * Cleaned up KDoc inherited from `java-iban` (#108). The `Iban` class documentation had its
   construction paragraph placed after an `@author` tag, which a KDoc block tag swallows — the
   published API docs rendered that paragraph as part of the Author field instead of as the class
@@ -194,6 +202,21 @@
   rendered into the job summary instead of only being downloadable, and an `apiCheck` failure now
   gets the same treatment via `apiDump` — the dump diff being the thing a reviewer actually needs.
   Every added step is non-fatal: `ci` stays a usable required check whatever the reporting does.
+
+* Closed the remaining direct test-coverage gaps ahead of the 1.0 freeze (#149). The `equals`
+  contract was tested but `hashCode` was not, so equal-objects-equal-hash-codes, stability across
+  calls, agreement across the plain and formatted spellings of the same IBAN (checked for every
+  known country's example IBAN) and the behaviour that actually depends on it — equal IBANs
+  collapsing in a `HashSet`, and a lookup by a distinct-but-equal key in a `HashMap` — are now
+  asserted. `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH` gets its value pinned and its boundary exercised
+  from both sides: one character below is rejected as `TOO_SHORT`, and input exactly at the
+  constant gets past the length check to fail on its country code instead.
+  `CountryCodes.shortestIbanLength` / `longestIbanLength` are cross-checked against the example
+  IBANs (independently of `ibanLength()`, which reads the same table), ordered against each other
+  and bounded by the 34-character ISO 13616 maximum. The JVM `IBAN` alias gets a `jvmTest` suite —
+  the source set did not exist before — asserting that it names the same class, reaches the
+  companion functions and is assignable in both directions against `Iban`. Tests only: no
+  production behaviour changed and `apiCheck` passes against the existing dumps.
 
 * Enabled Kotlin's explicit API mode (strict) for the library (#142). Every declaration in
   `commonMain` and `jvmMain` that is part of the public API now says `public` out loud, and the
