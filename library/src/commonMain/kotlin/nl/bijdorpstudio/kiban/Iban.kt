@@ -80,6 +80,17 @@ public class Iban private constructor(internal val value: String) : Comparable<I
         get() = value.substring(2, 4)
 
     /**
+     * Returns the BBAN embedded in the IBAN: everything after the country code and check digits.
+     *
+     * This is the counterpart of the `bban` argument [Iban.compose] takes, so
+     * `Iban.compose(iban.countryCode, iban.bban)` returns an IBAN equal to `iban`.
+     *
+     * @return the basic bank account number.
+     */
+    public val bban: String
+        get() = value.substring(4)
+
+    /**
      * Returns the bank identifier embedded in the IBAN, if available.
      *
      * @return the bank ID, or `null` if unknown for this country code.

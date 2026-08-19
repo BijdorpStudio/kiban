@@ -153,6 +153,10 @@ val IbanTest by testSuite {
         assertThat(Iban(VALID_IBAN).checkDigits).isEqualTo("03")
     }
 
+    test("Valid IBAN should return BBAN") {
+        assertThat(Iban(VALID_IBAN).bban).isEqualTo("ABNA0143267469")
+    }
+
     test("Invoke should accept toString output of valid IBAN") {
         val original = Iban(VALID_IBAN)
         val copy = Iban(original.toString())

@@ -20,6 +20,7 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public static final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBankIdentifier ()Ljava/lang/String;
+	public final fun getBban ()Ljava/lang/String;
 	public final fun getBranchIdentifier ()Ljava/lang/String;
 	public final fun getCheckDigits ()Ljava/lang/String;
 	public final fun getCountryCode ()Ljava/lang/String;

@@ -33,6 +33,13 @@ val CountryCodesIbanFieldsTest by testSuite {
     }
 
     for (testData in countriesTestData) {
+        test("Should extract BBAN for ${testData.name}") {
+            val iban = Iban(testData.plain)
+            assertThat(iban.bban).isEqualTo(testData.plain.substring(4))
+        }
+    }
+
+    for (testData in countriesTestData) {
         test("Should extract branch identifier for ${testData.name}") {
             val iban = Iban(testData.plain)
             assertThat(iban.branchIdentifier).isEqualTo(testData.branch)
