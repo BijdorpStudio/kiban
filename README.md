@@ -14,7 +14,11 @@
 
 This Kotlin Multiplatform library is a continuation and re-implementation of the original [`java-iban`](https://github.com/barend/java-iban) library by Barend Garvelink. It delivers IBAN validation, formatting, and country-specific IBAN details. The library is aimed to fulfill the same features as the original but in a Kotlin Multiplatform environment.
 
-> ⚠ **Important Note**: The API of this library is still evolving and not yet stable. Expect breaking changes until the API stabilizes in a future release.
+> **API stability.** Kiban is pre-1.0 and the API is still being settled, so the 0.x line still
+> breaks compatibility where the 1.0 freeze would otherwise lock in a mistake, and removals land
+> without a deprecation cycle. What that becomes at 1.0 — the semver contract, the binary
+> compatibility guarantee and the deprecation cycle for post-1.0 removals — is written down in
+> [VERSIONING.md](VERSIONING.md).
 
 ### Background
 
@@ -49,7 +53,8 @@ kotlin {
 }
 ```
 
-Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser), iOS, macOS, watchOS, tvOS, `linuxX64`, `linuxArm64`, and `mingwX64`.
+Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser), iOS,
+macOS (Apple silicon only), watchOS, tvOS, `linuxX64`, `linuxArm64`, and `mingwX64`.
 
 The `js` and `wasmJs` artifacts serve **Kotlin/JS and Kotlin/Wasm consumers**, not plain
 JavaScript or TypeScript ones. Nothing in the library is annotated `@JsExport`, so none of its
@@ -61,11 +66,27 @@ visible to JavaScript they become a second frozen contract to maintain alongside
 Exporting to plain JS stays possible as a purely additive change after 1.0 if there is demand for
 it — withdrawing it again would not be.
 
-Requires **Kotlin 2.3.0 or newer**. One API depends on that floor rather than merely being
-built against it: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the
-standard library only makes non-experimental from 2.3. Consumers compiling with an
-`apiVersion` below 2.3 can use the rest of the library, but reading that one property will ask
-them for `@OptIn(kotlin.time.ExperimentalTime::class)`. See
+### Requirements
+
+| | Requirement |
+| --- | --- |
+| Kotlin | **2.4.0 or newer**, for both the consumer's compiler and its `apiVersion` |
+| Java | bytecode level **17**, so a JDK 17 or newer runtime |
+| Android | `minSdk` **24** |
+| macOS | **Apple silicon only** — the macOS artifact and the macOS slice of the `Kiban` XCFramework have been `macosArm64` since 0.5.0 |
+
+These are part of the compatibility contract rather than incidental facts about the current build:
+raising any of them breaks consumers who cannot follow, so it only happens in a major release. The
+Kotlin and Java floors are pinned by the `tapmoc` plugin, independently of the compiler the library
+is built with, which moves forward on its own schedule. See [VERSIONING.md](VERSIONING.md).
+
+The Kotlin floor is 2.4.0 so that an optional parameter can be added to a published function
+without breaking binary compatibility: `@IntroducedAt` and `ExperimentalVersionOverloading` do not
+resolve below a 2.4 `languageVersion`. It moved up from 2.3.0 before the 1.0 freeze deliberately,
+since afterwards the same move would cost a major release. A second constraint keeps it from ever
+going below 2.3: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the standard
+library only makes non-experimental from 2.3, so a lower floor would ask callers for
+`@OptIn(kotlin.time.ExperimentalTime::class)` to read a frozen public property. See
 [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
 
 ## Use
@@ -245,10 +266,18 @@ The generator validates every entry before writing (mod-97 checksum, declared le
 * [Experimental IBANs](https://www.iban.com/structure)
 * [General Information](http://en.wikipedia.org/wiki/IBAN)
 
-## Contributions & Stability
+## Contributions
 
-As this is still an evolving library with an unstable API, contributions are welcome! Join the development journey and help shape a modern, multiplatform IBAN utility library.
+Contributions are welcome — issues, discussion and pull requests alike. Help shape a modern,
+multiplatform IBAN utility library.
+
+## Stability
+
+[VERSIONING.md](VERSIONING.md) is the policy: what a major, minor and patch bump each mean, what
+the binary compatibility guarantee covers and how `apiCheck` enforces it against the committed API
+dumps, the deprecation cycle that applies to post-1.0 removals, and the consumer requirements above.
+Until 1.0 ships, the API is still open to breaking change; every break so far is mapped in
+[MIGRATION.md](MIGRATION.md) and listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-This project follows the same licensing model as the original library and is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

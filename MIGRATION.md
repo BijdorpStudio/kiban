@@ -4,8 +4,12 @@ Kiban is a port of [`java-iban`](https://github.com/barend/java-iban). This docu
 current one, for people arriving from `java-iban`, from kiban 0.3.0 or earlier, or from the `Result`-returning
 kiban 0.4.0 API.
 
-The library has not reached 1.0 yet, so there is no deprecation cycle or compat layer: removed API is gone, not
-deprecated. Every break below is a compile error, not a runtime surprise.
+Every break mapped below happened before 1.0, while the API was still being settled: there was no deprecation
+cycle and no compat layer, so the left-hand column is gone rather than deprecated, and each break is a compile
+error rather than a runtime surprise. That is not how removals work from 1.0 onwards — see
+[VERSIONING.md](VERSIONING.md) for the semver contract, the binary compatibility guarantee and the deprecation
+cycle a post-1.0 removal has to run first. Kiban has not reached 1.0 yet, so the remaining 0.x releases can
+still add to this guide.
 
 ## Upgrading from kiban 0.4.0 to 0.5.0
 
