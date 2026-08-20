@@ -48,9 +48,17 @@ jobs:
           - target: wasmJsTest
             id: wasm-js-test
             os: ubuntu-latest
-          # Targets with no runner to execute on: cross-compile only.
-          - target: compileKotlinLinuxArm64 compileKotlinMingwX64
-            id: cross-compile
+          - target: mingwX64Test
+            id: mingw-x64-test
+            os: windows-latest
+          # Not a task KGP registers: Kotlin/Native has no Linux/ARM64 *host*
+          # compiler, so an 'ubuntu-24.04-arm' runner cannot build the target at
+          # all, and the x86_64 host that cross-compiles it cannot execute the
+          # result. ':library' registers 'linuxArm64Test' itself, running the
+          # binary under the emulator the toolchain ships (#151); it reports like
+          # any other test task from here.
+          - target: linuxArm64Test
+            id: linux-arm64-test
             os: ubuntu-latest
           # apiCheck builds a klib for every target the host supports, so it
           # doubles as the compile check for the Apple targets.
@@ -99,7 +107,7 @@ jobs:
         # builds (see CLAUDE.md) never load it, never attempt a publish and never
         # leak a developer's machine details to a public dashboard.
         #
-        # Only this workflow is scanned: it owns the 14-job matrix and therefore the
+        # Only this workflow is scanned: it owns the 15-job matrix and therefore the
         # payoff. 'publish.yml', 'registry-sync.yml' and 'ios-interop-verify.yml'
         # also use setup-gradle but are low-frequency, and stay unscanned.
         #
@@ -129,9 +137,8 @@ jobs:
     # token and on pull requests from forks: creating a check run instead would
     # need 'checks: write', which a fork's read-only token does not have.
     - name: Report test results
-      # Half the matrix (apiCheck, dokka, ktfmt, cross-compile, the sample run)
-      # writes no test XML at all; those jobs skip the step rather than report an
-      # empty suite.
+      # Four jobs (apiCheck, dokka, ktfmt, the sample run) write no test XML at
+      # all; those skip the step rather than report an empty suite.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal. If the action
       # itself breaks it must not fail the job - and, because 'failure()' latches
@@ -146,7 +153,7 @@ jobs:
         detailed_summary: true
         group_suite: true
         # Counts on green, the grouped failure listing on red. Listing all 1,217
-        # passing tests here as well was tried and reverted: nine test jobs each
+        # passing tests here as well was tried and reverted: eleven test jobs each
         # rendering the full per-country table buried the two numbers anyone
         # opens a summary for. The full listing is still a download away in the
         # 'test-results-*' artifact.
@@ -257,7 +264,7 @@ jobs:
     # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
     # certain to open. Suite names carry their target ('IbanTest[jvm]',
     # 'IbanTest[iosSimulatorArm64]', ...), so grouping by suite attributes each
-    # result without the 14 jobs having to be listed out here.
+    # result without the 15 jobs having to be listed out here.
     #
     # Both steps are 'continue-on-error' on purpose. This job is the single
     # required check; a missing artifact or a bad parse has to cost the summary
@@ -284,7 +291,7 @@ jobs:
         detailed_summary: true
         group_suite: true
         # Failures only: the per-target listings live on the matrix jobs, and
-        # every passing test across 9 targets would not fit the summary anyway.
+        # every passing test across 11 targets would not fit the summary anyway.
         include_passed: false
         fail_on_failure: false
         require_tests: false

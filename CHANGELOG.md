@@ -269,6 +269,33 @@
   were already spelled out everywhere, so the diff is `public` modifiers only, and test sources
   are exempt as usual.
 
+* CI now executes the test suite on `mingwX64` and `linuxArm64` (#151). Both are published
+  targets, and both had only ever been *compiled* — one `cross-compile` job running
+  `compileKotlinMingwX64` and `compileKotlinLinuxArm64` — so no line of the library had ever run
+  on Windows or on ARM64 Linux, which made them the two targets 1.0 would have claimed support for
+  on the strength of a type check alone. `mingwX64Test` now runs on a `windows-latest` runner.
+
+  `linuxArm64` had no test task to run at all. Kotlin/Native publishes no Linux/ARM64 *host*
+  compiler — the `kotlin-native-prebuilt` bundles are linux-x86_64, macos-x86_64, macos-aarch64 and
+  windows-x86_64 — so an `ubuntu-24.04-arm` runner cannot build the target, and on the linux-x86_64
+  host that cross-compiles it the Kotlin Gradle plugin registers nothing, because that host cannot
+  execute what it produces. The toolchain that cross-compiles the target ships what it takes to run
+  it anyway: `konan.properties` declares a `qemu-aarch64` user-mode emulator for the
+  `linux_x64-linux_arm64` pair, and the aarch64 sysroot the binary is linked against comes down
+  with the same toolchain, so emulator, sysroot and binary always match and nothing has to be
+  installed. `:library` therefore registers the missing `linuxArm64Test` itself, as a
+  `KotlinNativeHostTest` pointed at the emulator.
+
+  That makes it a test task like any other rather than a bare binary run, which matters for more
+  than tidiness: Gradle reads the results out of the binary's TeamCity service messages, so the
+  1,582 tests land in JUnit XML, get annotated on the run and appear in the `ci` job's roll-up as
+  `[linuxArm64]` beside every other target. It also makes failures fail — a Kotlin/Native test
+  binary is invoked with `--ktest_no_exit_code` and exits 0 whatever the tests did, so a job that
+  only checked its exit code would have reported green through a failing suite.
+
+  The compile-only job is gone: both of its targets are now covered by a job that builds and runs
+  them.
+
 ## 0.5.0
 
 **Breaking changes**

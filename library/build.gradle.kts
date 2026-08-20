@@ -1,8 +1,13 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
+import java.io.File
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -174,3 +179,95 @@ val verifyPublicationTargets =
     }
 
 tasks.withType<PublishToMavenRepository>().configureEach { dependsOn(verifyPublicationTargets) }
+
+// linuxArm64 is published but has never run a test. Kotlin/Native has no Linux/ARM64 *host*
+// compiler, so no machine can both build and run the target: an ARM64 runner cannot build it at
+// all, and on the linux-x86_64 host that cross-compiles it the Kotlin Gradle plugin registers no
+// test task, because that host cannot execute what it produces (#151).
+//
+// The toolchain that cross-compiles the target ships what it takes to run it anyway.
+// konan.properties declares a qemu-aarch64 user-mode emulator for the linux_x64-linux_arm64 pair,
+// and the aarch64 sysroot the binary is linked against comes down with the same toolchain, so
+// emulator, sysroot and binary always match. Pointing a KotlinNativeHostTest at the emulator gives
+// the target the same treatment as every other one: Gradle reads the results out of the binary's
+// TeamCity service messages, writes the JUnit XML that CI reports from, and fails the build on a
+// failing test. The binary's own exit code says nothing - KGP invokes it with
+// '--ktest_no_exit_code', and it exits 0 whatever the tests did.
+//
+// Guarded on the link task's existence because 'kotlin.native.ignoreDisabledTargets' (set in
+// gradle.properties) drops targets the host cannot build: where there is nothing to link there is
+// nothing to run, and this must not fail configuration for every other task on that host.
+if ("linkDebugTestLinuxArm64" in tasks.names) {
+
+    val linuxArm64TestLink = tasks.named<KotlinNativeLink>("linkDebugTestLinuxArm64")
+
+    tasks.register<KotlinNativeHostTest>("linuxArm64Test") {
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description =
+            "Executes Kotlin/Native unit tests for target linuxArm64 under the qemu-aarch64 emulator."
+        targetName = "linuxArm64"
+        workingDir = projectDir.absolutePath
+
+        // linux_x64 is the only host konan.properties declares an emulator for. Elsewhere the
+        // task is disabled rather than failing, which is how KGP treats a test task it cannot run.
+        enabled = HostManager.hostOrNull == KonanTarget.LINUX_X64
+
+        // KGP puts these under the task name; they are set explicitly because the helper that
+        // applies that convention lives in an internal package.
+        binaryResultsDirectory.set(layout.buildDirectory.dir("test-results/$name/binary"))
+        reports.junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/$name"))
+        reports.html.outputLocation.set(layout.buildDirectory.dir("reports/tests/$name"))
+
+        val testBinary = linuxArm64TestLink.flatMap { it.outputFile }
+        dependsOn(linuxArm64TestLink)
+        // The binary reaches the emulator as an argument, which Gradle does not track by itself.
+        // Declaring it keeps a rebuilt binary from being reported as up to date.
+        inputs.file(testBinary).withPropertyName("testBinary")
+
+        // The emulator and the sysroot it needs to load an aarch64 binary both live under the
+        // konan dependencies directory, in a directory whose name carries the dependency's
+        // version. Resolved while the task runs rather than while the build is configured: the
+        // link task above is what downloads them, so on a cold machine neither exists yet.
+        //
+        // The lookup is a local function rather than a shared one so that the lambda captures
+        // nothing from the build script, which is what keeps the provider configuration-cacheable.
+        val emulatorAndSysroot =
+            providers
+                .environmentVariable("KONAN_DATA_DIR")
+                .orElse(providers.systemProperty("user.home").map { "$it/.konan" })
+                .map { konanDataDir ->
+                    val dependencies = File(konanDataDir, "dependencies")
+                    fun dependency(prefix: String, path: String): File {
+                        // 'listFiles' is in filesystem order, and a Kotlin upgrade can leave the
+                        // previous version's directory behind, so the highest name wins rather
+                        // than whichever one is listed last.
+                        val root =
+                            dependencies
+                                .listFiles()
+                                .orEmpty()
+                                .filter { it.name.startsWith(prefix) }
+                                .maxByOrNull { it.name }
+                                ?: error("No Kotlin/Native dependency '$prefix*' in $dependencies.")
+                        // Checked because 'executable' is '@SkipWhenEmpty': a path that does not
+                        // exist would skip the task silently instead of failing it.
+                        return root.resolve(path).also {
+                            check(it.exists()) { "Kotlin/Native dependency has no $it." }
+                        }
+                    }
+                    dependency("qemu-aarch64-static-", "qemu-aarch64") to
+                        dependency(
+                            "aarch64-unknown-linux-gnu-",
+                            "aarch64-unknown-linux-gnu/sysroot",
+                        )
+                }
+
+        executable(emulatorAndSysroot.map { (emulator, _) -> emulator })
+        // 'args' takes no provider, so it is set once the link task has run. The emulator passes
+        // everything after the binary through to it, which is where KGP appends its own
+        // '--ktest_logger=TEAMCITY' and friends: the arguments set here come first.
+        doFirst {
+            val (_, sysroot) = emulatorAndSysroot.get()
+            args = listOf("-L", sysroot.absolutePath, testBinary.get().absolutePath)
+        }
+    }
+}
