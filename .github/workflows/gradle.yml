@@ -51,16 +51,13 @@ jobs:
           - target: mingwX64Test
             id: mingw-x64-test
             os: windows-latest
-          # linuxArm64 is the one published target with no 'linuxArm64Test' task
-          # to call: Kotlin/Native has no Linux/ARM64 *host* compiler (the only
-          # 'kotlin-native-prebuilt' bundles are linux-x86_64, macos-x86_64,
-          # macos-aarch64 and windows-x86_64), so an 'ubuntu-24.04-arm' runner
-          # cannot build the target at all, and on the x86_64 host that can
-          # cross-compile it KGP registers no test task, because the host cannot
-          # execute the result. Linking the test binary here and running it under
-          # the emulator below is what turns the old compile-only check into a
-          # real test run (#151).
-          - target: linkDebugTestLinuxArm64
+          # Not a task KGP registers: Kotlin/Native has no Linux/ARM64 *host*
+          # compiler, so an 'ubuntu-24.04-arm' runner cannot build the target at
+          # all, and the x86_64 host that cross-compiles it cannot execute the
+          # result. ':library' registers 'linuxArm64Test' itself, running the
+          # binary under the emulator the toolchain ships (#151); it reports like
+          # any other test task from here.
+          - target: linuxArm64Test
             id: linux-arm64-test
             os: ubuntu-latest
           # apiCheck builds a klib for every target the host supports, so it
@@ -131,61 +128,6 @@ jobs:
         mkdir -p build/reports/ci
         ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
 
-    # What makes 'linux-arm64-test' a test job rather than a compile check: the
-    # step above only links the binary, because KGP registers no test task for a
-    # target the host cannot execute (see the matrix comment).
-    #
-    # Nothing here is installed: the emulator and the aarch64 sysroot the binary
-    # is linked against are both part of the linuxArm64 toolchain the link task
-    # has already downloaded, so they always match the binary. The globs absorb
-    # the version each dependency carries in its directory name, and an
-    # unmatched glob stays literal and fails the step rather than skipping it.
-    - name: Run linuxArm64 tests under QEMU
-      if: matrix.id == 'linux-arm64-test'
-      shell: bash
-      run: |
-        konan="${KONAN_DATA_DIR:-$HOME/.konan}"
-        qemu=("$konan"/dependencies/qemu-aarch64-static-*/qemu-aarch64)
-        sysroot=("$konan"/dependencies/aarch64-unknown-linux-gnu-*/aarch64-unknown-linux-gnu/sysroot)
-        log=build/reports/ci/linux-arm64-test.log
-
-        # Redirected rather than tee'd: the binary emits several service messages
-        # per test over a 1,500-test suite, which is an artifact to download on
-        # red, not something to scroll past on green. What a failure needs is
-        # printed below, and the log is uploaded with the other failure reports.
-        status=0
-        "${qemu[0]}" -L "${sysroot[0]}" \
-          library/build/bin/linuxArm64/debugTest/test.kexe > "$log" 2>&1 || status=$?
-
-        # The exit code is not the verdict. A Kotlin/Native test binary reports
-        # through TeamCity service messages - which is what Gradle parses for
-        # every target it can run directly - and exits 0 whatever the tests did.
-        # So the messages are counted here instead, and a run that reports no
-        # test at all counts as a failure: a binary that silently does nothing
-        # must not be able to pass. The exit code still matters for the case the
-        # messages cannot describe - the binary dying part-way through.
-        finished=$(grep -c '##teamcity\[testFinished' "$log" || true)
-        failed=$(grep -c '##teamcity\[testFailed' "$log" || true)
-        # This job writes no JUnit XML, so it is skipped by the reporting steps
-        # below; these counts are what a reader gets instead.
-        echo "## linuxArm64 (QEMU)" >> "$GITHUB_STEP_SUMMARY"
-        echo "$finished tests finished, $failed failed." >> "$GITHUB_STEP_SUMMARY"
-        if [ "$status" -ne 0 ]; then
-          echo "::error::The linuxArm64 test binary exited $status."
-          tail -n 20 "$log"
-          exit 1
-        fi
-        if [ "$finished" -eq 0 ]; then
-          echo "::error::No linuxArm64 test ran under the emulator."
-          exit 1
-        fi
-        if [ "$failed" -ne 0 ]; then
-          echo "::error::$failed linuxArm64 test(s) failed."
-          grep '##teamcity\[testFailed' "$log"
-          exit 1
-        fi
-        echo "$finished linuxArm64 tests finished, none failed."
-
     # Renders the JUnit XML Gradle already writes into this job's summary, and
     # annotates failing tests on the run. 'always()' is the point of the step: a
     # green run used to report nothing but "BUILD SUCCESSFUL", which stranded the
@@ -195,9 +137,8 @@ jobs:
     # token and on pull requests from forks: creating a check run instead would
     # need 'checks: write', which a fork's read-only token does not have.
     - name: Report test results
-      # Half the matrix (apiCheck, dokka, ktfmt, the linuxArm64 run, the sample run)
-      # writes no test XML at all; those jobs skip the step rather than report an
-      # empty suite.
+      # Four jobs (apiCheck, dokka, ktfmt, the sample run) write no test XML at
+      # all; those skip the step rather than report an empty suite.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal. If the action
       # itself breaks it must not fail the job - and, because 'failure()' latches
@@ -212,7 +153,7 @@ jobs:
         detailed_summary: true
         group_suite: true
         # Counts on green, the grouped failure listing on red. Listing all 1,217
-        # passing tests here as well was tried and reverted: nine test jobs each
+        # passing tests here as well was tried and reverted: eleven test jobs each
         # rendering the full per-country table buried the two numbers anyone
         # opens a summary for. The full listing is still a download away in the
         # 'test-results-*' artifact.
@@ -350,7 +291,7 @@ jobs:
         detailed_summary: true
         group_suite: true
         # Failures only: the per-target listings live on the matrix jobs, and
-        # every passing test across 10 targets would not fit the summary anyway.
+        # every passing test across 11 targets would not fit the summary anyway.
         include_passed: false
         fail_on_failure: false
         require_tests: false
