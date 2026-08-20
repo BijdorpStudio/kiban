@@ -4,6 +4,27 @@
 
 **Breaking changes**
 
+* The minimum Kotlin version for consumers is now **2.4.0**, up from 2.3.0 (#180). This is a break
+  for anyone who cannot move their compiler, and it lands before 1.0 precisely because it could not
+  land after: raising the floor is a breaking change, so from 1.0 the same move would cost a major
+  release and the whole 1.x line would go without what it buys.
+
+  What it buys is `@IntroducedAt`. Adding a parameter with a default value to a published function
+  looks source-compatible and is not binary-compatible — the signature in the artifact changes, so
+  a caller compiled against the old one fails with `NoSuchMethodError` until it is rebuilt.
+  Annotating the new parameter with the version that introduced it makes the compiler emit the
+  older signature as a hidden overload, and both shapes land in the API dumps where they can be
+  reviewed. Neither `@IntroducedAt` nor `ExperimentalVersionOverloading` resolves below a 2.4
+  `languageVersion`, which is what forces the floor.
+
+  Nothing in the library is annotated yet: no public declaration currently takes an optional
+  parameter, so this buys the ability to add one during 1.x rather than fixing anything today. The
+  rule is written down in [VERSIONING.md](VERSIONING.md). Note that the feature is experimental —
+  `ExperimentalVersionOverloading` is `@RequiresOptIn(level = ERROR)` — and that the 2.3.0 floor's
+  original reason (`kotlin.time.Instant` stabilising at 2.3, see
+  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md)) is subsumed by the new
+  floor but still bounds it from below.
+
 * `IbanParseException.Malformed.Kind` is a sealed class hierarchy instead of an enum (#148). The
   kinds that could only ever be described in prose now carry that description as typed data:
   `InvalidCharacter(character, index)`, `InvalidBoundaryCharacter(character, atStart)` and

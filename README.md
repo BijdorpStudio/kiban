@@ -70,7 +70,7 @@ it — withdrawing it again would not be.
 
 | | Requirement |
 | --- | --- |
-| Kotlin | **2.3.0 or newer**, for both the consumer's compiler and its `apiVersion` |
+| Kotlin | **2.4.0 or newer**, for both the consumer's compiler and its `apiVersion` |
 | Java | bytecode level **17**, so a JDK 17 or newer runtime |
 | Android | `minSdk` **24** |
 | macOS | **Apple silicon only** — the macOS artifact and the macOS slice of the `Kiban` XCFramework have been `macosArm64` since 0.5.0 |
@@ -80,11 +80,13 @@ raising any of them breaks consumers who cannot follow, so it only happens in a 
 Kotlin and Java floors are pinned by the `tapmoc` plugin, independently of the compiler the library
 is built with, which moves forward on its own schedule. See [VERSIONING.md](VERSIONING.md).
 
-One API depends on the Kotlin floor rather than merely being built against it:
-`CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the standard library only makes
-non-experimental from 2.3. Consumers compiling with an `apiVersion` below 2.3 can use the rest of
-the library, but reading that one property will ask them for
-`@OptIn(kotlin.time.ExperimentalTime::class)`. See
+The Kotlin floor is 2.4.0 so that an optional parameter can be added to a published function
+without breaking binary compatibility: `@IntroducedAt` and `ExperimentalVersionOverloading` do not
+resolve below a 2.4 `languageVersion`. It moved up from 2.3.0 before the 1.0 freeze deliberately,
+since afterwards the same move would cost a major release. A second constraint keeps it from ever
+going below 2.3: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the standard
+library only makes non-experimental from 2.3, so a lower floor would ask callers for
+`@OptIn(kotlin.time.ExperimentalTime::class)` to read a frozen public property. See
 [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
 
 ## Use

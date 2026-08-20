@@ -12,10 +12,18 @@ junit = "4.13.2"
 kotlin = "2.4.10"
 kotlinx-binary-compatibility-validator = "0.18.1"
 # @keep this is library kotlin compatibility version
-# Do not lower below 2.3.0: kotlin.time.Instant (CountryCodes.lastUpdateDate) is only a
-# non-experimental stdlib declaration from 2.3, so a lower floor turns a frozen public API
-# into one that demands @OptIn from callers. See docs/144-instant-api-stability.md.
-kotlin-version = "2.3.0"
+# This is the minimum Kotlin version a consumer needs, not merely what the library is built with.
+# Raising it is a breaking change for consumers who cannot follow, so after 1.0 it only moves in a
+# major release (see VERSIONING.md) - which is why it moved to 2.4.0 before the freeze rather than
+# after it. Two things depend on the floor:
+#   - @IntroducedAt / ExperimentalVersionOverloading (kotlin package) do not resolve below a 2.4
+#     languageVersion, and they are what lets an optional parameter be added to an already
+#     published function without breaking binary compatibility. See #180.
+#   - kotlin.time.Instant (CountryCodes.lastUpdateDate) is only a non-experimental stdlib
+#     declaration from 2.3, so any floor below that turns a frozen public API into one that demands
+#     @OptIn from callers. Subsumed by the 2.4 floor, but it is the reason the floor can never go
+#     below 2.3. See docs/144-instant-api-stability.md.
+kotlin-version = "2.4.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"

@@ -94,6 +94,42 @@ never inside a major version.
 Deprecations are additive and therefore ship in minor releases; they appear in the API dumps, so
 both the deprecation and the eventual removal are visible in a reviewable diff.
 
+## Adding a parameter to a published function
+
+Adding a parameter with a default value looks source-compatible and is not binary-compatible: the
+signature in the compiled artifact changes, so a caller compiled against the old one fails with
+`NoSuchMethodError` until it is recompiled. It is the one everyday API-evolution move that silently
+breaks consumers, which is why it has a rule of its own.
+
+Annotate the new parameter with the kiban version that introduced it:
+
+``` kotlin
+@OptIn(ExperimentalVersionOverloading::class)
+public fun example(input: String, @IntroducedAt("1.1") pretty: Boolean = false): String
+```
+
+The compiler then emits the older signature as a hidden overload, so binaries built against `1.0`
+keep linking. Both shapes show up in the dumps —
+
+```
+public static final synthetic fun example (Ljava/lang/String;)Ljava/lang/String;
+public static final fun example (Ljava/lang/String;Z)Ljava/lang/String;
+```
+
+— which means the compatibility shim is reviewed like any other API change rather than being taken
+on trust. The version string is the kiban release the parameter appears in, not a Kotlin version.
+
+Two caveats worth knowing rather than discovering:
+
+* This is why the Kotlin floor is 2.4.0. Below a 2.4 `languageVersion` neither annotation resolves.
+* `ExperimentalVersionOverloading` is `@RequiresOptIn(level = ERROR)`, so this is an experimental
+  compiler feature carried inside an artifact whose API is frozen. If it changes shape, the fallback
+  is the pre-2.4 approach — declare the new arity as a separate overload and keep the old signature
+  as a `@Deprecated(level = DeprecationLevel.HIDDEN)` one — which is what the annotation automates,
+  not something it makes newly possible.
+
+Adding an optional parameter this way is additive, so it ships in a minor release.
+
 ## Consumer requirements
 
 These are part of the compatibility contract. Raising any of them breaks consumers who cannot
@@ -101,7 +137,7 @@ follow, so it happens **only in a major release**.
 
 | Requirement | Value |
 | --- | --- |
-| Kotlin (consumer compiler and `apiVersion`) | **2.3.0** or newer |
+| Kotlin (consumer compiler and `apiVersion`) | **2.4.0** or newer |
 | Java bytecode / `-Xjdk-release` | **17** |
 | Android `minSdk` | **24** |
 | macOS target | **`macosArm64` only** — no Intel slice since 0.5.0 |
@@ -111,11 +147,20 @@ The Kotlin and Java floors are pinned by the `tapmoc` plugin from single entries
 when the compiler used to *build* the library moves forward — which it does independently, and
 which is not itself a breaking change.
 
-The Kotlin floor is load-bearing rather than incidental: `CountryCodes.lastUpdateDate` returns
-`kotlin.time.Instant`, a declaration the standard library only makes non-experimental from 2.3.
-Consumers compiling below `apiVersion` 2.3 can use the rest of the library, but reading that one
-property will ask them for `@OptIn(kotlin.time.ExperimentalTime::class)`. See
-[docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+The Kotlin floor is load-bearing rather than incidental, and two separate things hold it up:
+
+* `@IntroducedAt` and `ExperimentalVersionOverloading` do not resolve below a 2.4 `languageVersion`,
+  and they are what makes an optional parameter addable to a published function without a break —
+  see [Adding a parameter to a published function](#adding-a-parameter-to-a-published-function).
+* `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the standard library only makes
+  non-experimental from 2.3. That is subsumed by the 2.4 floor, but it is why the floor can never go
+  *below* 2.3 — a lower one turns a frozen public API into one that demands
+  `@OptIn(kotlin.time.ExperimentalTime::class)` from callers. See
+  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+
+The floor moved from 2.3.0 to 2.4.0 deliberately before the freeze rather than after it: pre-1.0 the
+break costs a minor, and from 1.0 the rule above would make the same move cost a major and strand
+the 1.x line without `@IntroducedAt` for its whole life.
 
 ## Targets
 

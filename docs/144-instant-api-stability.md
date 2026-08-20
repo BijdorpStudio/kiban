@@ -118,6 +118,13 @@ Recorded so the reasoning is not lost the next time the toolchain moves:
   this is self-enforcing rather than a silent regression — but the failure would
   look like an unrelated opt-in error, hence this note and the pointer at the
   declaration.
+
+  Since #180 the pinned floor is **2.4.0**, raised for `@IntroducedAt` before the
+  1.0 freeze, so this constraint is no longer the binding one. It still holds as
+  the lower bound: whatever else moves the floor, 2.3.0 is the furthest down it
+  can go while this property is public. The evidence below was gathered at the
+  2.3.0 pin and is unchanged by the raise — `Instant` is stable from 2.3, and a
+  higher floor cannot make it less so.
 * **The midnight-UTC encoding is part of the contract**, not an implementation
   detail of the getter. A registry release is dated to the day; with no
   `LocalDate` in the standard library and a zero-dependency constraint that rules
