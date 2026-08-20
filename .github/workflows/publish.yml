@@ -13,9 +13,45 @@ permissions:
   contents: read
 
 jobs:
+  # Fail fast, before the full check matrix and the publish job spin up, if the release tag does
+  # not match the version the build script declares. publish.yml fires on any 'released'/
+  # 'prereleased' event and ships whatever the checked-out build says, so tagging 'v1.0.0' against
+  # a commit still declaring 0.6.0 would silently (re)publish 0.6.0 — and only fail late at Maven
+  # Central, if at all. This guard turns that into an immediate, obvious failure.
+  verify-version:
+    name: Verify tag matches project version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Compare release tag to Gradle version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          # The version is a plain literal in the build script, so it is read directly rather than
+          # by booting Gradle: this step exists to fail fast, and resolving the project the slow way
+          # would defeat that. The pattern anchors on the top-level 'version = "..."' assignment.
+          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' library/build.gradle.kts)"
+          if [ -z "$project_version" ]; then
+            echo "::error::Could not read the project version from library/build.gradle.kts."
+            exit 1
+          fi
+          # Release tags are 'vX.Y.Z'; the Gradle version is 'X.Y.Z'. Strip a single leading 'v'.
+          tag_version="${TAG_NAME#v}"
+          echo "Release tag:     $TAG_NAME (version $tag_version)"
+          echo "Project version: $project_version"
+          if [ "$tag_version" != "$project_version" ]; then
+            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in library/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
+            exit 1
+          fi
+          echo "Release tag and project version match."
+
   # Run the full check matrix (tests on every target plus apiCheck) before publishing anything.
   test:
     name: Check
+    needs: verify-version
     uses: ./.github/workflows/gradle.yml
     secrets: inherit
 
@@ -41,9 +77,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          # Only write to the cache for builds on the 'main' and 'release' branches. (Default is 'main' only.)
-          # Builds on other branches will only read existing entries from the cache.
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
+          # This workflow only ever runs on a release tag ref, never on 'main' or 'release', so the
+          # cache is always read-only here. It reuses entries the 'main' CI build wrote; a one-shot
+          # release build has nothing worth writing back.
+          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Publish to MavenCentral
@@ -87,7 +124,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
+          # Release-tag ref only, so the cache is read-only here as well; see the publish job.
+          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Generate Dokka HTML

@@ -178,4 +178,5 @@ Adding one later stays possible as a purely additive change; withdrawing it agai
 
 * [CHANGELOG.md](CHANGELOG.md) — every release, with breaking changes called out first.
 * [MIGRATION.md](MIGRATION.md) — the mapping for each break, from `java-iban` onwards.
+* [RELEASING.md](RELEASING.md) — the mechanical checklist for cutting and publishing a release.
 * The API dumps under `library/api/` — the surface itself, versioned in git.
