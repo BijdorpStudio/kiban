@@ -222,55 +222,52 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
         dependsOn(linuxArm64TestLink)
         // The binary reaches the emulator as an argument, which Gradle does not track by itself.
         // Declaring it keeps a rebuilt binary from being reported as up to date.
-        inputs
-            .file(testBinary)
-            .withPropertyName("testBinary")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(testBinary).withPropertyName("testBinary")
 
-        // Resolved while the task runs rather than while the build is configured: both
-        // directories are downloaded by the link task above, so on a cold machine neither exists
-        // yet. Each name carries the version of the dependency it holds, hence the prefix match.
+        // The emulator and the sysroot it needs to load an aarch64 binary both live under the
+        // konan dependencies directory, in a directory whose name carries the dependency's
+        // version. Resolved while the task runs rather than while the build is configured: the
+        // link task above is what downloads them, so on a cold machine neither exists yet.
+        //
+        // The lookup is a local function rather than a shared one so that the lambda captures
+        // nothing from the build script, which is what keeps the provider configuration-cacheable.
         val emulatorAndSysroot =
             providers
                 .environmentVariable("KONAN_DATA_DIR")
                 .orElse(providers.systemProperty("user.home").map { "$it/.konan" })
                 .map { konanDataDir ->
                     val dependencies = File(konanDataDir, "dependencies")
-                    fun pick(prefix: String, vararg path: String): File {
+                    fun dependency(prefix: String, path: String): File {
+                        // 'listFiles' is in filesystem order, and a Kotlin upgrade can leave the
+                        // previous version's directory behind, so the highest name wins rather
+                        // than whichever one is listed last.
                         val root =
                             dependencies
                                 .listFiles()
                                 .orEmpty()
                                 .filter { it.name.startsWith(prefix) }
                                 .maxByOrNull { it.name }
-                                ?: error(
-                                    "No Kotlin/Native dependency '$prefix*' under $dependencies."
-                                )
-                        return path
-                            .fold(root) { file, segment -> file.resolve(segment) }
-                            .also {
-                                check(it.exists()) {
-                                    "Kotlin/Native dependency '$prefix*' has no $it."
-                                }
-                            }
+                                ?: error("No Kotlin/Native dependency '$prefix*' in $dependencies.")
+                        // Checked because 'executable' is '@SkipWhenEmpty': a path that does not
+                        // exist would skip the task silently instead of failing it.
+                        return root.resolve(path).also {
+                            check(it.exists()) { "Kotlin/Native dependency has no $it." }
+                        }
                     }
-                    listOf(
-                        pick("qemu-aarch64-static-", "qemu-aarch64"),
-                        pick("aarch64-unknown-linux-gnu-", "aarch64-unknown-linux-gnu", "sysroot"),
-                    )
+                    dependency("qemu-aarch64-static-", "qemu-aarch64") to
+                        dependency(
+                            "aarch64-unknown-linux-gnu-",
+                            "aarch64-unknown-linux-gnu/sysroot",
+                        )
                 }
 
-        executable(emulatorAndSysroot.map { it.first() })
-        // 'args' takes no provider, and nothing here is locatable before the link task has run.
-        // The emulator passes everything after the binary through to it, which is where KGP
-        // appends its own '--ktest_logger=TEAMCITY' and friends: the arguments set here come first.
+        executable(emulatorAndSysroot.map { (emulator, _) -> emulator })
+        // 'args' takes no provider, so it is set once the link task has run. The emulator passes
+        // everything after the binary through to it, which is where KGP appends its own
+        // '--ktest_logger=TEAMCITY' and friends: the arguments set here come first.
         doFirst {
-            args =
-                listOf(
-                    "-L",
-                    emulatorAndSysroot.get()[1].absolutePath,
-                    testBinary.get().absolutePath,
-                )
+            val (_, sysroot) = emulatorAndSysroot.get()
+            args = listOf("-L", sysroot.absolutePath, testBinary.get().absolutePath)
         }
     }
 }
