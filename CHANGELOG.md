@@ -269,6 +269,28 @@
   were already spelled out everywhere, so the diff is `public` modifiers only, and test sources
   are exempt as usual.
 
+* CI now executes the test suite on `mingwX64` and `linuxArm64` (#151). Both are published
+  targets, and both had only ever been *compiled* — one `cross-compile` job running
+  `compileKotlinMingwX64` and `compileKotlinLinuxArm64` — so no line of the library had ever run
+  on Windows or on ARM64 Linux, which made them the two targets 1.0 would have claimed support for
+  on the strength of a type check alone. `mingwX64Test` now runs on a `windows-latest` runner like
+  any other target's job. `linuxArm64` cannot be handled that way: Kotlin/Native publishes no
+  Linux/ARM64 *host* compiler — the `kotlin-native-prebuilt` bundles are linux-x86_64,
+  macos-x86_64, macos-aarch64 and windows-x86_64 — so a native `ubuntu-24.04-arm` runner cannot
+  build the target at all, and on the x86_64 host that can cross-compile it the Kotlin Gradle
+  plugin registers no `linuxArm64Test` task, because the host cannot execute what it produces.
+  That job therefore links the test binary with `linkDebugTestLinuxArm64` and runs it under the
+  `qemu-aarch64` user-mode emulator, which needs nothing installed: the emulator and the aarch64
+  sysroot the binary is linked against are both part of the linuxArm64 toolchain the link task has
+  already downloaded, so they always match it. Its exit code is not the verdict — a Kotlin/Native
+  test binary reports through TeamCity service messages, which is what Gradle parses for every
+  target it can run directly, and exits 0 whatever the tests did — so the workflow reads those
+  messages, and counts a run that reports no test at all as a failure rather than letting a binary
+  that silently does nothing pass. That job writes no JUnit XML, so its counts go to the job
+  summary instead of the run's test report. The compile-only job is gone: both of its targets are
+  now covered by a job that links and runs them. 1,582 tests execute on `linuxArm64` under the
+  emulator.
+
 ## 0.5.0
 
 **Breaking changes**
