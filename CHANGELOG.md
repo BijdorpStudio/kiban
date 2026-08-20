@@ -115,6 +115,26 @@
 
 **Documentation**
 
+* Wrote down the versioning, compatibility and deprecation policy that 1.0 has to stand on, as
+  [VERSIONING.md](VERSIONING.md) (#150). The README warned that the API was unstable and
+  MIGRATION.md said removed API is gone with no deprecation cycle — both true today, and both
+  definitionally incompatible with a 1.0 release, with nothing written down about what replaces
+  them. The new document states what a major, minor and patch bump each mean (registry data
+  updates are a minor, not a patch; tightening validation is a major), defines the public API as
+  what the committed dumps under `library/api/` contain and names what is deliberately outside it
+  (exception messages, undocumented ordering, generated data internals), points the binary
+  compatibility guarantee at the `apiCheck`/`apiDump` tooling that already enforces it, and sets
+  the post-1.0 deprecation cycle: `@Deprecated` with `ReplaceWith` at `WARNING` for at least one
+  further minor, optionally `ERROR` after that, removal no earlier than the next major.
+
+* Documented the consumer requirements in the README, which were absent (#150): Kotlin 2.3.0,
+  Java bytecode level 17, Android `minSdk` 24, and that macOS has been `macosArm64` only since
+  0.5.0 — the last of which the CHANGELOG recorded but the README's target list did not. They are
+  stated as contract rather than as facts about the current build: raising any of them only
+  happens in a major release. The README's stability warning and its "Contributions & Stability"
+  section, and MIGRATION.md's preamble, now point at the policy instead of at an open-ended
+  expectation of breakage.
+
 * Stated in the README that the `js` and `wasmJs` artifacts are for Kotlin/JS and Kotlin/Wasm
   consumers only (#145). No declaration in the library carries `@JsExport`, so nothing is reachable
   from hand-written JavaScript and no TypeScript definitions are generated, and the artifacts go to
