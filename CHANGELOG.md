@@ -136,6 +136,24 @@
 
 **Documentation**
 
+* Added [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) (#157). The README invited
+  contributions without saying anywhere what a contributor should run, and the only build guidance in
+  the repository was [CLAUDE.md](CLAUDE.md) — written for agents in cloud sandboxes, about what those
+  containers can and cannot build, rather than for a human with a checkout. CONTRIBUTING.md states the
+  three checks that run on any machine (`./gradlew jvmTest apiCheck ktfmtCheck`), when the API dumps
+  have to be regenerated with `apiDump` and committed alongside the change, that `ktfmtFormat` is what
+  fixes a formatting report, the TestBalloon/assertk shape a new test is expected to take, that the
+  registry data files are generated and not to be hand-edited, and what a pull request should carry —
+  including naming which targets were left unverified locally, since Apple and Android tasks need a
+  toolchain most contributors do not have.
+
+  SECURITY.md gives what a library handling bank account data should not be missing at 1.0: a private
+  reporting channel, via GitHub's private vulnerability reporting rather than an email address to
+  maintain. It also draws the scope line, which for this library is not obvious — validation that is
+  wrong in the permissive direction is the report worth making privately, while registry data
+  predating a SWIFT revision, a false negative, and the deliberately unenforced national check digits
+  and format masks are ordinary issues.
+
 * Wrote down the versioning, compatibility and deprecation policy that 1.0 has to stand on, as
   [VERSIONING.md](VERSIONING.md) (#150). The README warned that the API was unstable and
   MIGRATION.md said removed API is gone with no deprecation cycle — both true today, and both
