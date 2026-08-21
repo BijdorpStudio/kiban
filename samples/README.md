@@ -16,8 +16,11 @@ A runnable walkthrough of the API, depending on `:library` directly and followin
 
 A Swift Package Manager executable exercising the library through Kotlin/Native's
 Objective-C interop — the path consumers of the published `Kiban.xcframework` actually use.
-Needs a macOS host with Xcode; see `.github/workflows/ios-interop-verify.yml` for on-demand
-CI access to one.
+Needs a macOS host with Xcode. CI builds and runs it on every push and pull request from
+`gradle.yml`'s `swift-console` matrix job (#155), so it cannot quietly stop compiling between
+releases; `.github/workflows/ios-interop-verify.yml` runs the same thing on demand, next to
+the generated Objective-C header, when the question is what the interop *looks* like rather
+than whether it still builds.
 
 One thing to know before reading it, a finding of the #9 interop review
 ([`docs/9-swift-interop-review.md`](../docs/9-swift-interop-review.md)): top-level Kotlin

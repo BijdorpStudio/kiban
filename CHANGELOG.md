@@ -318,6 +318,19 @@
   `.asc` files instead), so `:library` gained a `kiban.signPublications` Gradle property. It
   defaults to true and `publish.yml` never sets it, so a release still signs or fails.
 
+* CI builds the `Kiban.xcframework` and compiles and runs `samples/swift-console` against it on every
+  push and pull request (#155). Neither happened before: `gradle.yml`'s matrix tests every Apple
+  target but never assembles the framework, and the only thing that built the Swift sample was
+  `ios-interop-verify.yml`, which is `workflow_dispatch`-only. A change that broke Objective-C
+  interop — the path every consumer of the published XCFramework takes — therefore surfaced whenever
+  someone next thought to press the button, in practice during a release run rather than on the pull
+  request that caused it. The new `swift-console` matrix job closes that window, and because it is a
+  matrix entry it joins the `ci` gate automatically. It costs one macOS runner: the XCFramework holds
+  a single target (`macosArm64`), so the job is one debug link plus a `swift build`, next to four
+  full Apple test jobs the matrix already runs. `ios-interop-verify.yml` keeps its copy of the same
+  steps — on demand it answers what the interop *looks* like, alongside the generated Objective-C
+  header, which is a different question from whether it still builds.
+
 ## 0.5.0
 
 **Breaking changes**
