@@ -33,10 +33,16 @@ Kotlin source.
 `.github/workflows/ios-interop-verify.yml` provides on-demand access to that
 host: a `workflow_dispatch`-only job on a `macos-latest` runner (Actions tab →
 "iOS/Swift interop verification" → "Run workflow"), for pulling real build
-output and toolchain versions without a maintainer at a physical Mac. It now
-also builds and runs `samples/swift-console` (#68) — the concrete testbed
-#9's actual API review needs — so Swift Export artifact generation for that
-sample is the only piece #9 still has to add.
+output and toolchain versions without a maintainer at a physical Mac. It also
+builds and runs `samples/swift-console` (#68) — the concrete testbed #9's
+actual API review needs — so Swift Export artifact generation for that sample
+is the only piece #9 still has to add.
+
+Keeping that sample compiling is not on-demand work, though: `gradle.yml`'s
+`swift-console` matrix entry assembles the XCFramework and runs the sample on
+every push and pull request (#155). So a change that breaks Objective-C
+interop fails CI on the pull request that made it — you still cannot reproduce
+that here, but you will not learn about it during a release either.
 
 ## Android tasks need an SDK the sandbox doesn't have
 
@@ -51,9 +57,10 @@ else.
 
 Don't claim untested changes pass. `jvmTest`, the full `apiCheck`,
 `ktfmtCheck` and the Linux-host Kotlin/Native tasks all run here and count
-as real verification. Apple-target compilation/tests and Android-specific
-tasks don't run here — say explicitly in the PR body which commands you ran
-and which targets were left unverified. `.github/workflows/gradle.yml` runs
-the full target matrix across Linux and macOS runners — that's the actual
+as real verification. Apple-target compilation/tests, the XCFramework and the
+Swift sample, and Android-specific tasks don't run here — say explicitly in
+the PR body which commands you ran and which targets were left unverified.
+`.github/workflows/gradle.yml` runs the full target matrix across Linux and
+macOS runners, `samples/swift-console` included — that's the actual
 verification once the PR is pushed, and `ios-interop-verify.yml` covers
-anything Swift-facing on demand.
+anything Swift-facing that needs inspectable output on demand.

@@ -79,6 +79,18 @@ jobs:
           - target: :samples:jvm-cli:run
             id: samples-jvm-cli-run
             os: ubuntu-latest
+          # Assembles the XCFramework the Swift sample consumes; the step below
+          # compiles and runs the sample against it (#155). Nothing on push or
+          # pull request did either before, so 'samples/swift-console' could stop
+          # compiling and only 'ios-interop-verify.yml' - which is
+          # workflow_dispatch-only - would ever say so, i.e. during a release run
+          # rather than before one. Cheap enough to run per PR: the XCFramework
+          # holds a single target (macosArm64, see ':library'), so this is one
+          # debug link plus a 'swift build', next to the four full Apple test
+          # jobs this matrix already runs.
+          - target: :library:assembleKibanDebugXCFramework
+            id: swift-console
+            os: macos-latest
           # Publishes what the step below consumes (#154). Three targets rather
           # than the aggregate 'publishToMavenLocal', which also publishes the
           # Android and Apple variants and so would need an Android SDK and a
@@ -119,7 +131,7 @@ jobs:
         # builds (see CLAUDE.md) never load it, never attempt a publish and never
         # leak a developer's machine details to a public dashboard.
         #
-        # Only this workflow is scanned: it owns the 16-job matrix and therefore the
+        # Only this workflow is scanned: it owns the 17-job matrix and therefore the
         # payoff. 'publish.yml', 'registry-sync.yml' and 'ios-interop-verify.yml'
         # also use setup-gradle but are low-frequency, and stay unscanned.
         #
@@ -148,6 +160,19 @@ jobs:
       shell: bash
       run: ./gradlew -p samples/consumption-probe check 2>&1 | tee -a build/reports/ci/gradle-build.log
 
+    # The Gradle step only assembles the framework. The sample is a Swift Package
+    # Manager build outside Gradle, and its 'Package.swift' resolves the binary
+    # target out of 'Frameworks/', which is git-ignored and populated per build.
+    # Same three lines as samples/README.md and 'ios-interop-verify.yml'.
+    - name: Build and run samples/swift-console
+      if: matrix.id == 'swift-console'
+      shell: bash
+      run: |
+        mkdir -p samples/swift-console/Frameworks
+        cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
+        cd samples/swift-console
+        swift run SwiftConsole
+
     # Renders the JUnit XML Gradle already writes into this job's summary, and
     # annotates failing tests on the run. 'always()' is the point of the step: a
     # green run used to report nothing but "BUILD SUCCESSFUL", which stranded the
@@ -157,8 +182,8 @@ jobs:
     # token and on pull requests from forks: creating a check run instead would
     # need 'checks: write', which a fork's read-only token does not have.
     - name: Report test results
-      # Four jobs (apiCheck, dokka, ktfmt, the sample run) write no test XML at
-      # all; those skip the step rather than report an empty suite.
+      # Five jobs (apiCheck, dokka, ktfmt and the two sample runs) write no test
+      # XML at all; those skip the step rather than report an empty suite.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal. If the action
       # itself breaks it must not fail the job - and, because 'failure()' latches
