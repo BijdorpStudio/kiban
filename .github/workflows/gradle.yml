@@ -79,6 +79,26 @@ jobs:
           - target: :samples:jvm-cli:run
             id: samples-jvm-cli-run
             os: ubuntu-latest
+          # The only job that resolves the *published* artifact by coordinates.
+          # ':samples:jvm-cli' depends on ':library' as a project and so never
+          # reads a published file, and 'verifyPublicationTargets' counts
+          # publications rather than resolving one - neither catches Gradle
+          # module metadata that no consumer can resolve (#154). The second step
+          # below is the half that matters; this publishes what it consumes.
+          #
+          # Three targets rather than the aggregate 'publishToMavenLocal': that
+          # one also publishes the Android and Apple variants, which would put an
+          # Android SDK and a macOS runner between this check and the metadata it
+          # is here to exercise. Signing is off because no key exists outside
+          # 'publish.yml' and a local repository has nothing to verify against.
+          - target: >-
+              -Pkiban.signPublications=false
+              :library:publishKotlinMultiplatformPublicationToMavenLocal
+              :library:publishJvmPublicationToMavenLocal
+              :library:publishLinuxX64PublicationToMavenLocal
+              :library:publishJsPublicationToMavenLocal
+            id: consumption-probe
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -107,7 +127,7 @@ jobs:
         # builds (see CLAUDE.md) never load it, never attempt a publish and never
         # leak a developer's machine details to a public dashboard.
         #
-        # Only this workflow is scanned: it owns the 15-job matrix and therefore the
+        # Only this workflow is scanned: it owns the 16-job matrix and therefore the
         # payoff. 'publish.yml', 'registry-sync.yml' and 'ios-interop-verify.yml'
         # also use setup-gradle but are low-frequency, and stay unscanned.
         #
@@ -127,6 +147,17 @@ jobs:
       run: |
         mkdir -p build/reports/ci
         ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
+
+    # A build of its own, not part of the root one, so that it resolves
+    # 'nl.bijdorpstudio.kiban:kiban' out of the local repository the step above
+    # wrote instead of being substituted back to ':library'. Its repository
+    # declaration pins that group to 'mavenLocal()' exclusively, so a publish
+    # that produced nothing fails here rather than quietly resolving the last
+    # release from Maven Central. See samples/consumption-probe.
+    - name: Resolve the published artifact from an independent build
+      if: matrix.id == 'consumption-probe'
+      shell: bash
+      run: ./gradlew -p samples/consumption-probe check 2>&1 | tee -a build/reports/ci/gradle-build.log
 
     # Renders the JUnit XML Gradle already writes into this job's summary, and
     # annotates failing tests on the run. 'always()' is the point of the step: a
@@ -264,7 +295,7 @@ jobs:
     # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
     # certain to open. Suite names carry their target ('IbanTest[jvm]',
     # 'IbanTest[iosSimulatorArm64]', ...), so grouping by suite attributes each
-    # result without the 15 jobs having to be listed out here.
+    # result without the 16 jobs having to be listed out here.
     #
     # Both steps are 'continue-on-error' on purpose. This job is the single
     # required check; a missing artifact or a bad parse has to cost the summary
@@ -291,7 +322,7 @@ jobs:
         detailed_summary: true
         group_suite: true
         # Failures only: the per-target listings live on the matrix jobs, and
-        # every passing test across 11 targets would not fit the summary anyway.
+        # every passing test across 12 jobs would not fit the summary anyway.
         include_passed: false
         fail_on_failure: false
         require_tests: false

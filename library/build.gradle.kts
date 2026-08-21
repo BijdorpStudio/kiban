@@ -93,10 +93,25 @@ kotlin {
     }
 }
 
+// Publications are signed by default: Maven Central rejects an unsigned artifact, and 'publish.yml'
+// supplies the key. The one case that needs them unsigned is the mavenLocal consumption probe
+// (samples/consumption-probe, #154), which republishes these same artifacts to a throwaway local
+// repository so that an independent build can resolve them by coordinates. No signing key exists
+// outside the release workflow, and with 'signAllPublications()' applied every local publish fails
+// on "No configured signatory" before it writes anything. Skipping the Sign tasks with '-x' does
+// not help either - their signature artifacts stay registered on the publication, so publishing
+// then fails on the missing '.asc' files. Not applying it at all is what works.
+//
+// 'publish.yml' never sets this property, so a release still signs or fails.
+val signPublications: Boolean =
+    providers.gradleProperty("kiban.signPublications").map(String::toBoolean).getOrElse(true)
+
 mavenPublishing {
     publishToMavenCentral()
 
-    signAllPublications()
+    if (signPublications) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "kiban", version.toString())
 
