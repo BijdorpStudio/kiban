@@ -47,21 +47,10 @@ repository, through the Gradle module metadata the publish flow produced. `jvm-c
 (`library/build.gradle.kts`) counts publications rather than resolving one, so between them they
 could not tell a working publication from module metadata no consumer can resolve (#154).
 
-It is a **separate build**, deliberately not included from the root `settings.gradle.kts` and
-deliberately not wired up with `includeBuild`: either would let Gradle's dependency substitution
-replace `nl.bijdorpstudio.kiban:kiban:<version>` with `:library` again, and the probe would pass
-without a single published file being read. It has no wrapper of its own — the root one drives it
-with `-p`.
-
-Its repository declaration pins the `nl.bijdorpstudio.kiban` group to `mavenLocal()` with
-`exclusiveContent`. Plain repository order would not be enough: the version under development is
-usually one Maven Central already holds, so a probe that could fall back would keep passing against
-the *last released* artifact if the local publish were skipped or produced nothing.
-
-Three targets — `jvm`, `linuxX64`, `js` — one per compilation backend, which is the axis metadata
-resolution breaks along. The tests are deliberately shallow and wide: one call per kind of
-declaration a consumer reaches for, because a declaration that failed to publish shows up as a
-compile or link error long before an assertion could fail.
+It is a separate build, deliberately not included from the root `settings.gradle.kts` and not wired
+up with `includeBuild` — either would let dependency substitution put `:library` back in place of
+the coordinates. It has no wrapper of its own; the root one drives it with `-p`. Three targets,
+`jvm`, `linuxX64` and `js`, one per compilation backend.
 
 ```shell
 ./gradlew -Pkiban.signPublications=false \
@@ -72,10 +61,10 @@ compile or link error long before an assertion could fail.
 ./gradlew -p samples/consumption-probe check
 ```
 
-The publish step names the three targets rather than using the aggregate `publishToMavenLocal`,
-which would additionally need an Android SDK and every Apple toolchain. `-Pkiban.signPublications`
-exists for this: no signing key exists outside `publish.yml`, and with signing applied a local
-publish fails on "No configured signatory" before it writes anything.
+`linuxX64` makes this a Linux-host check, which is why CI pins the job to a Linux runner. The
+publish step names the three consumed targets because the aggregate `publishToMavenLocal` would also
+need an Android SDK and every Apple toolchain, and `-Pkiban.signPublications=false` is needed
+because no signing key exists outside `publish.yml`.
 
-Being a separate build, this one is outside the root `ktfmtCheck` and `apiCheck`; its own `check`
-runs `ktfmtCheck` for it.
+Being a separate build, it sits outside the root `ktfmtCheck` and `apiCheck`; its own `check` runs
+`ktfmtCheck` for it.

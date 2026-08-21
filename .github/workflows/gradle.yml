@@ -79,18 +79,10 @@ jobs:
           - target: :samples:jvm-cli:run
             id: samples-jvm-cli-run
             os: ubuntu-latest
-          # The only job that resolves the *published* artifact by coordinates.
-          # ':samples:jvm-cli' depends on ':library' as a project and so never
-          # reads a published file, and 'verifyPublicationTargets' counts
-          # publications rather than resolving one - neither catches Gradle
-          # module metadata that no consumer can resolve (#154). The second step
-          # below is the half that matters; this publishes what it consumes.
-          #
-          # Three targets rather than the aggregate 'publishToMavenLocal': that
-          # one also publishes the Android and Apple variants, which would put an
-          # Android SDK and a macOS runner between this check and the metadata it
-          # is here to exercise. Signing is off because no key exists outside
-          # 'publish.yml' and a local repository has nothing to verify against.
+          # Publishes what the step below consumes (#154). Three targets rather
+          # than the aggregate 'publishToMavenLocal', which also publishes the
+          # Android and Apple variants and so would need an Android SDK and a
+          # macOS runner to check something that is about metadata.
           - target: >-
               -Pkiban.signPublications=false
               :library:publishKotlinMultiplatformPublicationToMavenLocal
@@ -148,12 +140,9 @@ jobs:
         mkdir -p build/reports/ci
         ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
 
-    # A build of its own, not part of the root one, so that it resolves
-    # 'nl.bijdorpstudio.kiban:kiban' out of the local repository the step above
-    # wrote instead of being substituted back to ':library'. Its repository
-    # declaration pins that group to 'mavenLocal()' exclusively, so a publish
-    # that produced nothing fails here rather than quietly resolving the last
-    # release from Maven Central. See samples/consumption-probe.
+    # A build of its own, so it resolves kiban by coordinates out of the local
+    # repository the step above wrote instead of being substituted back to
+    # ':library'. See samples/consumption-probe.
     - name: Resolve the published artifact from an independent build
       if: matrix.id == 'consumption-probe'
       shell: bash
