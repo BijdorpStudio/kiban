@@ -93,10 +93,19 @@ kotlin {
     }
 }
 
+// Off only for the mavenLocal consumption probe (samples/consumption-probe), which has no signing
+// key: applied, every local publish fails on "No configured signatory", and skipping the Sign tasks
+// with '-x' fails on the missing '.asc' files instead. 'publish.yml' never sets this, so a release
+// still signs or fails.
+val signPublications: Boolean =
+    providers.gradleProperty("kiban.signPublications").map(String::toBoolean).getOrElse(true)
+
 mavenPublishing {
     publishToMavenCentral()
 
-    signAllPublications()
+    if (signPublications) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "kiban", version.toString())
 

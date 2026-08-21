@@ -296,6 +296,28 @@
   The compile-only job is gone: both of its targets are now covered by a job that builds and runs
   them.
 
+* A CI job now resolves the *published* artifact by coordinates from a build that has never heard of
+  `:library` (#154). Nothing did before: `samples/jvm-cli` depends on `:library` as a project and so
+  never reads a published file, and `verifyPublicationTargets` counts publications rather than
+  resolving one — between them they could not tell a working publication from Gradle module metadata
+  no consumer can resolve. The job publishes `kiban` to `mavenLocal()` and then runs
+  `samples/consumption-probe`, a separate build that depends on
+  `nl.bijdorpstudio.kiban:kiban:<version>` and exercises it on `jvm`, `linuxX64` and `js` — one
+  target per compilation backend, which is the axis metadata resolution breaks along.
+
+  Two details are what make it a real check rather than a green tick. It is *not* included from the
+  root `settings.gradle.kts` and not wired up with `includeBuild`, because either would let Gradle's
+  dependency substitution put `:library` back in place of the coordinates. And its repository
+  declaration pins the `nl.bijdorpstudio.kiban` group to `mavenLocal()` with `exclusiveContent`,
+  because the version under development is usually one Maven Central already holds — without that,
+  a publish that produced nothing would resolve the last release instead and the probe would pass
+  against an artifact this build did not make.
+
+  Publishing to a local repository needs signing off (`signAllPublications()` fails on "No
+  configured signatory" before writing anything, and skipping the `Sign` tasks fails on the missing
+  `.asc` files instead), so `:library` gained a `kiban.signPublications` Gradle property. It
+  defaults to true and `publish.yml` never sets it, so a release still signs or fails.
+
 ## 0.5.0
 
 **Breaking changes**

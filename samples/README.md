@@ -1,7 +1,7 @@
 # Samples
 
-Consumer projects for `kiban`, focused on API/interop ergonomics rather than Maven packaging
-(the publish flow, `apiCheck`, and `verifyPublicationTargets` already cover the packaging side).
+Consumer projects for `kiban`. Two of them (`jvm-cli`, `swift-console`) are about API and interop
+ergonomics; the third (`consumption-probe`) is about the published artifact itself.
 
 ## jvm-cli
 
@@ -38,3 +38,33 @@ cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/F
 cd samples/swift-console
 swift run SwiftConsole
 ```
+
+## consumption-probe
+
+The only thing here that consumes `kiban` the way a real dependant does — by coordinates, out of a
+repository, through the Gradle module metadata the publish flow produced. `jvm-cli` depends on
+`:library` as a project and never reads a published file, and `verifyPublicationTargets`
+(`library/build.gradle.kts`) counts publications rather than resolving one, so between them they
+could not tell a working publication from module metadata no consumer can resolve (#154).
+
+It is a separate build, deliberately not included from the root `settings.gradle.kts` and not wired
+up with `includeBuild` — either would let dependency substitution put `:library` back in place of
+the coordinates. It has no wrapper of its own; the root one drives it with `-p`. Three targets,
+`jvm`, `linuxX64` and `js`, one per compilation backend.
+
+```shell
+./gradlew -Pkiban.signPublications=false \
+  :library:publishKotlinMultiplatformPublicationToMavenLocal \
+  :library:publishJvmPublicationToMavenLocal \
+  :library:publishLinuxX64PublicationToMavenLocal \
+  :library:publishJsPublicationToMavenLocal
+./gradlew -p samples/consumption-probe check
+```
+
+`linuxX64` makes this a Linux-host check, which is why CI pins the job to a Linux runner. The
+publish step names the three consumed targets because the aggregate `publishToMavenLocal` would also
+need an Android SDK and every Apple toolchain, and `-Pkiban.signPublications=false` is needed
+because no signing key exists outside `publish.yml`.
+
+Being a separate build, it sits outside the root `ktfmtCheck` and `apiCheck`; its own `check` runs
+`ktfmtCheck` for it.
