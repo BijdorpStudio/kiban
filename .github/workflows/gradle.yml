@@ -12,6 +12,18 @@ on:
 permissions:
   contents: read
 
+# The full target matrix - a job per target, several of them on macOS runners - against a commit
+# that has already been superseded tells nobody anything, so a new push to a branch or pull request
+# cancels the run still going for the old head. Two cases keep every run instead:
+#   - 'main', where the per-commit result is the record of what the branch actually passed.
+#   - Release runs, which reach this workflow through 'workflow_call' from publish.yml. There
+#     github.ref is the release tag, and publish.yml fires on both 'prereleased' and 'released', so
+#     promoting a prerelease starts a second run against the same tag - cancelling the first would
+#     fail the 'needs: test' gate and take its publish job down with it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.event_name != 'release' }}
+
 jobs:
   build:
     # Named off 'matrix.id' alone, so the check name stays stable when a matrix
