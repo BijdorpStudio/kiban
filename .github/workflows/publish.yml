@@ -59,6 +59,16 @@ jobs:
     name: Release build and publish
     needs: test
     runs-on: macOS-latest
+    # The only job holding the Maven Central credentials and the GPG signing key. Binding it to a
+    # GitHub environment is what makes that scoping enforceable: the secrets can live on the
+    # 'release' environment instead of the repository, so no other workflow or job can read them,
+    # and the environment's required reviewers turn "a release was created" into "a human approved
+    # this publish". Creating a release stays the trigger; it stops being sufficient on its own.
+    # The environment and its protection rules are repository settings, not workflow content — see
+    # RELEASING.md for what has to be configured for this to gate anything.
+    environment:
+      name: release
+      url: https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban
     steps:
       - name: Check out code
         uses: actions/checkout@v7
