@@ -362,6 +362,16 @@
   keeps the close-and-reopen note in the body — so a fork or a repository without the secret still
   gets working sync runs rather than a failing workflow.
 
+* The `publish` job is bound to a `release` GitHub environment (#158). It is the only job that holds
+  the Maven Central credentials and the GPG signing key, and until now the sole gate in front of it
+  was the release event itself: anything that could create a GitHub release could ship a signed
+  artifact under this coordinate, with no second pair of eyes and nothing to stop an accidental tag.
+  The environment adds the required-reviewer pause between "a release was created" and "an artifact
+  is on Maven Central", and it is also what lets the five publish secrets move off the repository
+  and onto the environment, where only a job declaring it can read them. Both of those are
+  repository settings rather than workflow content — [RELEASING.md](RELEASING.md) documents what to
+  configure, including the deployment-branch rule to avoid, since the publish runs on a tag ref.
+
 ## 0.5.0
 
 **Breaking changes**
