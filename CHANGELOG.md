@@ -349,6 +349,19 @@
   steps — on demand it answers what the interop *looks* like, alongside the generated Objective-C
   header, which is a different question from whether it still builds.
 
+* The SWIFT registry sync opens its data-update pull request with a `REGISTRY_SYNC_TOKEN` secret when
+  one is configured (#156). GitHub deliberately does not trigger workflow runs from events an
+  automation created with the default `GITHUB_TOKEN`, so `gradle.yml` never ran on a sync pull
+  request: the only verification a registry update got before merge was the `./gradlew jvmTest` the
+  sync job runs itself, with "close and reopen it" written into the body as the workaround. For a
+  library whose entire value is the correctness of that data, the target matrix is exactly the check
+  it should get. `REGISTRY_SYNC_TOKEN` is a fine-grained PAT or GitHub App installation token scoped
+  to this repository with `Contents: read and write` and `Pull requests: read and write`; the
+  checkout, the branch push and `gh pr create` all use it, so the pull request comes from an identity
+  whose events CI reacts to. The secret is optional — unset, the job falls back to `GITHUB_TOKEN` and
+  keeps the close-and-reopen note in the body — so a fork or a repository without the secret still
+  gets working sync runs rather than a failing workflow.
+
 ## 0.5.0
 
 **Breaking changes**
