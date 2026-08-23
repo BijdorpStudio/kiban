@@ -372,6 +372,29 @@
   repository settings rather than workflow content — [RELEASING.md](RELEASING.md) documents what to
   configure, including the deployment-branch rule to avoid, since the publish runs on a tag ref.
 
+* Two supply-chain additions for 1.0 (#160), each covering a question nothing here answered before.
+  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md) records the choices, the
+  options that were rejected, and why the issue's third item needed no change: **CodeQL** is
+  already enabled on this repository through default setup, which analyses `java-kotlin` and
+  `actions` on every pull request without leaving a file in `.github/workflows` to notice. An
+  advanced workflow cannot be added alongside it — GitHub rejects the upload with "CodeQL analyses
+  from advanced configurations cannot be processed when the default setup is enabled" — so
+  replacing it would be a repository-settings decision, not a pull request.
+
+  **OpenSSF Scorecard** (`.github/workflows/scorecard.yml`) scores the repository against the
+  OpenSSF checks, files the findings as code scanning alerts, and publishes the result, which is
+  what backs the new README badge and what a consumer querying the Scorecard API or deps.dev reads.
+  Default branch only: the score is a property of `main`, and publishing works from nowhere else.
+
+  **Build provenance** on the published artifacts. The GPG signature on a Maven Central artifact
+  says a maintainer's key signed something; it does not say which commit or which workflow produced
+  the bytes. `publish.yml` now attests every `.jar`, `.klib` and `.aar` it uploads, so
+  `gh attestation verify <file> --repo BijdorpStudio/kiban` answers that against a file pulled from
+  Maven Central. A Kotlin Multiplatform publication leaves its 17 modules' artifacts in as many
+  places, so the job stages the publication into one local Maven repository inside the workspace
+  first — a second write of already-built files, not a second build. No CycloneDX SBOM: kiban
+  depends on nothing but the Kotlin standard library and the POM already says so.
+
 ## 0.5.0
 
 **Breaking changes**

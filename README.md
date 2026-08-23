@@ -8,6 +8,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/nl.bijdorpstudio.kiban/kiban.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban)
 [![CI](https://github.com/BijdorpStudio/kiban/actions/workflows/gradle.yml/badge.svg)](https://github.com/BijdorpStudio/kiban/actions/workflows/gradle.yml)
 [![API docs](https://img.shields.io/badge/API%20docs-Dokka-blue.svg)](https://bijdorpstudio.github.io/kiban/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/BijdorpStudio/kiban/badge)](https://scorecard.dev/viewer/?uri=github.com/BijdorpStudio/kiban)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Introduction

@@ -28,6 +28,21 @@ kiban is pre-1.0: only the latest released version is supported, and a fix ships
 rather than as a patch to an older line. Once 1.0 is out this section will say what the supported
 line is; [VERSIONING.md](VERSIONING.md) is the policy that will define it.
 
+## Verifying a release
+
+Every artifact the release workflow uploads carries [build
+provenance](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+alongside the usual GPG signature. The signature says a maintainer's key signed something; the
+attestation says which repository, workflow and commit produced the bytes you have:
+
+```shell
+gh attestation verify kiban-jvm-<version>.jar --repo BijdorpStudio/kiban
+```
+
+The same works for any of the published `.jar`, `.klib` or `.aar` files. A file that fails this
+check did not come from this repository's release workflow — that is worth reporting privately,
+using the process above.
+
 ## What is in scope
 
 * **Validation that is wrong in the permissive direction** — input `Iban(...)`, `toIban()`,

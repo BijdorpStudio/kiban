@@ -59,6 +59,14 @@ jobs:
     name: Release build and publish
     needs: test
     runs-on: macOS-latest
+    permissions:
+      contents: read
+      # Build provenance for the published artifacts (#160). 'attestations: write' records the
+      # attestation against this repository; 'id-token: write' is how the run proves to Sigstore
+      # that it is this workflow on this commit, rather than by holding a signing key. Neither
+      # widens what the job can do to the repository's contents.
+      attestations: write
+      id-token: write
     # The only job holding the Maven Central credentials and the GPG signing key. Binding it to a
     # GitHub environment is what makes that scoping enforceable: the secrets can live on the
     # 'release' environment instead of the repository, so no other workflow or job can read them,
@@ -104,6 +112,59 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+
+      # Build provenance needs the files as subjects, and the step above uploads them without
+      # leaving a single directory to point at: a Kotlin Multiplatform publication is 17 modules
+      # whose artifacts sit wherever their compilation put them ('build/libs' for the JVM and
+      # metadata jars, 'build/classes/kotlin/<target>/main/klib' for the Native ones, and so on).
+      # Writing the same publication into a local Maven repository lays every published file out
+      # under one path, in the layout Maven Central will serve it in.
+      #
+      # This is a second write of artifacts the publish above already built, not a second build:
+      # every compile, jar and Sign task is up to date by now, so the step is the install itself
+      # plus Gradle's configuration time. '-Dmaven.repo.local' keeps it inside the workspace rather
+      # than in '~/.m2', which is what lets the attest step below address it with a relative glob.
+      # The signing secrets are passed because 'signAllPublications()' applies to every repository,
+      # so without them this publication would fail on a missing signatory.
+      - name: Stage the published artifacts for attestation
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+        run: |
+          ./gradlew :library:publishToMavenLocal --no-configuration-cache \
+            -Pkotlin.native.ignoreDisabledTargets=false \
+            -Dmaven.repo.local="$GITHUB_WORKSPACE/build/attestation-staging"
+          # An empty tree here would make the attest step fail with "no subjects found", which
+          # says nothing about why. Fail on the staging itself, where the cause is visible.
+          # '|| true' because 'shell: bash' runs with '-e' and pipefail, and a missing staging
+          # directory is one of the two cases this check exists to report - not a reason to abort
+          # before it can say so.
+          staged="$(find build/attestation-staging/nl/bijdorpstudio/kiban \
+            -type f \( -name '*.jar' -o -name '*.klib' -o -name '*.aar' \) 2>/dev/null | wc -l || true)"
+          echo "Staged $staged artifact files for attestation."
+          if [ "$staged" -eq 0 ]; then
+            echo "::error::Nothing was staged under build/attestation-staging. The publication layout changed, or Gradle ignored '-Dmaven.repo.local'."
+            exit 1
+          fi
+
+      # What this buys a consumer: 'gh attestation verify <file> --repo BijdorpStudio/kiban' on a
+      # jar or klib pulled from Maven Central answers "was this file built by this repository's
+      # release workflow, from this commit" - a question the GPG signature, which says only that
+      # the maintainer's key signed something, cannot answer.
+      #
+      # Binaries only. The '.pom' and '.module' files are metadata that Maven Central rewrites
+      # nothing of but that no consumer executes, and leaving them out keeps the subject list to
+      # the ~51 files (17 publications, each with its artifact, sources jar and javadoc jar) that
+      # actually end up on a classpath.
+      - name: Attest build provenance for the published artifacts
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            build/attestation-staging/nl/bijdorpstudio/kiban/**/*.jar
+            build/attestation-staging/nl/bijdorpstudio/kiban/**/*.klib
+            build/attestation-staging/nl/bijdorpstudio/kiban/**/*.aar
 
   docs:
     name: Publish API docs

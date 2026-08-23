@@ -1,0 +1,66 @@
+# OpenSSF Scorecard analysis (#160).
+#
+# Scorecard scores a repository against the checks the OpenSSF publishes - branch protection,
+# pinned dependencies, token permissions, signed releases, whether a CI test workflow exists and
+# runs, and so on - and files what it finds as code scanning alerts. Two audiences for that here:
+# consumers in regulated environments increasingly look the score up before taking a dependency,
+# and the checks themselves are a maintenance checklist for a repository heading to 1.0.
+#
+# 'publish_results: true' sends the result to the OpenSSF's public API, which is what backs the
+# badge in README.md and what a consumer querying deps.dev or the Scorecard API reads. It works
+# only from the default branch of a public repository, which is why the triggers below are what
+# they are: no 'pull_request', because a fork's run could neither publish nor upload SARIF, and the
+# score is a property of 'main' rather than of a proposed change.
+
+name: OpenSSF Scorecard
+
+on:
+  # The Branch-Protection check reads settings rather than files, so it can go stale without a
+  # commit. This event fires when a branch ruleset changes and re-scores immediately.
+  branch_protection_rule:
+  schedule:
+    - cron: '18 4 * * 2'
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Uploading the SARIF result into the Security tab.
+      security-events: write
+      # Publishing the result to the OpenSSF API, which authenticates the run by OIDC token rather
+      # than by a secret - nothing to store, and nothing a fork can borrow.
+      id-token: write
+      contents: read
+      # Several checks (Token-Permissions, Dangerous-Workflow, CI-Tests) read this repository's
+      # workflow definitions and run history through the Actions API.
+      actions: read
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          # Scorecard only reads the tree. Leaving the token behind in '.git/config' would hand
+          # every later step in the job a credential none of them need - and Scorecard would be
+          # right to mark that down if it checked for it.
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      # Code scanning is where the findings become actionable: each check that scores below its
+      # maximum arrives as an alert with the reason and the remediation, instead of a number in a
+      # log nobody opens.
+      - name: Upload result to the Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
