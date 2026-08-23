@@ -92,6 +92,15 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
    [Maven Central](https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban) (it can take
    a while to index) and that the API docs on GitHub Pages reflect the release.
 
+   The publish job also records [build provenance](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+   for every artifact it uploaded, listed under the repository's **Attestations** tab. A spot check
+   on a downloaded jar is the quickest confirmation that the attestation covers what Maven Central
+   is serving:
+
+   ```shell
+   gh attestation verify kiban-jvm-X.Y.Z.jar --repo BijdorpStudio/kiban
+   ```
+
 ## After the release — open the next cycle
 
 8. **Reopen the CHANGELOG.** Add a fresh `## X.Y.(Z+1) (unreleased)` section (or the next minor/

@@ -372,6 +372,31 @@
   repository settings rather than workflow content — [RELEASING.md](RELEASING.md) documents what to
   configure, including the deployment-branch rule to avoid, since the publish runs on a tag ref.
 
+* Three supply-chain additions for 1.0 (#160), each covering a question nothing here answered
+  before. [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md) records the choices
+  and the two options that were rejected.
+
+  **CodeQL** (`.github/workflows/codeql.yml`) analyses the Kotlin sources on every push and pull
+  request to `main`, and weekly so a newly published query pack reaches a repository that has not
+  changed. It is the workflow form rather than GitHub's default setup, because the default setup
+  autobuilds and the default build of this project wants an Android SDK and Xcode; `build-mode:
+  manual` compiles `:library:compileKotlinJvm` instead, which is `commonMain` — nearly all of the
+  code — plus the JVM `actual` declarations.
+
+  **OpenSSF Scorecard** (`.github/workflows/scorecard.yml`) scores the repository against the
+  OpenSSF checks, files the findings as code scanning alerts, and publishes the result, which is
+  what backs the new README badge and what a consumer querying the Scorecard API or deps.dev reads.
+  Default branch only: the score is a property of `main`, and publishing works from nowhere else.
+
+  **Build provenance** on the published artifacts. The GPG signature on a Maven Central artifact
+  says a maintainer's key signed something; it does not say which commit or which workflow produced
+  the bytes. `publish.yml` now attests every `.jar`, `.klib` and `.aar` it uploads, so
+  `gh attestation verify <file> --repo BijdorpStudio/kiban` answers that against a file pulled from
+  Maven Central. A Kotlin Multiplatform publication leaves its 17 modules' artifacts in as many
+  places, so the job stages the publication into one local Maven repository inside the workspace
+  first — a second write of already-built files, not a second build. No CycloneDX SBOM: kiban
+  depends on nothing but the Kotlin standard library and the POM already says so.
+
 ## 0.5.0
 
 **Breaking changes**
