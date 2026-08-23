@@ -1,36 +1,48 @@
 # #160: supply-chain posture for 1.0
 
 #160 asked for three additions, "each independent, land in any order": a CodeQL workflow, an
-OpenSSF Scorecard action and badge, and SBOM/build provenance on the published artifacts. All
-three landed together. This is what was chosen for each and, where an option was rejected, why —
-so the next person to touch these workflows does not have to re-derive it.
+OpenSSF Scorecard action and badge, and SBOM/build provenance on the published artifacts. Two of
+them landed. The third turned out to be already done — CodeQL is enabled on this repository through
+default setup, which leaves no file in `.github/workflows` to notice. This is what was chosen for
+each and, where an option was rejected, why, so the next person to touch these workflows does not
+have to re-derive it.
 
 None of it changes the published API or the library's behaviour. It changes what a consumer can
 find out about an artifact before depending on it, which is the part of "ready for 1.0" that
 Dependabot and the version-catalog-update plugin — already covering dependency freshness — say
 nothing about.
 
-## CodeQL: a workflow, not the default setup, and JVM-only
+## CodeQL: already enabled, and no workflow to add
 
-GitHub's "default setup" is one click in the Security tab and needs no file in the repository. It
-autobuilds, which is where it comes apart here: the default Gradle build of a Kotlin Multiplatform
-project reaches for the Android SDK and the Apple toolchain, and the `ubuntu-latest` runner CodeQL
-schedules has neither. The advanced (workflow) form is what lets the build mode be stated, so
-`.github/workflows/codeql.yml` uses `build-mode: manual` and compiles exactly one target.
+The issue asked for a CodeQL workflow. There is nothing to add: **CodeQL default setup is already
+enabled on this repository** and has been running all along, analysing both `java-kotlin` and
+`actions` on every pull request. Its runs show up under the `dynamic/github-code-scanning/codeql`
+path rather than as a file in `.github/workflows`, which is why reading the workflow directory
+suggested there was no coverage.
 
-That target is the JVM one. Every other target compiles the same `commonMain` sources through a
-different backend, so `:library:compileKotlinJvm` puts all of the shared code — which is nearly all
-of the code — in front of the extractor. What it does not cover is the per-platform `actual`
-declarations, a handful of files. Covering those would mean a second target matrix on macOS and
-Windows runners for a query pack aimed at the JVM ecosystem; the trade is not worth it, and this
-note is here so the gap is known rather than assumed away.
+An advanced workflow was written first, on the assumption that there was none, and pushed. It
+failed, twice over, and both failures are worth recording because either one is enough to rule the
+approach out:
 
-One wart: `CODEQL_EXTRACTOR_KOTLIN_ALLOW_UNSUPPORTED_VERSION`. The Kotlin extractor pins the
-compiler versions it can read, and this repository tracks the current Kotlin release, so it is
-routinely ahead of that pin. Without the escape hatch the build step fails on the version check and
-the workflow goes red on every Kotlin bump until CodeQL catches up — an analysis that runs and may
-miss a declaration beats one that never runs. Remove the line if the pin ever leads the Kotlin
-version rather than trailing it.
+* **The two configurations cannot coexist.** The `analyze` step uploaded its SARIF and got back
+  `CodeQL analyses from advanced configurations cannot be processed when the default setup is
+  enabled`. Adding a workflow here is not additive — it is a replacement, and switching would mean
+  turning default setup off first, which is a repository setting rather than workflow content.
+
+* **`build-mode: manual` produced an empty database.** The step ran
+  `./gradlew :library:compileKotlinJvm`, which reported `BUILD SUCCESSFUL` and
+  `1 executed, 1 from cache` — the Kotlin compilation was served out of the Gradle build cache, so
+  no compiler ever ran under CodeQL's tracer, and `database finalize` failed with `CodeQL could not
+  process any code written in Java/Kotlin`. Anything taking this route later has to defeat the
+  build cache (and account for the Gradle daemon) for the tracer to see a compilation at all.
+
+The obvious follow-up worry — that default setup's autobuild might extract nothing from a Kotlin
+Multiplatform project and pass anyway — does not hold either. On the same commit its `Autobuild`
+step ran for 55 seconds and `Perform CodeQL Analysis` for a further 40, against the java-kotlin
+database; an autobuild that had seen no code would have failed `database finalize` the way the
+advanced run did, in about a second. The coverage is real.
+
+So: nothing to do for this item, and the workflow was removed.
 
 ## Scorecard: published results, default branch only
 

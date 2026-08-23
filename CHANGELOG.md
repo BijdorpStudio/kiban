@@ -372,16 +372,14 @@
   repository settings rather than workflow content — [RELEASING.md](RELEASING.md) documents what to
   configure, including the deployment-branch rule to avoid, since the publish runs on a tag ref.
 
-* Three supply-chain additions for 1.0 (#160), each covering a question nothing here answered
-  before. [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md) records the choices
-  and the two options that were rejected.
-
-  **CodeQL** (`.github/workflows/codeql.yml`) analyses the Kotlin sources on every push and pull
-  request to `main`, and weekly so a newly published query pack reaches a repository that has not
-  changed. It is the workflow form rather than GitHub's default setup, because the default setup
-  autobuilds and the default build of this project wants an Android SDK and Xcode; `build-mode:
-  manual` compiles `:library:compileKotlinJvm` instead, which is `commonMain` — nearly all of the
-  code — plus the JVM `actual` declarations.
+* Two supply-chain additions for 1.0 (#160), each covering a question nothing here answered before.
+  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md) records the choices, the
+  options that were rejected, and why the issue's third item needed no change: **CodeQL** is
+  already enabled on this repository through default setup, which analyses `java-kotlin` and
+  `actions` on every pull request without leaving a file in `.github/workflows` to notice. An
+  advanced workflow cannot be added alongside it — GitHub rejects the upload with "CodeQL analyses
+  from advanced configurations cannot be processed when the default setup is enabled" — so
+  replacing it would be a repository-settings decision, not a pull request.
 
   **OpenSSF Scorecard** (`.github/workflows/scorecard.yml`) scores the repository against the
   OpenSSF checks, files the findings as code scanning alerts, and publishes the result, which is
