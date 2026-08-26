@@ -80,6 +80,10 @@ sequence, and the raw registry file is never committed because it is not redistr
 workflow (`.github/workflows/registry-sync.yml`) opens the update pull request when the registry
 changes, so this is rarely something to do by hand.
 
+Both scripts under `scripts/` carry their own offline test: `--self-check` on either one asserts
+over its parsing helpers and exits. Changing how the generator reads the registry means extending
+`scripts/testdata/synthetic-registry.txt` — there is no real registry file to test against.
+
 ## Pull requests
 
 * **One topic per pull request.** Keep unrelated cleanups out of a change that has to be reviewed on

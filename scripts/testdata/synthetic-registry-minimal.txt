@@ -1,0 +1,6 @@
+IBAN prefix country code (ISO 3166)	XG	XH
+Name of country	Sparseland	Minimalia
+BBAN structure	16!n	12!n
+IBAN structure	XG2!n16!n	XH2!n12!n
+IBAN length	20	16
+IBAN electronic format example	XG780011002233445566	XH83998877665544
