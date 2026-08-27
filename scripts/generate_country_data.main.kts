@@ -9,6 +9,7 @@
  *
  * Usage:
  *     kotlin scripts/generate_country_data.main.kts --registry ~/Downloads/iban-registry-v102.txt --rev 102
+ *     kotlin scripts/generate_country_data.main.kts --self-check
  *
  * The registry file is transposed: rows are fields, countries are columns. On top of it the
  * script applies a curated overlay (embedded below): countries from the IBAN.com Experimental
@@ -19,6 +20,11 @@
  *  - bank/branch identifiers extracted via the declared positions must equal the registry's
  *    own independent "Bank identifier example" / "Branch identifier example" fields, so the
  *    position encoding is cross-checked against data it was not derived from.
+ *
+ * --self-check runs the parser, the overlay merge and the validation over the fixtures in
+ * scripts/testdata/ - invented countries in the registry's own format, because the real TXT
+ * cannot be committed - and exits without writing anything. It is what turns a format-handling
+ * regression into a failing check rather than a bad weekly sync.
  */
 
 @file:DependsOn("com.jsoizo:kotlin-csv-jvm:1.10.0")
@@ -126,13 +132,21 @@ fun argValue(name: String): String? {
     return if (index >= 0 && index + 1 < args.size) args[index + 1] else null
 }
 
-val registryPath = argValue("--registry") ?: error("Missing --registry <path to SWIFT registry TXT>")
-val rev = argValue("--rev") ?: error("Missing --rev <SWIFT registry revision, e.g. 102>")
-val date = argValue("--date") ?: LocalDate.now().toString()
+/**
+ * Metadata the generator only stamps into its output: neither value is derived from the registry
+ * file, which states no revision and carries no generation date.
+ */
+data class Stamp(val rev: String, val date: String)
 
 val repoRoot = __FILE__.absoluteFile.parentFile.parentFile
 val dataFile = repoRoot.resolve("library/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt")
 val testFile = repoRoot.resolve("library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt")
+
+/** Invented registry entries covering the parser's edge cases; see --self-check. */
+val syntheticRegistry = repoRoot.resolve("scripts/testdata/synthetic-registry.txt")
+
+/** A registry stripped to the rows the parser cannot do without; see --self-check. */
+val minimalRegistry = repoRoot.resolve("scripts/testdata/synthetic-registry-minimal.txt")
 
 // ---------------------------------------------------------------------------
 // Registry TXT parsing (tab-separated; quoted cells may contain newlines)
@@ -224,14 +238,19 @@ fun mod97(iban: String): Int {
 fun validate(countries: List<Country>) {
     val problems = mutableListOf<String>()
     for (c in countries) {
-        if (!c.example.startsWith(c.code)) problems += "${c.code}: example ${c.example} has wrong prefix"
-        if (c.example.length != c.length) problems += "${c.code}: example length ${c.example.length} != declared ${c.length}"
-        if (mod97(c.example) != 1) problems += "${c.code}: example ${c.example} fails mod-97 check"
+        val structural = mutableListOf<String>()
+        if (!c.example.startsWith(c.code)) structural += "${c.code}: example ${c.example} has wrong prefix"
+        if (c.example.length != c.length) structural += "${c.code}: example length ${c.example.length} != declared ${c.length}"
+        if (mod97(c.example) != 1) structural += "${c.code}: example ${c.example} fails mod-97 check"
         if (c.bank.begin > c.bank.end || c.bank.end > c.length || c.branch.begin > c.branch.end || c.branch.end > c.length) {
-            problems += "${c.code}: identifier positions out of range"
+            structural += "${c.code}: identifier positions out of range"
         }
+        problems += structural
         // Cross-check: identifiers cut by position from the example IBAN must equal the
-        // registry's independently stated identifier examples.
+        // registry's independently stated identifier examples. Only meaningful for an entry whose
+        // example and positions agree on a length: cutting from a garbled one dies in substring()
+        // instead of reporting what is wrong with it, and the structural problems already say so.
+        if (structural.isNotEmpty()) continue
         val mismatches = mutableListOf<String>()
         if (c.bank.present && c.bankExample.isNotEmpty()) {
             val cut = c.bank.cutFrom(c.example)
@@ -280,15 +299,16 @@ fun licenseHeader(year: String) = """
 val regenerateNote =
     "Regenerate with: kotlin scripts/generate_country_data.main.kts --registry <registry.txt> --rev <NN>"
 
-fun generatedKdoc(what: String) =
-    "$what This is a generated file, do not edit manually.\n$regenerateNote\nUpdated to SWIFT IBAN Registry version $rev on $date.\n"
+fun generatedKdoc(what: String, stamp: Stamp) =
+    "$what This is a generated file, do not edit manually.\n$regenerateNote\n" +
+        "Updated to SWIFT IBAN Registry version ${stamp.rev} on ${stamp.date}.\n"
 
 fun constInt(name: String, format: String, vararg args: Any): PropertySpec =
     PropertySpec.builder(name, INT, KModifier.CONST)
         .initializer(format, *args)
         .build()
 
-fun dataFileSpec(countries: List<Country>): FileSpec {
+fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
     val sepa = constInt("SEPA", "1 shl 8")
     val swift = constInt("SWIFT", "1 shl 9")
     val bankEndShift = constInt("BANK_IDENTIFIER_END_SHIFT", "8")
@@ -340,17 +360,17 @@ fun dataFileSpec(countries: List<Country>): FileSpec {
 
     val dataObject = TypeSpec.objectBuilder("CountryCodesData")
         .addModifiers(KModifier.INTERNAL)
-        .addKdoc(generatedKdoc("Contains information about IBAN country codes."))
+        .addKdoc(generatedKdoc("Contains information about IBAN country codes.", stamp))
         .addProperty(
             PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.CONST)
                 .addKdoc("The \"yyyy-MM-dd\" datestamp that the embedded IBAN data was updated.\n")
-                .initializer("%S", date)
+                .initializer("%S", stamp.date)
                 .build()
         )
         .addProperty(
             PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.CONST)
                 .addKdoc("The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.\n")
-                .initializer("%S", rev)
+                .initializer("%S", stamp.rev)
                 .build()
         )
         .addProperty(sepa)
@@ -405,7 +425,7 @@ fun dataFileSpec(countries: List<Country>): FileSpec {
 
 fun pretty(plain: String): String = plain.chunked(4).joinToString(" ")
 
-fun testFileSpec(countries: List<Country>): FileSpec {
+fun testFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
     val testDataType = ClassName(pkg, "IbanCountryTestData")
     val entriesInitializer = buildCodeBlock {
         add("listOf(\n")
@@ -435,7 +455,7 @@ fun testFileSpec(countries: List<Country>): FileSpec {
 
     val property = PropertySpec.builder("countryTestData", LIST.parameterizedBy(testDataType), KModifier.INTERNAL)
         .addKdoc(
-            generatedKdoc("Valid example IBANs for every known country.") +
+            generatedKdoc("Valid example IBANs for every known country.", stamp) +
                 "\nBank and branch identifier expectations are cross-validated at generation time against the\n" +
                 "registry's own \"Bank identifier example\" and \"Branch identifier example\" fields, which are\n" +
                 "independent of the position data embedded in CountryCodesData.\n" +
@@ -453,13 +473,151 @@ fun testFileSpec(countries: List<Country>): FileSpec {
 }
 
 // ---------------------------------------------------------------------------
+// Generation
+// ---------------------------------------------------------------------------
+
+fun generate() {
+    val registryPath = argValue("--registry") ?: error("Missing --registry <path to SWIFT registry TXT>")
+    val stamp = Stamp(
+        rev = argValue("--rev") ?: error("Missing --rev <SWIFT registry revision, e.g. 102>"),
+        date = argValue("--date") ?: LocalDate.now().toString(),
+    )
+
+    val countries = merge(parseRegistry(File(registryPath)))
+    validate(countries)
+    dataFile.writeText(licenseHeader(stamp.date.substring(0, 4)) + dataFileSpec(countries, stamp))
+    testFile.writeText(licenseHeader(stamp.date.substring(0, 4)) + testFileSpec(countries, stamp))
+    val swiftCount = countries.count(Country::swift)
+    println("Generated data for ${countries.size} countries ($swiftCount SWIFT, ${countries.size - swiftCount} experimental) at registry rev ${stamp.rev}.")
+    println("Wrote ${dataFile.relativeTo(repoRoot)} and ${testFile.relativeTo(repoRoot)}.")
+}
+
+// ---------------------------------------------------------------------------
+// Self-check: offline assertions over the parser, against synthetic registries
+//
+// The SWIFT registry TXT cannot be committed, so the fixtures invent their countries on ISO 3166
+// user-assigned codes, which no real registry revision can ever hand out. scripts/testdata/README.md
+// says which quirk each country stands for; keep the two in step when either changes.
+// ---------------------------------------------------------------------------
+
+fun selfCheck() {
+    var checks = 0
+
+    fun expect(what: String, expected: Any?, actual: Any?) {
+        check(expected == actual) { "$what: expected <$expected>, got <$actual>" }
+        checks++
+    }
+
+    fun expectRejected(what: String, needle: String, vararg countries: Country) {
+        val message = runCatching { validate(countries.toList()) }.exceptionOrNull()?.message
+        check(message != null && needle in message) {
+            "$what: expected validation to fail with <$needle>, got <${message ?: "no failure"}>"
+        }
+        checks++
+    }
+
+    fun expectAccepted(what: String, vararg countries: Country) {
+        val message = runCatching { validate(countries.toList()) }.exceptionOrNull()?.message
+        check(message == null) { "$what: expected validation to pass, got <$message>" }
+        checks++
+    }
+
+    // Position ranges. Offsets are into the whole IBAN, so a "1-4" BBAN range starts at 4.
+    expect("a BBAN range", IdentifierPosition(4, 8), IdentifierPosition.ofBban("1-4"))
+    expect("a BBAN range padded with spaces", IdentifierPosition(8, 11), IdentifierPosition.ofBban(" 5-7 "))
+    expect("a two-digit BBAN range", IdentifierPosition(13, 16), IdentifierPosition.ofBban("10-12"))
+    expect("a single-character BBAN range", IdentifierPosition(4, 5), IdentifierPosition.ofBban("1-1"))
+    expect("a BBAN range stated as N/A", IdentifierPosition.ABSENT, IdentifierPosition.ofBban("N/A"))
+    expect("an empty BBAN range", IdentifierPosition.ABSENT, IdentifierPosition.ofBban(""))
+    expect("the length of a BBAN range", 4, IdentifierPosition.ofBban("1-4").length)
+    expect("an absent range is not present", false, IdentifierPosition.ABSENT.present)
+    expect("a parsed range is present", true, IdentifierPosition.ofBban("1-4").present)
+    expect("cutting an absent identifier", null, IdentifierPosition.ABSENT.cutFrom("XA86BANK123456789012"))
+    expect("cutting a present identifier", "BANK", IdentifierPosition.ofBban("1-4").cutFrom("XA86BANK123456789012"))
+
+    expect("mod-97 of a sound IBAN", 1, mod97("XA86BANK123456789012"))
+    expect("mod-97 of an IBAN with a wrong check digit", 2, mod97("XA87BANK123456789012"))
+
+    expect("pretty-printing a length divisible by four", "XA86 BANK 1234 5678 9012", pretty("XA86BANK123456789012"))
+    expect("pretty-printing a length that is not", "XF24 FBNK 0070 000", pretty("XF24FBNK0070000"))
+
+    // Parsing the fixture. A row is one logical record however many lines its quoted cells span;
+    // splitting one in two would misalign every column after it.
+    expect("rows in the fixture", 17, parseTsv(syntheticRegistry).size)
+
+    val parsed = parseRegistry(syntheticRegistry)
+    val byCode = parsed.associateBy(Country::code)
+    expect("countries in the order the fixture states them", listOf("XE", "XA", "XD", "XC", "XB", "XF"), parsed.map(Country::code))
+    expect("every registry entry counts as a SWIFT entry", true, parsed.all(Country::swift))
+    expect("SEPA membership", listOf(false, true, false, true, false, true), parsed.map(Country::sepa))
+    expect("declared IBAN lengths", listOf(24, 20, 16, 22, 18, 15), parsed.map(Country::length))
+    expect("a name padded with spaces", "Whitespace Republic", byCode.getValue("XC").name)
+    expect("an example IBAN written in print format", "XC55WSPC77123456789012", byCode.getValue("XC").example)
+    expect("a bank identifier position", IdentifierPosition(4, 9), byCode.getValue("XE").bank)
+    expect("a branch identifier position", IdentifierPosition(9, 12), byCode.getValue("XE").branch)
+    expect("a bank identifier position padded with spaces", IdentifierPosition(4, 8), byCode.getValue("XC").bank)
+    expect("a bank identifier the country does not embed", IdentifierPosition.ABSENT, byCode.getValue("XD").bank)
+    expect("a branch identifier the country does not embed", IdentifierPosition.ABSENT, byCode.getValue("XB").branch)
+    expect("an identifier example written with spaces", "WSPC", byCode.getValue("XC").bankExample)
+    expect("a branch identifier example written with spaces", "77", byCode.getValue("XC").branchExample)
+    expect("a branch identifier example stated as N/A", "N/A", byCode.getValue("XE").branchExample)
+    // The fixture's "Branch identifier example" row stops one column short, as a truncated
+    // download would: the missing value has to read as absent rather than shift the row.
+    expect("a value missing from a short row", "", byCode.getValue("XF").branchExample)
+    expect("the country after a short row's last value", "XF24FBNK0070000", byCode.getValue("XF").example)
+
+    // A whole row can go missing too - a registry revision that renames a column takes it away from
+    // every country at once, and the fields it carried have to read as absent rather than throw.
+    val minimal = parseRegistry(minimalRegistry)
+    expect("countries in a registry stripped to its mandatory rows", listOf("XG", "XH"), minimal.map(Country::code))
+    expect("a name still read from a stripped registry", "Sparseland", minimal.first().name)
+    expect("SEPA membership without a SEPA row", listOf(false, false), minimal.map(Country::sepa))
+    expect("identifier positions without a position row", listOf(IdentifierPosition.ABSENT, IdentifierPosition.ABSENT), minimal.map(Country::bank))
+    expect("identifier examples without an example row", listOf("", ""), minimal.map(Country::branchExample))
+    expectAccepted("a registry stripped to its mandatory rows", *merge(minimal).toTypedArray())
+
+    // Merging in the curated overlay.
+    val merged = merge(parsed)
+    expect("merging appends the experimental overlay", parsed.size + experimentalCountries.size, merged.size)
+    expect("merging sorts by country code", merged.map(Country::code).sorted(), merged.map(Country::code))
+    val overlaid = merged.first { it.code == experimentalCountries.first().code }
+    expect("an overlay entry is not in the registry", false, overlaid.swift)
+    expect("an overlay entry embeds no bank identifier", IdentifierPosition.ABSENT, overlaid.bank)
+    expect("an overlay entry takes its length from its example", overlaid.example.length, overlaid.length)
+    // The SEPA overrides name real countries, so no invented code can carry one; borrow a code.
+    val overridden = byCode.getValue("XE").copy(code = sepaOverrides.first(), sepa = false)
+    expect("SEPA is overridden for a country the registry does not flag", true, merge(listOf(overridden)).single { it.code == overridden.code }.sepa)
+    expect("SEPA is left alone outside the overrides", false, merge(listOf(byCode.getValue("XE"))).single { it.code == "XE" }.sepa)
+    val caughtUp = runCatching { merge(listOf(byCode.getValue("XE").copy(code = experimentalCountries.first().code))) }
+    expect(
+        "merging a registry that has caught up with the overlay",
+        true,
+        caughtUp.exceptionOrNull()?.message?.contains("is now in the SWIFT registry") == true,
+    )
+
+    // Validation, which is what stands between a garbled download and the library.
+    expectAccepted("the synthetic registry as a whole", *merged.toTypedArray())
+    val sound = byCode.getValue("XA")
+    expectRejected("an example with the wrong country prefix", "has wrong prefix", sound.copy(example = "XZ${sound.example.drop(2)}"))
+    expectRejected("an example that is not the declared length", "example length 20 != declared 21", sound.copy(length = 21))
+    expectRejected("an example with a wrong check digit", "fails mod-97 check", sound.copy(example = "XA87BANK123456789012"))
+    // Positions past the end of the IBAN have to be reported, not cut from it.
+    expectRejected("a bank identifier reaching past the IBAN", "identifier positions out of range", sound.copy(bank = IdentifierPosition(4, 21)))
+    expectRejected("a bank identifier position that runs backwards", "identifier positions out of range", sound.copy(bank = IdentifierPosition(8, 4)))
+    expectRejected("a bank identifier the position data disagrees with", "bank id by position 'BANK' != registry example 'WRONG'", sound.copy(bankExample = "WRONG"))
+    expectRejected("a branch identifier the position data disagrees with", "branch id by position '123' != registry example '999'", sound.copy(branchExample = "999"))
+
+    // "BA" is one of the countries knownIdentifierExampleMismatches exempts; the list holds only as
+    // long as it does, so a revision that fixes one has to fail rather than silently keep it.
+    val exempt = sound.copy(code = "BA", example = "BA90BANK123456789012")
+    expectAccepted("an exempt country whose registry examples still disagree", exempt.copy(bankExample = "WRONG"))
+    expectRejected("an exempt country whose registry examples now agree", "remove the exception", exempt)
+
+    println("All $checks self-checks passed.")
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-val countries = merge(parseRegistry(File(registryPath)))
-validate(countries)
-dataFile.writeText(licenseHeader(date.substring(0, 4)) + dataFileSpec(countries))
-testFile.writeText(licenseHeader(date.substring(0, 4)) + testFileSpec(countries))
-val swiftCount = countries.count(Country::swift)
-println("Generated data for ${countries.size} countries ($swiftCount SWIFT, ${countries.size - swiftCount} experimental) at registry rev $rev.")
-println("Wrote ${dataFile.relativeTo(repoRoot)} and ${testFile.relativeTo(repoRoot)}.")
+if (args.contains("--self-check")) selfCheck() else generate()

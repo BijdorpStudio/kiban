@@ -1,0 +1,18 @@
+IBAN prefix country code (ISO 3166)	XE	XA	XD	XC	XB	XF
+Name of country	Kingdom of Ranges	Republic of Testonia	Bareland	 Whitespace Republic 	Fixtureland	Truncatia
+Country code includes other countries/territories	N/A	N/A	N/A	"Whitespace Republic
+(and its overseas fixtures)"	N/A	N/A
+SEPA country	No	Yes	No	Yes	No	Yes
+Domestic account number example	BNKID BR1 000012345678	BANK 123 456789012	123456789012	WSPC 77 123456789012	FXL 12345678901	FBNK 007 0000
+BBAN structure	5!c3!c12!n	4!a3!n9!n	12!n	4!a2!n12!n	3!a11!n	4!a3!n4!n
+BBAN length	20	16	12	18	14	11
+Bank identifier position within the BBAN	1-5	1-4	N/A	 1-4 	1-3	1-4
+Bank identifier pattern	5!c	4!a	N/A	4!a	3!a	4!a
+Branch identifier position within the BBAN	6-8	5-7	N/A	5-6	N/A	5-7
+Bank identifier example	BNKID	BANK	N/A	WS PC	FXL	FBNK
+Branch identifier example	N/A	123	N/A	7 7	N/A
+IBAN structure	XE2!n20!c	XA2!n16!c	XD2!n12!n	XC2!n18!c	XB2!n14!c	XF2!n11!c
+IBAN length	24	20	16	22	18	15
+IBAN electronic format example	XE72BNKIDBR1000012345678	XA86BANK123456789012	XD52123456789012	XC55 WSPC 7712 3456 789012	XB84FXL12345678901	XF24FBNK0070000
+IBAN print format example	XE72 BNKI DBR1 0000 1234 5678	XA86 BANK 1234 5678 9012	XD52 1234 5678 9012	XC55 WSPC 7712 3456 789012	XB84 FXL1 2345 678901	XF24 FBNK 0070 000
+Effective date	Apr-24	Nov-19	Jan-20	Jun-22	Sep-18	Mar-25
