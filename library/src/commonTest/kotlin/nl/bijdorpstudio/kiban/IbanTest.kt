@@ -121,10 +121,6 @@ val IbanTest by testSuite {
         assertThat(INVALID_IBAN.isValidIban()).isFalse()
     }
 
-    // The extensions take a String receiver while invoke, compose, Modulo97 and CountryCodes take
-    // a CharSequence (#143). The asymmetry is deliberate, so these two lock in both halves of it:
-    // a non-String CharSequence parses through invoke, and it does so identically to the String
-    // the extensions would have been handed.
     test("Invoke should accept a CharSequence that is not a String") {
         val builder: CharSequence = StringBuilder(VALID_IBAN)
 
@@ -206,9 +202,6 @@ val IbanTest by testSuite {
         assertThat(Iban("NL03 ABNA 0143 2674 69").plain).isEqualTo(VALID_IBAN)
     }
 
-    // pretty is initialized lazily in PUBLICATION mode, so an Iban stays safe to share between
-    // threads: racing readers may each compute the value, but only one is published and every
-    // read afterwards returns that one. Memoization is what is observable from a single thread.
     test("Pretty should be memoized and identical across reads") {
         val iban = Iban(VALID_IBAN)
 
@@ -216,9 +209,6 @@ val IbanTest by testSuite {
         assertThat(iban.pretty).isSameInstanceAs(iban.pretty)
     }
 
-    // The ASCII space is grouping, every other whitespace character is just a character an IBAN
-    // cannot contain. Inserting one makes the input a character too long and replacing one keeps
-    // the length correct; both have to be blamed on the character, not on the length.
     for ((label, whitespace) in nonSpaceWhitespace) {
         test("Invoke should reject an inserted $label") {
             assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, whitespace.toString())) }
@@ -250,8 +240,6 @@ val IbanTest by testSuite {
     }
 
     test("Invoke should reject the tab that used to be stripped silently") {
-        // The example from #137: before the leniency was narrowed to the ASCII space this parsed,
-        // because toPlain stripped every Unicode whitespace character anywhere in the input.
         assertFailure { Iban("NL91\tABNA 0417164300") }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
@@ -270,8 +258,6 @@ val IbanTest by testSuite {
             }
     }
 
-    // The point of the typed kinds: a caller can read what went wrong off the rejection instead
-    // of parsing the message for it. These pin the payload the parser attaches at each site.
     test("Invoke should name the offending character of a leading boundary rejection") {
         assertFailure { Iban(" $VALID_IBAN") }
             .isInstanceOf<IbanParseException.Malformed>()
@@ -294,8 +280,6 @@ val IbanTest by testSuite {
     }
 
     test("Invoke should name the offending character and index of a substituted character") {
-        // Substituting keeps the length correct, so this is the rejection Modulo97 raises and
-        // the parser then attributes to a character.
         assertFailure { Iban(VALID_IBAN.replaceRange(6, 7, "_")) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
@@ -303,8 +287,6 @@ val IbanTest by testSuite {
     }
 
     test("Invoke should name the offending character and index of an inserted character") {
-        // Inserting makes the input a character too long, so this is the rejection the length
-        // branch attributes to a character. Both branches have to agree on the payload.
         assertFailure { Iban(VALID_IBAN.replaceRange(4, 4, "_")) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
@@ -312,8 +294,6 @@ val IbanTest by testSuite {
     }
 
     test("Invoke should index the offending character in the plain input, spaces removed") {
-        // The index is into the input the exception carries, which has the grouping spaces
-        // stripped -- not into the pretty-printed input the caller handed over.
         assertFailure { Iban("NL03 ABNA 0143 26_4 69") }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
@@ -453,10 +433,6 @@ val IbanTest by testSuite {
         assertFailure { Iban(INVALID_IBAN) }.isInstanceOf<IllegalArgumentException>()
     }
 
-    // parse is a named alias for invoke, for the callers whose language has no invoke call syntax:
-    // Java reads Iban.Companion.invoke(...) and Swift Iban.companion.invoke(input:). Nothing about
-    // the parsing may differ between the two, so these assert that the alias agrees with invoke
-    // rather than testing the parser a second time.
     test("Parse should accept valid input") {
         assertThat(Iban.parse(VALID_IBAN)).isEqualTo(Iban(VALID_IBAN))
     }
@@ -505,11 +481,6 @@ val IbanTest by testSuite {
             .isInstanceOf<IbanParseException.Malformed.Kind.InvalidStructure>()
     }
 
-    // A country code that is not exactly two characters used to slip past the one-arg
-    // Modulo97.calculateCheckDigits, which inspects indices 2 and 3 rather than the country code.
-    // With a BBAN starting in '0' the check digits were then computed against the wrong indices
-    // and the failure surfaced later as an UnknownCountryCode built from BBAN bytes, instead of
-    // the structural rejection it is.
     for ((description, countryCode) in
         listOf(
             "one character" to "N",
@@ -559,9 +530,6 @@ val IbanTest by testSuite {
     }
 
     test("Hash code should ignore the formatting of the parsed input") {
-        // The two instances are equal because an Iban holds the plain form whichever spelling it
-        // was parsed from; the hash code has to follow, or an IBAN parsed from formatted input
-        // would fail to find its plain-input twin in a hash-based collection.
         val plain = Iban(VALID_IBAN)
         val formatted = Iban("NL03 ABNA 0143 2674 69")
 
@@ -588,8 +556,6 @@ val IbanTest by testSuite {
     }
 
     test("Shortest possible IBAN length should be the five characters ISO 13616 allows") {
-        // Two country characters, two check digits and at least one BBAN character. The constant
-        // is public and freezes at 1.0, so the value is pinned here rather than re-derived.
         assertThat(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH).isEqualTo(5)
     }
 
@@ -606,9 +572,6 @@ val IbanTest by testSuite {
     }
 
     test("Input at SHORTEST_POSSIBLE_IBAN_LENGTH should get past the length check") {
-        // "XX00A" is not an IBAN, but it is long enough to be one: the rejection has to come from
-        // the unknown country code rather than from the length. That is what makes the constant
-        // the boundary it claims to be, rather than a number the parser never consults.
         val atMinimum = "XX00A"
 
         assertThat(atMinimum.length).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH)
@@ -689,9 +652,8 @@ val IbanTest by testSuite {
         assertThat(actual.sorted()).isEqualTo(expected)
     }
 
-    // T3: for a representative set of invalid inputs across every rejection kind, invoke,
-    // toIban and compose must only ever throw IbanParseException — nothing raw from Modulo97 or
-    // the stdlib may escape. This is what makes @Throws sound on Kotlin/Native.
+    // @Throws is only sound on Kotlin/Native if nothing raw from Modulo97 or the stdlib can
+    // escape the parse entry points, so every rejection kind is checked for that here.
     for (input in rejectionKindInputs) {
         test("Only IbanParseException escapes invoke and toIban for '$input'") {
             assertFailure { Iban(input) }.isInstanceOf<IbanParseException>()

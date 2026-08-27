@@ -42,7 +42,6 @@ val IbanAliasTest by testSuite {
     }
 
     test("IBAN alias should reach the companion functions") {
-        // The java-iban spellings a migrating caller is most likely to have written.
         assertThat(IBAN.parse(VALID_IBAN)).isEqualTo(Iban(VALID_IBAN))
         assertThat(IBAN.compose(countryCode = "NL", bban = VALID_IBAN.substring(4)))
             .isEqualTo(Iban(VALID_IBAN))
@@ -50,8 +49,6 @@ val IbanAliasTest by testSuite {
     }
 
     test("IBAN and Iban should be interchangeable as declared types") {
-        // Assigning across the two spellings in both directions is the whole point of the alias:
-        // a migrated call site holding an `IBAN` still feeds APIs typed as `Iban`, and vice versa.
         val fromExtension: IBAN = VALID_IBAN.toIban()
         val backAsIban: Iban = fromExtension
 

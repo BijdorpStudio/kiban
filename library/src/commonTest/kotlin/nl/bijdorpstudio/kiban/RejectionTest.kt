@@ -44,9 +44,6 @@ private val messages: List<Pair<Kind, String>> =
 
 /** Tests for the internal [Rejection] type behind the non-throwing validation paths. */
 val RejectionTest by testSuite {
-    // The wording is derived from the kind alone, so a kind that names a character or a reason
-    // needs no second channel to say it. There is no rejection that cannot describe itself, and
-    // no runtime check standing in for that: the sealed hierarchy makes it a property of the type.
     for ((kind, expectedMessage) in messages) {
         test("Malformed rejection of $kind describes itself") {
             val exception = Rejection.Malformed(VALID_IBAN, kind).toException()

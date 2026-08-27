@@ -27,8 +27,8 @@ concurrency:
 jobs:
   build:
     # Named off 'matrix.id' alone, so the check name stays stable when a matrix
-    # key is added or reordered. The default name interpolates *every* matrix
-    # value, which is what renamed every check when 'id' was introduced.
+    # key is added or reordered: the default name interpolates *every* matrix
+    # value.
     name: ${{ matrix.id }} (${{ matrix.os }})
     strategy:
       matrix:
@@ -92,14 +92,10 @@ jobs:
             id: samples-jvm-cli-run
             os: ubuntu-latest
           # Assembles the XCFramework the Swift sample consumes; the step below
-          # compiles and runs the sample against it (#155). Nothing on push or
-          # pull request did either before, so 'samples/swift-console' could stop
-          # compiling and only 'ios-interop-verify.yml' - which is
-          # workflow_dispatch-only - would ever say so, i.e. during a release run
-          # rather than before one. Cheap enough to run per PR: the XCFramework
-          # holds a single target (macosArm64, see ':library'), so this is one
-          # debug link plus a 'swift build', next to the four full Apple test
-          # jobs this matrix already runs.
+          # compiles and runs the sample against it (#155). Cheap enough to run
+          # per PR: the XCFramework holds a single target (macosArm64, see
+          # ':library'), so this is one debug link plus a 'swift build', next to
+          # the four full Apple test jobs this matrix already runs.
           - target: :library:assembleKibanDebugXCFramework
             id: swift-console
             os: macos-latest
@@ -186,9 +182,9 @@ jobs:
         swift run SwiftConsole
 
     # Renders the JUnit XML Gradle already writes into this job's summary, and
-    # annotates failing tests on the run. 'always()' is the point of the step: a
-    # green run used to report nothing but "BUILD SUCCESSFUL", which stranded the
-    # per-test reporting #115 migrated to TestBalloon for.
+    # annotates failing tests on the run. 'always()' is the point of the step:
+    # per-test results have to reach the summary on a green run too, not just a
+    # red one.
     #
     # 'annotate_only' keeps this working under the workflow's 'contents: read'
     # token and on pull requests from forks: creating a check run instead would
