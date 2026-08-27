@@ -56,7 +56,7 @@ jobs:
           swift --version
 
       - name: Build and test Apple targets
-        run: ./gradlew iosSimulatorArm64Test macosArm64Test tvosSimulatorArm64Test watchosSimulatorArm64Test apiCheck
+        run: ./gradlew iosSimulatorArm64Test macosArm64Test tvosSimulatorArm64Test watchosSimulatorArm64Test checkKotlinAbi
 
       - name: Assemble the Kiban XCFramework
         run: ./gradlew :library:assembleKibanDebugXCFramework

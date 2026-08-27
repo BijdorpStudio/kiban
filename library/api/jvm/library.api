@@ -14,7 +14,6 @@ public final class nl/bijdorpstudio/kiban/CountryCodes {
 public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public static final field Companion Lnl/bijdorpstudio/kiban/Iban$Companion;
 	public static final field SHORTEST_POSSIBLE_IBAN_LENGTH I
-	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public fun compareTo (Lnl/bijdorpstudio/kiban/Iban;)I
 	public static final fun compose (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;

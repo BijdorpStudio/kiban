@@ -72,9 +72,9 @@ jobs:
           - target: linuxArm64Test
             id: linux-arm64-test
             os: ubuntu-latest
-          # apiCheck builds a klib for every target the host supports, so it
-          # doubles as the compile check for the Apple targets.
-          - target: apiCheck
+          # checkKotlinAbi builds a klib for every target the host supports, so
+          # it doubles as the compile check for the Apple targets.
+          - target: checkKotlinAbi
             id: api-check
             os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks :library:testAndroidHostTest
@@ -194,8 +194,9 @@ jobs:
     # token and on pull requests from forks: creating a check run instead would
     # need 'checks: write', which a fork's read-only token does not have.
     - name: Report test results
-      # Five jobs (apiCheck, dokka, ktfmt and the two sample runs) write no test
-      # XML at all; those skip the step rather than report an empty suite.
+      # Five jobs (checkKotlinAbi, dokka, ktfmt and the two sample runs) write
+      # no test XML at all; those skip the step rather than report an empty
+      # suite.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal. If the action
       # itself breaks it must not fail the job - and, because 'failure()' latches
@@ -268,20 +269,21 @@ jobs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Generate API dump diff
-      # apiCheck reports a binary-compatibility break as a Gradle failure whose
-      # useful part - what the dump would have to become - is buried in the log
-      # tail. Regenerating the dump surfaces exactly that, as a reviewable diff.
+      # checkKotlinAbi reports a binary-compatibility break as a Gradle failure
+      # whose useful part - what the dump would have to become - is buried in
+      # the log tail. Regenerating the dump surfaces exactly that, as a
+      # reviewable diff.
       if: failure() && matrix.id == 'api-check'
       shell: bash
       run: |
-        ./gradlew apiDump || true
+        ./gradlew updateKotlinAbi || true
         mkdir -p build/reports/api-dump
         git diff > build/reports/api-dump/api-dump.patch
         {
           echo '## API dump'
           echo
-          echo 'If the change is intended, run `./gradlew apiDump` and commit the updated'
-          echo 'dump files. If it is not, it is a binary-compatibility break.'
+          echo 'If the change is intended, run `./gradlew updateKotlinAbi` and commit'
+          echo 'the updated dump files. If it is not, it is a binary-compatibility break.'
           echo
           echo '```diff'
           head -n 400 build/reports/api-dump/api-dump.patch

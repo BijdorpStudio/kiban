@@ -275,14 +275,14 @@ Contributions are welcome — issues, discussion and pull requests alike. Help s
 multiplatform IBAN utility library.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the practical part: the checks to run before pushing
-(`./gradlew jvmTest apiCheck ktfmtCheck`), when to regenerate the API dumps, and what a pull request
+(`./gradlew jvmTest checkKotlinAbi ktfmtCheck`), when to regenerate the API dumps, and what a pull request
 is expected to carry. Found a security problem instead? Do not open an issue — [SECURITY.md](SECURITY.md)
 has the private reporting channel.
 
 ## Stability
 
 [VERSIONING.md](VERSIONING.md) is the policy: what a major, minor and patch bump each mean, what
-the binary compatibility guarantee covers and how `apiCheck` enforces it against the committed API
+the binary compatibility guarantee covers and how `checkKotlinAbi` enforces it against the committed API
 dumps, the deprecation cycle that applies to post-1.0 removals, and the consumer requirements above.
 Until 1.0 ships, the API is still open to breaking change; every break so far is mapped in
 [MIGRATION.md](MIGRATION.md) and listed in [CHANGELOG.md](CHANGELOG.md).

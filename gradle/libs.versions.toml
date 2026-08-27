@@ -10,7 +10,6 @@ dokka = "2.2.0"
 java-version = "17"
 junit = "4.13.2"
 kotlin = "2.4.10"
-kotlinx-binary-compatibility-validator = "0.18.1"
 # @keep this is library kotlin compatibility version
 # This is the minimum Kotlin version a consumer needs, not merely what the library is built with.
 # Raising it is a breaking change for consumers who cannot follow, so after 1.0 it only moves in a
@@ -48,7 +47,6 @@ compat-tapmoc = { id = "com.gradleup.tapmoc", version.ref = "tapmoc-plugin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-binary-compatibility-validator" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt-plugin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 testballoon = { id = "de.infix.testBalloon", version.ref = "testballoon" }

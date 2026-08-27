@@ -67,7 +67,7 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
 4. **Verify locally.** Run the checks that pass in a cloud sandbox (see [CLAUDE.md](CLAUDE.md)):
 
    ```
-   ./gradlew jvmTest apiCheck ktfmtCheck
+   ./gradlew jvmTest checkKotlinAbi ktfmtCheck
    ```
 
    The full target matrix (Apple, Android, Windows, Linux/Native) runs in CI on the PR via

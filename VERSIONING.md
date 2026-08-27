@@ -32,7 +32,8 @@ Two consequences worth stating outright, because they are the cases that usually
 
 ## What the public API is
 
-The public API is what the binary compatibility validator dumps, and nothing else:
+The public API is what the ABI validation built into the Kotlin Gradle plugin dumps, and nothing
+else:
 
 * `library/api/jvm/library.api` — the JVM/Android ABI.
 * `library/api/library.klib.api` — the klib ABI, covering every Kotlin/Native, JS and Wasm target.
@@ -58,14 +59,15 @@ Three things are deliberately **not** contract, and may change in any release:
 Within a major version, an artifact built against `1.x` links against any later `1.y` (`y >= x`) on
 every published target. That is checked mechanically, not reviewed by eye:
 
-* `apiCheck` (wired in the root `build.gradle.kts` with `klib { enabled = true }`) diffs the current
-  API surface against the committed dumps and fails the build on any divergence.
+* `checkKotlinAbi` (wired in `library/build.gradle.kts` with `kotlin { abiValidation { } }`) diffs
+  the current API surface against the committed dumps and fails the build on any divergence. Both
+  the JVM and the klib dump are produced; klib-based targets need no switching on.
 * It runs on every pull request as its own CI job. Because building the klib dump compiles every
   target the host supports, that job doubles as the compile check for the Apple targets.
-* An intentional API change is not an override or a suppression: run `./gradlew apiDump` and commit
-  the regenerated dumps. The API delta then shows up in the pull request diff as reviewable lines,
-  which is the point — nothing changes the frozen surface without a reviewer seeing the exact
-  change.
+* An intentional API change is not an override or a suppression: run `./gradlew updateKotlinAbi`
+  and commit the regenerated dumps. The API delta then shows up in the pull request diff as
+  reviewable lines, which is the point — nothing changes the frozen surface without a reviewer
+  seeing the exact change.
 
 Source compatibility is the stronger of the two and is what the table above promises: within a
 major version, source that compiled against an earlier minor still compiles. Note that the reverse

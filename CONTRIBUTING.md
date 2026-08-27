@@ -30,7 +30,7 @@ cannot build, so a green local run plus a green CI run is the complete picture.
 ## Before you push
 
 ```
-./gradlew jvmTest apiCheck ktfmtCheck
+./gradlew jvmTest checkKotlinAbi ktfmtCheck
 ```
 
 These three run everywhere, including on Linux and Windows without an Android SDK, and they catch
@@ -38,22 +38,22 @@ most of what CI would reject:
 
 * **`jvmTest`** runs the common test suite on the JVM. The same sources run on every other target in
   CI, so a failure here is a failure everywhere.
-* **`apiCheck`** compares the public API against the dumps committed under `library/api/`
-  (`jvm/library.api` and `library.klib.api`). The klib half infers the Apple targets from the
-  buildable ones, so this passes on Linux — you do not need a Mac to check the API.
+* **`checkKotlinAbi`** compares the public API against the dumps committed under `library/api/`
+  (`jvm/library.api` and `library.klib.api`). A klib needs no Xcode, so the Apple targets are dumped
+  from a Linux host like any other — you do not need a Mac to check the API.
 * **`ktfmtCheck`** enforces formatting. `./gradlew ktfmtFormat` applies it; run that rather than
   hand-fixing the report.
 
 ## Changing the public API
 
-`apiCheck` fails on any change to the public API, including additions. That is deliberate: the dumps
+`checkKotlinAbi` fails on any change to the public API, including additions. That is deliberate: the dumps
 are the reviewable record of what consumers can see, and [VERSIONING.md](VERSIONING.md) defines the
 public API as exactly what they contain.
 
 When a change to the API is intended, regenerate and commit the dumps:
 
 ```
-./gradlew apiDump
+./gradlew updateKotlinAbi
 ```
 
 Both dump files are expected in the same commit as the code that changes them. Note that a new
