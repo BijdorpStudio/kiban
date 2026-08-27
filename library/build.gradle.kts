@@ -25,8 +25,35 @@ version = "0.6.0"
 
 ktfmt { kotlinLangStyle() }
 
+// Versioned API docs (#162). Every release overwrites GitHub Pages with the Dokka output of the
+// version being published, so without this a consumer still on an older line loses their reference
+// the moment the next release goes out. The versioning plugin turns the site into an archive: it
+// renders a version dropdown, keeps the version being generated at the root (so the Pages URL
+// always lands on the latest docs), and copies the versions handed to it below into 'older/'.
+//
+// The archive is not in this repository - it is the previously published site, restored by the
+// 'docs' job in 'publish.yml' and pointed at with this property. The property is deliberately
+// optional: with no value the DirectoryProperty stays unset and Dokka generates exactly the
+// single-version site it did before, which is what a local ':library:dokkaGeneratePublicationHtml'
+// wants and what the very first versioned release has to produce anyway (no archive exists yet).
+// See docs/162-versioned-api-docs.md.
+val previousDocVersionsDir: Provider<Directory> =
+    providers.gradleProperty("kiban.previousDocVersions").map { path ->
+        // Absolute in CI; resolved against the project directory otherwise, as Gradle's own
+        // file-path properties are.
+        layout.projectDirectory.dir(path)
+    }
+
+dependencies { dokkaPlugin(libs.dokka.versioning.plugin) }
+
 dokka {
     moduleName.set("kiban")
+    pluginsConfiguration.versioning {
+        // The version of the docs being generated, which is the version being released: the tag
+        // guard in 'publish.yml' has already checked that these agree.
+        version.set(project.version.toString())
+        olderVersionsDir.set(previousDocVersionsDir)
+    }
     dokkaSourceSets.configureEach {
         sourceLink {
             localDirectory.set(rootDir)
