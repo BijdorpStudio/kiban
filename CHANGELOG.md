@@ -395,6 +395,17 @@
   first — a second write of already-built files, not a second build. No CycloneDX SBOM: kiban
   depends on nothing but the Kotlin standard library and the POM already says so.
 
+* Versioned API docs (#162). Every release used to overwrite GitHub Pages with the Dokka output of
+  the version being published, so a consumer still on an older line lost their reference the moment
+  the next release went out. `publish.yml` now generates the docs with Dokka's versioning plugin:
+  the version being released stays at the root — the README badge keeps landing on the latest docs —
+  and every previous version is reachable from a dropdown. The archive of older versions is the
+  previously published site, kept on a `docs-archive` branch (rebuilt as a single commit each
+  release, so it never accumulates history) rather than in `main`, where a full Dokka site per
+  release would dominate every clone. The job that pushes that branch is separate from the one that
+  runs Gradle, so `contents: write` never sits on a job running project build logic. See
+  [docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
+
 ## 0.5.0
 
 **Breaking changes**

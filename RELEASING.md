@@ -90,7 +90,9 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
 
 7. **Confirm the artifact.** Once the workflow is green, confirm the version appears on
    [Maven Central](https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban) (it can take
-   a while to index) and that the API docs on GitHub Pages reflect the release.
+   a while to index) and that the API docs on GitHub Pages reflect the release — the version just
+   released at the root, and the previous ones still reachable from the version dropdown (see
+   [Versioned API docs](#versioned-api-docs) below).
 
    The publish job also records [build provenance](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
    for every artifact it uploaded, listed under the repository's **Attestations** tab. A spot check
@@ -100,6 +102,31 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
    ```shell
    gh attestation verify kiban-jvm-X.Y.Z.jar --repo BijdorpStudio/kiban
    ```
+
+## Versioned API docs
+
+The docs deploy is versioned (#162): the release being published lands at the root of GitHub Pages,
+so the README badge always points at the latest reference, and every previously published version
+stays reachable from the version dropdown.
+
+Nothing in this checklist has to be done to keep that working. The two jobs at the end of
+`publish.yml` do it: `docs` restores the previously published versions from the `docs-archive`
+branch and generates the site around them, and `archive-docs` puts the version just deployed back
+onto that branch for the next release to pick up.
+
+What is worth knowing when reading a release:
+
+* **The archive lives on the `docs-archive` branch**, one directory per version under `versions/`,
+  rebuilt as a single commit on every release. It is never merged into `main` — a full Dokka site
+  per release would dominate every clone.
+* **To drop a version from the dropdown**, delete its directory from that branch. The next release
+  regenerates the branch from what the site serves at that point, so the deletion sticks.
+* **If the branch is missing** — as it was for the first release after this landed — the `docs` job
+  logs "No archived versions restored" and publishes a single-version site. That is not a failure;
+  the archive starts from that release onwards.
+
+The full reasoning, including the storage options that were rejected, is in
+[docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
 
 ## After the release — open the next cycle
 

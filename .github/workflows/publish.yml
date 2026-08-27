@@ -8,7 +8,8 @@ on:
 # Least privilege for every job in this workflow. Without this the GITHUB_TOKEN falls back to the
 # repository default, which is read-write for repositories created before February 2023 — and the
 # 'publish' job runs with the Maven Central and GPG signing secrets in scope. The 'docs' job
-# widens this for its Pages deployment; nothing else here needs more than read.
+# widens this for its Pages deployment and 'archive-docs' for the branch it pushes; nothing else
+# here needs more than read.
 permissions:
   contents: read
 
@@ -181,6 +182,17 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v7
 
+      # The versions already published, kept on the 'docs-archive' branch by the job below (#162).
+      # 'continue-on-error' covers the one case where that branch does not exist: the first release
+      # after versioned docs landed. The generate step then falls through to the single-version site
+      # this job produced before, and the archive starts existing from that release onwards.
+      - name: Restore previously published doc versions
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          ref: docs-archive
+          path: docs-archive
+
       # Dokka resolves 'nativeMain'/'appleMain' through the Kotlin analysis
       # frontend, so this job downloads the Kotlin/Native distribution as well --
       # see the action's own comment.
@@ -200,7 +212,19 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Generate Dokka HTML
-        run: ./gradlew :library:dokkaGeneratePublicationHtml
+        shell: bash
+        run: |
+          # The property is only passed when there is actually an archive to merge in: pointing the
+          # versioning plugin at a directory holding no versions buys nothing, and not passing it at
+          # all is the documented way to ask for the plain single-version site.
+          older="$GITHUB_WORKSPACE/docs-archive/versions"
+          if [ -d "$older" ] && [ -n "$(ls -A "$older")" ]; then
+            echo "Archived versions being merged in: $(ls "$older" | tr '\n' ' ')"
+            ./gradlew :library:dokkaGeneratePublicationHtml -Pkiban.previousDocVersions="$older"
+          else
+            echo "No archived versions restored; generating a single-version site."
+            ./gradlew :library:dokkaGeneratePublicationHtml
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
@@ -210,3 +234,67 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  # Adds the version just published to the archive the 'docs' job restores from, so the next release
+  # can put it behind the version dropdown (#162).
+  #
+  # It is a job of its own for one reason: 'contents: write' - what it takes to push a branch - must
+  # not sit on a job that runs the Gradle build, where any dependency's build logic would inherit
+  # it. This job runs no project code; it rearranges files and pushes them.
+  #
+  # It archives the Pages artifact this run just deployed rather than re-generating anything, so
+  # what ends up behind the dropdown is byte for byte what was served as that version.
+  archive-docs:
+    name: Archive published API docs
+    needs: docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the deployed Pages artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: pages-artifact
+
+      - name: Rebuild the docs archive branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          # 'verify-version' has already established that the tag and the project version agree, so
+          # the tag is a safe source for the version the docs were generated as.
+          version="${TAG_NAME#v}"
+
+          mkdir -p site archive/versions
+          tar -xf pages-artifact/artifact.tar -C site
+
+          # Everything served under 'older/' is a version that was already archived; carry those
+          # over unchanged so the branch stays the complete set.
+          if [ -d site/older ]; then
+            for dir in site/older/*/; do
+              [ -d "$dir" ] || continue
+              cp -R "$dir" "archive/versions/$(basename "${dir%/}")"
+            done
+          fi
+
+          # What sits at the root is the version just published. Its own copy of 'older/' is dropped
+          # before archiving: keeping it would nest every past version inside every future one, and
+          # the archive would double in size with every release.
+          rm -rf site/older
+          cp -R site "archive/versions/$version"
+
+          echo "Archive now holds: $(ls archive/versions | tr '\n' ' ')"
+
+          # A fresh repository with a single commit, force-pushed: the branch is a snapshot, not a
+          # history, so it never accumulates the previous releases' copies as dangling git objects.
+          # Nothing reads its history - the 'docs' job only ever checks out its tip.
+          cd archive
+          git init -q -b docs-archive
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -q -m "Archive API docs for $version"
+          git push -q --force \
+            "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" docs-archive
