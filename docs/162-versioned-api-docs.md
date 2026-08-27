@@ -93,5 +93,10 @@ dependency's build logic would inherit it. `archive-docs` runs no project code.
 * **Losing the branch** costs the archive, not the docs: the `docs` job's restore step is
   `continue-on-error`, so a missing branch produces a single-version site and the archive starts
   again from that release.
-* **Nothing here runs outside a release.** Pull request CI does not generate docs, so a change to
-  this wiring is first exercised by the release that follows it.
+* **What pull request CI does and does not cover.** `gradle.yml`'s `dokka` job runs
+  `:library:dokkaGeneratePublicationHtml` on every pull request (generation only, no deploy), so the
+  Gradle side of this — the plugin being applied, the configuration being valid, the generate
+  succeeding — is exercised per PR. It runs without the property, so what it covers is the
+  single-version path. The workflow side (restoring the archive, passing the property, the archive
+  push) only ever runs on a release tag, and is therefore first exercised by the release that
+  follows a change to it.
