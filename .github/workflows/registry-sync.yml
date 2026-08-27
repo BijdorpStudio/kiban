@@ -84,6 +84,12 @@ jobs:
       - name: Check the fetch script's parsing helpers
         run: kotlin scripts/fetch_registry.main.kts --self-check
 
+      # Before the download, not after: if the generator can no longer read the registry format,
+      # this run has nothing to contribute and should say so against a fixture rather than against
+      # whatever the registry happens to be today.
+      - name: Check the generator's parser against the synthetic registry
+        run: kotlin scripts/generate_country_data.main.kts --self-check
+
       # Headed under Xvfb, with no headless attempt first. Headless Chromium is dropped by Swift's
       # edge from a consumer ISP and from GitHub's runner range alike (run 31359092080), which puts
       # the tell in the client fingerprint - navigator.webdriver, the HeadlessChrome UA token, no

@@ -258,6 +258,8 @@ The registry's release number has to be supplied by hand: the download endpoint 
 
 The generator validates every entry before writing (mod-97 checksum, declared length and country prefix, and bank/branch identifier positions cross-checked against the registry's own identifier examples), so a malformed or truncated download fails loudly instead of landing in the library.
 
+The registry TXT cannot be committed, so the generator's parser is covered by a synthetic fixture instead — invented countries in the registry's own format, carrying the quirks it has to survive. `kotlin scripts/generate_country_data.main.kts --self-check` runs the parser, the overlay merge and the validation over [`scripts/testdata/synthetic-registry.txt`](scripts/testdata/) and writes nothing; the sync workflow runs it before every download.
+
 ## References
 
 * [SWIFT IBAN page](https://www.swift.com/standards/data-standards/iban) — official ISO 13616 registry page

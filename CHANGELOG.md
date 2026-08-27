@@ -395,6 +395,20 @@
   first — a second write of already-built files, not a second build. No CycloneDX SBOM: kiban
   depends on nothing but the Kotlin standard library and the POM already says so.
 
+* `scripts/generate_country_data.main.kts` grew a `--self-check` (#161), so the generator's parser is
+  no longer the one piece of the registry pipeline with no offline test. The SWIFT registry TXT is
+  not redistributable, so there is no real fixture to commit and a format-handling regression could
+  only surface during an actual weekly sync — against whatever the registry happened to be that
+  week. Two synthetic fixtures under `scripts/testdata/` stand in: invented countries on ISO 3166
+  user-assigned codes (`XA`–`XH`), carrying the quirks the parser has to survive — identifier ranges
+  and absent identifiers, whitespace inside cells and around them, an example IBAN in print format,
+  a row that stops short of the last country, a cell quoted across two lines, and a registry
+  stripped to the rows the parser cannot do without. The check runs the parser, the overlay merge
+  and the validation, asserts the corruptions validation has to reject, and writes nothing;
+  `registry-sync.yml` runs it before the download, so a broken parser fails the run instead of
+  generating from it. Validation itself changed with it: an entry whose example and identifier
+  positions disagree on a length is now reported as out of range rather than dying in `substring()`.
+
 ## 0.5.0
 
 **Breaking changes**
