@@ -219,8 +219,6 @@ public class Iban private constructor(internal val value: String) : Comparable<I
             if (input.isEmpty()) {
                 return Rejection.Malformed("", Kind.Empty)
             }
-            // Reported one end at a time so the rejection can name the character that caused it.
-            // The first end wins when both are invalid, which is the end a reader looks at first.
             val firstCharacter = input.first()
             if (!firstCharacter.isAsciiLetterOrDigit()) {
                 return Rejection.Malformed(
@@ -271,7 +269,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                     // Modulo97 rejects an input for a character outside the IBAN character set,
                     // which the scan names, or for holding fewer than five non-space characters,
                     // which cannot happen here: the length was already matched against the
-                    // country's registered length. The elvis is what keeps this total.
+                    // country's registered length.
                     return Rejection.Malformed(
                         value,
                         invalidCharacterIn(value)

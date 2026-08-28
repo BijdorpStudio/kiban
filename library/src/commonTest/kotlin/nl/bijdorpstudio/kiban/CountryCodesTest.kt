@@ -40,18 +40,12 @@ private const val LONGEST_IBAN_LENGTH_ISO_13616 = 34
 /** Some tests for [CountryCodes]. */
 val CountryCodesTest by testSuite {
     test("Known country codes should not be editable") {
-        // Not meant to be an exhaustive test, just a reminder to keep API consistent if
-        // implementation changes. The list is built by `buildList`, which rejects mutation on
-        // every target once built — so, unlike the array view it replaced, this holds outside
-        // the JVM too.
         @Suppress("UNCHECKED_CAST")
         assertFailure { (CountryCodes.knownCountryCodes as MutableList<String>).add("ZZ") }
             .isInstanceOf<UnsupportedOperationException>()
     }
 
     test("Known country codes should not be editable in place") {
-        // A `set` through the cast is what an array view (`Array.asList()`) would have allowed on
-        // the JVM, corrupting the library's own reference data. The defensive copy rules it out.
         @Suppress("UNCHECKED_CAST")
         assertFailure { (CountryCodes.knownCountryCodes as MutableList<String>)[0] = "ZZ" }
             .isInstanceOf<UnsupportedOperationException>()
@@ -86,9 +80,6 @@ val CountryCodesTest by testSuite {
         assertThat(CountryCodes.isKnownCountryCode("NL")).isTrue()
     }
 
-    // indexOf backs every country code lookup in the library, so its contract — the index when
-    // found, the inverted insertion point when not — is pinned here directly, independently of
-    // the public methods that read it.
     test("indexOf finds every known country code at its own position") {
         val codes = CountryCodes.knownCountryCodes
 
@@ -109,8 +100,6 @@ val CountryCodesTest by testSuite {
     }
 
     test("indexOf rejects input that is not a country code") {
-        // Lower case, wrong length and empty input all have to come back negative rather than
-        // matching a prefix or running off the end of the array.
         assertThat(CountryCodes.indexOf("")).isLessThan(0)
         assertThat(CountryCodes.indexOf("nl")).isLessThan(0)
         assertThat(CountryCodes.indexOf("N")).isLessThan(0)
@@ -138,17 +127,11 @@ val CountryCodesTest by testSuite {
     }
 
     test("longest known IBAN length does not exceed the ISO 13616 maximum") {
-        // ISO 13616 caps an IBAN at 34 characters. A registry sync that produced anything longer
-        // would be a parser bug rather than a new country, and the length table is what every
-        // parse decision is made against.
         assertThat(CountryCodes.longestIbanLength)
             .isLessThanOrEqualTo(LONGEST_IBAN_LENGTH_ISO_13616)
     }
 
     test("shortest and longest IBAN lengths agree with the example IBANs") {
-        // Cross-checks the two bounds against real IBANs that parse, independently of
-        // ibanLength(): both read the same length table, so a table that drifted from the
-        // registry examples would go unnoticed by a test phrased in terms of ibanLength() alone.
         val exampleLengths = countryTestData.map { it.plain.length }
 
         assertThat(exampleLengths.min()).isEqualTo(CountryCodes.shortestIbanLength)
@@ -169,10 +152,6 @@ val CountryCodesTest by testSuite {
             )
     }
 
-    // The midnight-UTC encoding of lastUpdateDate is a frozen part of the public contract (#144):
-    // a registry release is dated to the day, and with no LocalDate in the standard library the
-    // date is carried as the instant at 00:00:00Z. Callers are documented to rely on that, so it
-    // is pinned here rather than left as an implementation detail of the getter.
     test("lastUpdateDate is the registry date at exactly midnight UTC") {
         val lastUpdateDate = CountryCodes.lastUpdateDate
 
@@ -188,9 +167,6 @@ val CountryCodesTest by testSuite {
     }
 
     test("lastUpdateDate is a stable value across reads") {
-        // The property is a getter that re-parses on every call, so equality across two reads is
-        // worth asserting: an Instant is a value, and callers may compare results of separate
-        // reads.
         assertThat(CountryCodes.lastUpdateDate).isEqualTo(CountryCodes.lastUpdateDate)
     }
 
