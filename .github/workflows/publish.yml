@@ -160,7 +160,7 @@ jobs:
       # the ~51 files (17 publications, each with its artifact, sources jar and javadoc jar) that
       # actually end up on a classpath.
       - name: Attest build provenance for the published artifacts
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/attestation-staging/nl/bijdorpstudio/kiban/**/*.jar
