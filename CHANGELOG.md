@@ -223,6 +223,30 @@
 
 **Infrastructure**
 
+* Replaced the standalone `binary-compatibility-validator` plugin with the ABI validation built into
+  the Kotlin Gradle plugin (#182), acting on the investigation in
+  [docs/182-builtin-abi-validation.md](docs/182-builtin-abi-validation.md). `apiCheck` and `apiDump`
+  become `checkKotlinAbi` and `updateKotlinAbi`; the dumps stay where they are, in the same layout
+  and format, so `library/api/library.klib.api` comes out byte-identical and every published Native,
+  JS and Wasm target is covered exactly as before. The standalone plugin is in maintenance mode by
+  its own README, with new work going to the built-in validation instead — nothing was broken, but
+  1.0 freezes the tooling story along with the API, so the choice is better made now than after.
+
+  `library/api/jvm/library.api` loses one line: the `public synthetic` bridge constructor Kotlin
+  emits for `Iban`'s private constructor, which the built-in tool filters and the standalone one
+  listed. It is `ACC_SYNTHETIC`, so no Kotlin or Java source can name it and no consumer can be
+  affected. The two tools disagree on that line rather than rendering it differently, which is why
+  the dump changes in the same commit and why this is a migration rather than an addition.
+
+  Two things came out of the investigation beyond the migration itself. Enabling the built-in
+  validation at all needed `libs.plugins.testballoon` declared in the root `build.gradle.kts` with
+  `apply false`: applied only in `:library`, TestBalloon's transitive Kotlin Gradle plugin 2.2.0 was
+  the sole KGP on that subproject's script classpath and shadowed the pinned 2.4.10, whose DSL the
+  `abiValidation` block needs. And the long-standing claim that a Linux runner infers the Apple
+  targets it cannot build is wrong: compiling an Apple target to a klib needs no Xcode, only linking
+  a framework does, so those targets are compiled here rather than inferred. `CLAUDE.md` is
+  corrected accordingly.
+
 * Migrated the test suite from `kotlin.test` to [TestBalloon](https://github.com/infix-de/testBalloon)
   (#115), acting on the evaluation in `docs/82-testballoon-evaluation.md`. The country table used to be
   folded into an assertk `Table1` and looped inside a handful of `@Test` methods, so all 111 countries

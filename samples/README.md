@@ -69,5 +69,5 @@ publish step names the three consumed targets because the aggregate `publishToMa
 need an Android SDK and every Apple toolchain, and `-Pkiban.signPublications=false` is needed
 because no signing key exists outside `publish.yml`.
 
-Being a separate build, it sits outside the root `ktfmtCheck` and `apiCheck`; its own `check` runs
-`ktfmtCheck` for it.
+Being a separate build, it sits outside the root `ktfmtCheck` and `checkKotlinAbi`; its own `check`
+runs `ktfmtCheck` for it.

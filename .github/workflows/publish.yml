@@ -49,7 +49,8 @@ jobs:
           fi
           echo "Release tag and project version match."
 
-  # Run the full check matrix (tests on every target plus apiCheck) before publishing anything.
+  # Run the full check matrix (tests on every target plus checkKotlinAbi) before publishing
+  # anything.
   test:
     name: Check
     needs: verify-version

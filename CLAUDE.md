@@ -7,8 +7,8 @@ Read this before spending time diagnosing a `./gradlew` failure as a code
 regression.
 
 Network egress is no longer a problem: `./gradlew jvmTest`, the full
-`apiCheck` (both `jvmApiCheck` and `klibApiCheck` — unbuildable Apple targets
-are inferred), `ktfmtCheck`, Kotlin/Native compilation and testing for host
+`checkKotlinAbi` (the JVM and the klib dump both, Apple targets included),
+`ktfmtCheck`, Kotlin/Native compilation and testing for host
 targets (`compileKotlinLinuxX64`, `linuxX64Test`), and `:samples:jvm-cli:run`
 all run out of the box. (Older revisions of this file documented egress
 blocks on `dl.google.com` and `download.jetbrains.com` that broke AGP
@@ -19,11 +19,14 @@ the network.
 
 ## No Apple toolchain in most cloud sandboxes
 
-Targets that need Xcode/macOS — `ios*`, `macos*`, `tvos*`, `watchos*` — can't
-be compiled or tested on a Linux container, and neither can
-`assembleKibanDebugXCFramework` (used by `samples/swift-console`, see #68).
-`apiCheck` is *not* blocked by this: the klib check infers the Apple targets
-from the buildable ones and passes here.
+Apple targets — `ios*`, `macos*`, `tvos*`, `watchos*` — can't be *tested* on a
+Linux container, and `assembleKibanDebugXCFramework` (used by
+`samples/swift-console`, see #68) can't be built there either: linking a
+framework or an executable is what needs Xcode.
+
+Compiling them to a klib does not. `compileKotlinIosArm64` and its siblings run
+here, which is why `checkKotlinAbi` covers every Apple target from a Linux
+container rather than inferring them (#182).
 
 This also blocks anything that requires actually running Swift-facing code
 (e.g. reviewing how the API surfaces through Objective-C interop or Swift
@@ -55,9 +58,9 @@ else.
 
 ## What "verified" should mean when local verification is incomplete
 
-Don't claim untested changes pass. `jvmTest`, the full `apiCheck`,
+Don't claim untested changes pass. `jvmTest`, the full `checkKotlinAbi`,
 `ktfmtCheck` and the Linux-host Kotlin/Native tasks all run here and count
-as real verification. Apple-target compilation/tests, the XCFramework and the
+as real verification. Apple-target *tests*, the XCFramework and the
 Swift sample, and Android-specific tasks don't run here — say explicitly in
 the PR body which commands you ran and which targets were left unverified.
 `.github/workflows/gradle.yml` runs the full target matrix across Linux and

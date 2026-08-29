@@ -3,6 +3,7 @@ import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import java.io.File
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
@@ -69,6 +70,25 @@ tapmoc {
 }
 
 kotlin {
+    // Binary compatibility validation, the tooling the 1.0 guarantee rests on (#150, #179). This is
+    // the Kotlin Gradle plugin's own implementation rather than the standalone
+    // binary-compatibility-validator, which is in maintenance mode with new work going here
+    // instead (#182). Dumps land in 'library/api' in the same layout and format the standalone
+    // plugin used, so the committed reference files carried over.
+    //
+    // Nothing to switch on: calling the block is what enables validation - the 'enabled' property
+    // it took in Kotlin 2.2 is gone, as is the 'klib { enabled }' that turned klib dumping on,
+    // because klib-based targets are now always dumped.
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation {
+        // Keeps a target the publishing host cannot build in the dump instead of dropping it,
+        // which is what makes a check on one host agree with a check on another - the counterpart
+        // of 'kotlin.native.ignoreDisabledTargets' in gradle.properties. Not exercised by a Linux
+        // container or by CI's runners: every klib target here compiles on both, Apple ones
+        // included, since a klib needs no Xcode. It is set for the host that cannot.
+        keepLocallyUnsupportedTargets.set(true)
+    }
+
     // Every public declaration must state its visibility and return type deliberately, so nothing
     // reaches the frozen API surface by omission. Applies to production source sets only; test
     // sources are exempt.

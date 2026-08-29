@@ -19,8 +19,8 @@ updates:
   # Two things to know about the PRs this produces:
   #
   #   * A Kotlin bump can change klib ABI rendering, so such a PR may fail
-  #     `apiCheck` until someone runs `./gradlew apiDump` on the branch.
-  #     Dependabot cannot finish those on its own.
+  #     `checkKotlinAbi` until someone runs `./gradlew updateKotlinAbi` on
+  #     the branch. Dependabot cannot finish those on its own.
   #   * AGP (`com.android.kotlin.multiplatform.library`) is published only to
   #     Google's Maven repository — it is not on Maven Central, and the
   #     Gradle Plugin Portal just redirects there. So AGP coverage depends
