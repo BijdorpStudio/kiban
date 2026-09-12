@@ -76,6 +76,17 @@ kotlin {
     // instead (#182). Dumps land in 'library/api' in the same layout and format the standalone
     // plugin used, so the committed reference files carried over.
     //
+    // Since Kotlin 2.4.20 the android target gets its own JVM-class dump,
+    // 'library/api/android/library.api', alongside the jvm one; 2.4.10 and the standalone plugin
+    // before it dumped neither (see docs/182-builtin-abi-validation.md). It is byte-identical to
+    // the jvm dump and will stay that way while there is no 'androidMain' source set: both
+    // targets compile commonMain alone, and jvmMain holds only the 'IBAN' typealias, which is
+    // erased and so reaches no dump. The duplication is the tool's, not a choice made here -
+    // suppressing it would drop the android surface from validation instead of deduplicating it.
+    //
+    // The consequence for anyone running this task: 'checkKotlinAbi' now needs an Android SDK,
+    // because dumping that target compiles androidMain. See CLAUDE.md.
+    //
     // Nothing to switch on: calling the block is what enables validation - the 'enabled' property
     // it took in Kotlin 2.2 is gone, as is the 'klib { enabled }' that turned klib dumping on,
     // because klib-based targets are now always dumped.

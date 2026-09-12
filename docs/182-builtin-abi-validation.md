@@ -115,6 +115,18 @@ Android target's ABI was not separately dumped before and is not now. The JVM
 dump is what covers the JVM/Android surface, as
 [VERSIONING.md](../VERSIONING.md) already says.
 
+> **Superseded by Kotlin 2.4.20.** That version does add `api/android/`: the
+> android target now gets its own JVM-class dump,
+> `library/api/android/library.api`, and `checkKotlinAbi` fails with
+> *"Expected file with ABI declarations 'library/api/android/library.api' does
+> not exist"* until it is committed. Kotlin 2.4.20 is what changed — AGP 9.4.0,
+> bumped in the same commit, produces the 2.4.10 behaviour unchanged. The file
+> is byte-identical to `api/jvm/library.api` and stays so while there is no
+> `androidMain` source set; the paragraph above still describes the surface
+> accurately, just no longer the number of files it is written to. The practical
+> cost is that `checkKotlinAbi` now needs an Android SDK, because dumping that
+> target compiles `androidMain` — see [CLAUDE.md](../CLAUDE.md).
+
 ## 4. `keepLocallyUnsupportedTargets` is set, and was not exercised
 
 This is the one item that could not be tested, and the reason is more
