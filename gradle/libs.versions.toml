@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.0"
+agp = "9.3.2"
 # @keep this version because it is not used in a dependency declaration
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
@@ -26,11 +26,13 @@ kotlin-version = "2.4.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
-# Test-only. 1.1.0-RC is the first unified release: one artifact set auto-adapting to the Kotlin
-# compiler in use (2.2.0+), instead of 1.0.x's per-Kotlin-version variants, which would have made
-# every Kotlin bump a coupled TestBalloon bump. Move to 1.1.0 once it ships; it is binary
-# compatible, so the bump is this line alone. See docs/82-testballoon-evaluation.md.
-testballoon = "1.2.0-Beta1"
+# Test-only. The 1.1.0 line is the first unified release: one artifact set auto-adapting to the
+# Kotlin compiler in use (2.2.0+), instead of 1.0.x's per-Kotlin-version variants, which would have
+# made every Kotlin bump a coupled TestBalloon bump. See docs/82-testballoon-evaluation.md. Keep
+# this on a stable release: the verification suite this gates is what gates publish.yml, so a
+# release candidate or beta here (1.1.0-RC was one until 1.1.0 shipped, see #153) puts a prerelease
+# in front of every publish.
+testballoon = "1.1.0"
 versions-catalogue-update-plugin = "1.1.1"
 
 [libraries]
