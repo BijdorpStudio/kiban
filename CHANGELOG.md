@@ -444,6 +444,12 @@
   runs Gradle, so `contents: write` never sits on a job running project build logic. See
   [docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
 
+* TestBalloon moved from `1.1.0-RC` to the released `1.1.0` (#153). The whole verification suite —
+  the thing that gates `publish.yml` — was running on a release candidate, which is not what a 1.0
+  should freeze its tooling story on. 1.1.0 is binary compatible with the candidate and still brings
+  the same transitive Kotlin Gradle plugin 2.2.0, so the root `apply false` declaration that #182
+  needed keeps doing its job and no test, dump or build file changes with it.
+
 ## 0.5.0
 
 **Breaking changes**
