@@ -119,8 +119,10 @@ dump is what covers the JVM/Android surface, as
 > android target now gets its own JVM-class dump,
 > `library/api/android/library.api`, and `checkKotlinAbi` fails with
 > *"Expected file with ABI declarations 'library/api/android/library.api' does
-> not exist"* until it is committed. Kotlin 2.4.20 is what changed — AGP 9.4.0,
-> bumped in the same commit, produces the 2.4.10 behaviour unchanged. The file
+> not exist"* until it is committed. Kotlin 2.4.20 alone is what changed: AGP
+> 9.4.0 and 9.4.1, each bumped alongside it by a dependabot group PR, both
+> produce the 2.4.10 behaviour unchanged, which is why the bump here is the
+> Kotlin line and nothing else. The file
 > is byte-identical to `api/jvm/library.api` and stays so while there is no
 > `androidMain` source set; the paragraph above still describes the surface
 > accurately, just no longer the number of files it is written to. The practical
