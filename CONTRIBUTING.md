@@ -33,14 +33,16 @@ cannot build, so a green local run plus a green CI run is the complete picture.
 ./gradlew jvmTest checkKotlinAbi ktfmtCheck
 ```
 
-These three run everywhere, including on Linux and Windows without an Android SDK, and they catch
-most of what CI would reject:
+These three run on Linux and Windows as well as macOS, and they catch most of what CI would reject:
 
 * **`jvmTest`** runs the common test suite on the JVM. The same sources run on every other target in
   CI, so a failure here is a failure everywhere.
 * **`checkKotlinAbi`** compares the public API against the dumps committed under `library/api/`
-  (`jvm/library.api` and `library.klib.api`). A klib needs no Xcode, so the Apple targets are dumped
-  from a Linux host like any other — you do not need a Mac to check the API.
+  (`jvm/library.api`, `android/library.api` and `library.klib.api`). A klib needs no Xcode, so the
+  Apple targets are dumped from a Linux host like any other — you do not need a Mac to check the
+  API. You do need an Android SDK, as of Kotlin 2.4.20: dumping the android target compiles
+  `androidMain`, so without one the task fails on "SDK location not found" rather than on anything
+  about the API.
 * **`ktfmtCheck`** enforces formatting. `./gradlew ktfmtFormat` applies it; run that rather than
   hand-fixing the report.
 

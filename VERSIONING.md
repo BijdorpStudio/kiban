@@ -35,7 +35,11 @@ Two consequences worth stating outright, because they are the cases that usually
 The public API is what the ABI validation built into the Kotlin Gradle plugin dumps, and nothing
 else:
 
-* `library/api/jvm/library.api` — the JVM/Android ABI.
+* `library/api/jvm/library.api` — the JVM ABI.
+* `library/api/android/library.api` — the Android ABI. Byte-identical to the JVM dump, and stays so
+  while there is no `androidMain` source set: both targets compile `commonMain` alone. Kotlin dumps
+  the two targets separately as of 2.4.20, so the duplication is the tool's rather than a second
+  surface to keep in step by hand — `updateKotlinAbi` writes both.
 * `library/api/library.klib.api` — the klib ABI, covering every Kotlin/Native, JS and Wasm target.
 
 The library is built with `explicitApi()` (`library/build.gradle.kts`), so every public declaration
