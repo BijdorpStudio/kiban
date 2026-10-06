@@ -9,7 +9,7 @@ dokka = "2.2.0"
 # @keep this is library java compatibility version
 java-version = "17"
 junit = "4.13.2"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 # @keep this is library kotlin compatibility version
 # This is the minimum Kotlin version a consumer needs, not merely what the library is built with.
 # Raising it is a breaking change for consumers who cannot follow, so after 1.0 it only moves in a
