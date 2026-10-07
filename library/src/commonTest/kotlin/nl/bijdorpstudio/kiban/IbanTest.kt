@@ -556,25 +556,26 @@ val IbanTest by testSuite {
     }
 
     test("Shortest possible IBAN length should be the five characters ISO 13616 allows") {
+        // The constant is internal (#205) — the parser's lower bound, not a number a consumer can
+        // act on. It is still pinned here, because the two boundary tests below spell the same
+        // threshold as literals and would silently stop testing the boundary if it moved.
         assertThat(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH).isEqualTo(5)
     }
 
-    test(
-        "Input one character below SHORTEST_POSSIBLE_IBAN_LENGTH should be rejected as too short"
-    ) {
+    test("Input one character below the five-character minimum should be rejected as too short") {
         val tooShort = "NL03"
 
-        assertThat(tooShort.length).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH - 1)
+        assertThat(tooShort.length).isEqualTo(4)
         assertFailure { Iban(tooShort) }
             .isInstanceOf<IbanParseException.Malformed>()
             .prop(IbanParseException.Malformed::kind)
             .isEqualTo(IbanParseException.Malformed.Kind.TooShort)
     }
 
-    test("Input at SHORTEST_POSSIBLE_IBAN_LENGTH should get past the length check") {
+    test("Input at the five-character minimum should get past the length check") {
         val atMinimum = "XX00A"
 
-        assertThat(atMinimum.length).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH)
+        assertThat(atMinimum.length).isEqualTo(5)
         assertFailure { Iban(atMinimum) }.isInstanceOf<IbanParseException.UnknownCountryCode>()
     }
 

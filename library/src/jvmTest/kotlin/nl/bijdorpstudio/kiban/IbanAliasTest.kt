@@ -45,7 +45,6 @@ val IbanAliasTest by testSuite {
         assertThat(IBAN.parse(VALID_IBAN)).isEqualTo(Iban(VALID_IBAN))
         assertThat(IBAN.compose(countryCode = "NL", bban = VALID_IBAN.substring(4)))
             .isEqualTo(Iban(VALID_IBAN))
-        assertThat(IBAN.SHORTEST_POSSIBLE_IBAN_LENGTH).isEqualTo(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH)
     }
 
     test("IBAN and Iban should be interchangeable as declared types") {
