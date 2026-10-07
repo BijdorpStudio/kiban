@@ -170,7 +170,16 @@ val CountryCodesTest by testSuite {
         assertThat(CountryCodes.lastUpdateDate).isEqualTo(CountryCodes.lastUpdateDate)
     }
 
-    test("lastUpdateRevision should not be null") {
-        assertThat(CountryCodes.lastUpdateRevision).isNotNull()
+    test("LAST_UPDATE_REVISION should not be null") {
+        assertThat(CountryCodes.LAST_UPDATE_REVISION).isNotNull()
+    }
+
+    test("isSepaCountry reports SEPA participation for known country codes") {
+        assertThat(CountryCodes.isSepaCountry("NL")).isTrue()
+        assertThat(CountryCodes.isSepaCountry("BI")).isFalse()
+    }
+
+    test("isSepaCountry is false for an unknown country code") {
+        assertThat(CountryCodes.isSepaCountry("ZZ")).isFalse()
     }
 }

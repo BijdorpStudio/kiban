@@ -66,8 +66,8 @@ fun main() {
     println("compose: ${composed.plain}")
 
     // You can query whether an IBAN is of a SEPA-participating country
-    val isSepa = Iban(candidate).isSEPA // true
-    println("isSEPA: $isSepa")
+    val isSepa = Iban(candidate).isSepa // true
+    println("isSepa: $isSepa")
 
     // You can query whether an IBAN is in the SWIFT Registry
     val isRegistered = Iban(candidate).isInSwiftRegistry // true

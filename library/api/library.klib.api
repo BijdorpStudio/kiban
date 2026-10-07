@@ -19,8 +19,8 @@ final class nl.bijdorpstudio.kiban/Iban : kotlin/Comparable<nl.bijdorpstudio.kib
         final fun <get-countryCode>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.countryCode.<get-countryCode>|<get-countryCode>(){}[0]
     final val isInSwiftRegistry // nl.bijdorpstudio.kiban/Iban.isInSwiftRegistry|{}isInSwiftRegistry[0]
         final fun <get-isInSwiftRegistry>(): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.isInSwiftRegistry.<get-isInSwiftRegistry>|<get-isInSwiftRegistry>(){}[0]
-    final val isSEPA // nl.bijdorpstudio.kiban/Iban.isSEPA|{}isSEPA[0]
-        final fun <get-isSEPA>(): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.isSEPA.<get-isSEPA>|<get-isSEPA>(){}[0]
+    final val isSepa // nl.bijdorpstudio.kiban/Iban.isSepa|{}isSepa[0]
+        final fun <get-isSepa>(): kotlin/Boolean // nl.bijdorpstudio.kiban/Iban.isSepa.<get-isSepa>|<get-isSepa>(){}[0]
     final val plain // nl.bijdorpstudio.kiban/Iban.plain|{}plain[0]
         final fun <get-plain>(): kotlin/String // nl.bijdorpstudio.kiban/Iban.plain.<get-plain>|<get-plain>(){}[0]
     final val pretty // nl.bijdorpstudio.kiban/Iban.pretty|{}pretty[0]
@@ -123,8 +123,8 @@ sealed class nl.bijdorpstudio.kiban/IbanParseException : kotlin/IllegalArgumentE
 }
 
 final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/CountryCodes|null[0]
-    final const val lastUpdateRevision // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision|{}lastUpdateRevision[0]
-        final fun <get-lastUpdateRevision>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.lastUpdateRevision.<get-lastUpdateRevision>|<get-lastUpdateRevision>(){}[0]
+    final const val LAST_UPDATE_REVISION // nl.bijdorpstudio.kiban/CountryCodes.LAST_UPDATE_REVISION|{}LAST_UPDATE_REVISION[0]
+        final fun <get-LAST_UPDATE_REVISION>(): kotlin/String // nl.bijdorpstudio.kiban/CountryCodes.LAST_UPDATE_REVISION.<get-LAST_UPDATE_REVISION>|<get-LAST_UPDATE_REVISION>(){}[0]
 
     final val knownCountryCodes // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes|{}knownCountryCodes[0]
         final fun <get-knownCountryCodes>(): kotlin.collections/List<kotlin/String> // nl.bijdorpstudio.kiban/CountryCodes.knownCountryCodes.<get-knownCountryCodes>|<get-knownCountryCodes>(){}[0]
@@ -138,7 +138,7 @@ final object nl.bijdorpstudio.kiban/CountryCodes { // nl.bijdorpstudio.kiban/Cou
     final fun ibanLength(kotlin/CharSequence): kotlin/Int? // nl.bijdorpstudio.kiban/CountryCodes.ibanLength|ibanLength(kotlin.CharSequence){}[0]
     final fun isInSwiftRegistry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isInSwiftRegistry|isInSwiftRegistry(kotlin.CharSequence){}[0]
     final fun isKnownCountryCode(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isKnownCountryCode|isKnownCountryCode(kotlin.CharSequence){}[0]
-    final fun isSEPACountry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isSEPACountry|isSEPACountry(kotlin.CharSequence){}[0]
+    final fun isSepaCountry(kotlin/CharSequence): kotlin/Boolean // nl.bijdorpstudio.kiban/CountryCodes.isSepaCountry|isSepaCountry(kotlin.CharSequence){}[0]
 }
 
 final object nl.bijdorpstudio.kiban/Modulo97 { // nl.bijdorpstudio.kiban/Modulo97|null[0]

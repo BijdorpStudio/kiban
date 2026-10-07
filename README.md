@@ -154,7 +154,7 @@ before parsing if your input layer can produce them.
     Iban.compose( "BI", "10000100010000332045181" ) // BI4210000100010000332045181
 
     // You can query whether an IBAN is of a SEPA-participating country
-    val isSepa = Iban( candidate ).isSEPA // true
+    val isSepa = Iban( candidate ).isSepa // true
 
     // You can query whether an IBAN is in the SWIFT Registry
     val isRegistered = Iban( candidate ).isInSwiftRegistry // true

@@ -139,7 +139,7 @@ public object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return true if SEPA, false if not.
      */
-    public fun isSEPACountry(countryCode: CharSequence): Boolean {
+    public fun isSepaCountry(countryCode: CharSequence): Boolean {
         val index = indexOf(countryCode.toString())
         return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
     }
@@ -199,5 +199,5 @@ public object CountryCodes {
      *
      * @return revision information of the SWIFT IBAN Registry.
      */
-    public const val lastUpdateRevision: String = LAST_UPDATE_REV
+    public const val LAST_UPDATE_REVISION: String = LAST_UPDATE_REV
 }
