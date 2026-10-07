@@ -44,6 +44,20 @@
   invalid-character rejection names its index ("Invalid character '_' at index 6 in ..."). Messages
   are diagnostics, not contract, but tests that assert on them will need updating.
 
+* The `IbanParseException.Malformed.Kind` subtypes that carry data — `InvalidBoundaryCharacter`,
+  `InvalidCharacter` and `InvalidStructure` — are plain classes with internal constructors instead
+  of `data class`es (#203). Their `copy`, `copy$default` and `componentN` members are gone from the
+  API dumps, and a consumer can no longer construct a kind the parser never produced. That makes the
+  "constructed by kiban only" promise in `IbanParseException`'s KDoc true for the whole hierarchy,
+  and keeps three synthesized members per subtype out of the surface frozen at 1.0, where
+  destructuring an error kind has no use case to pay for them.
+
+  What callers actually do with a kind is unaffected: the `character`, `index`, `atStart` and
+  `reason` properties are unchanged, `equals`, `hashCode` and `toString` are written out by hand to
+  the same behaviour (`InvalidCharacter(character=_, index=6)`), and a `when` over `Malformed.kind`
+  stays exhaustive without an `else`. Only code that built or copied a kind itself — which the KDoc
+  already said was not for consumers to do — has to stop.
+
 * IBAN validation is now ASCII-only (#136). `Iban.validate` used `Char.isDigit()` and
   `Char.isLetterOrDigit()`, and `Modulo97.checksum` used `Char.isDigit()` — all Unicode-aware on
   every platform, as is `String.toLong`, which the checksum folds its buffer through. The effect was

@@ -54,6 +54,10 @@ public sealed class IbanParseException(
          * character, or the reason behind them, carry it as typed data, so a caller can react to a
          * rejection instead of parsing [message] for it. A `when` over this type is still
          * exhaustive without an `else`, as it was over the enum.
+         *
+         * Like the exceptions that carry them, kinds are constructed by kiban only: the subtypes
+         * that carry data have internal constructors, and no `copy` or destructuring, so a caller
+         * cannot build a kind the parser never produced.
          */
         public sealed class Kind {
             /** The input is empty. */
@@ -80,10 +84,22 @@ public sealed class IbanParseException(
              * @property atStart `true` when [character] is the first character of the input,
              *   `false` when it is the last. When both ends are invalid, the first is reported.
              */
-            public data class InvalidBoundaryCharacter(
+            public class InvalidBoundaryCharacter
+            internal constructor(
                 public val character: Char,
                 public val atStart: Boolean,
-            ) : Kind()
+            ) : Kind() {
+                override fun equals(other: Any?): Boolean =
+                    this === other ||
+                        (other is InvalidBoundaryCharacter &&
+                            character == other.character &&
+                            atStart == other.atStart)
+
+                override fun hashCode(): Int = 31 * character.hashCode() + atStart.hashCode()
+
+                override fun toString(): String =
+                    "InvalidBoundaryCharacter(character=$character, atStart=$atStart)"
+            }
 
             /**
              * The input contains a character outside the ASCII range `[A-Za-z0-9 ]`.
@@ -92,10 +108,22 @@ public sealed class IbanParseException(
              * @property index where it sits in [IbanParseException.input], which has the grouping
              *   spaces removed. When more than one character is invalid, the first is reported.
              */
-            public data class InvalidCharacter(
+            public class InvalidCharacter
+            internal constructor(
                 public val character: Char,
                 public val index: Int,
-            ) : Kind()
+            ) : Kind() {
+                override fun equals(other: Any?): Boolean =
+                    this === other ||
+                        (other is InvalidCharacter &&
+                            character == other.character &&
+                            index == other.index)
+
+                override fun hashCode(): Int = 31 * character.hashCode() + index
+
+                override fun toString(): String =
+                    "InvalidCharacter(character=$character, index=$index)"
+            }
 
             /**
              * The parts handed to [Iban.compose] cannot be assembled into an IBAN, because they are
@@ -104,7 +132,14 @@ public sealed class IbanParseException(
              *
              * @property reason what made the parts unusable.
              */
-            public data class InvalidStructure(public val reason: String) : Kind()
+            public class InvalidStructure internal constructor(public val reason: String) : Kind() {
+                override fun equals(other: Any?): Boolean =
+                    this === other || (other is InvalidStructure && reason == other.reason)
+
+                override fun hashCode(): Int = reason.hashCode()
+
+                override fun toString(): String = "InvalidStructure(reason=$reason)"
+            }
         }
     }
 

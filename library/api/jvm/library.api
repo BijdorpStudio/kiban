@@ -64,11 +64,6 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$Empt
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
-	public fun <init> (CZ)V
-	public final fun component1 ()C
-	public final fun component2 ()Z
-	public final fun copy (CZ)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;
-	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;CZILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidBoundaryCharacter;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAtStart ()Z
 	public final fun getCharacter ()C
@@ -77,11 +72,6 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$Inva
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
-	public fun <init> (CI)V
-	public final fun component1 ()C
-	public final fun component2 ()I
-	public final fun copy (CI)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;
-	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;CIILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidCharacter;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCharacter ()C
 	public final fun getIndex ()I
@@ -90,10 +80,6 @@ public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$Inva
 }
 
 public final class nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure : nl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;
-	public static synthetic fun copy$default (Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;Ljava/lang/String;ILjava/lang/Object;)Lnl/bijdorpstudio/kiban/IbanParseException$Malformed$Kind$InvalidStructure;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getReason ()Ljava/lang/String;
 	public fun hashCode ()I
