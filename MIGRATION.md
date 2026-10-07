@@ -107,7 +107,8 @@ try {
 | `IBAN.toPlain(input)` | no replacement — parse with `Iban(input)`, then use `iban.plain` |
 | `iban.countryCode` | `iban.countryCode` |
 | `iban.checkDigits` | `iban.checkDigits` |
-| `iban.isSEPA` / `iban.isInSwiftRegistry` | unchanged |
+| `iban.isSEPA` | `iban.isSepa` |
+| `iban.isInSwiftRegistry` | unchanged |
 
 ## Bank and branch identifiers
 
@@ -127,17 +128,23 @@ ground, and `?:` replaces `orElse`.
 | --- | --- |
 | `CountryCodes.getLengthForCountryCode(cc)` → `-1` when unknown | `CountryCodes.ibanLength(cc)` → `Int?`, `null` when unknown |
 | `CountryCodes.LAST_UPDATE_DATE` / `lastUpdateDateString` | `CountryCodes.lastUpdateDate` → `kotlin.time.Instant` |
-| `CountryCodes.LAST_UPDATE_REV` | `CountryCodes.lastUpdateRevision` |
+| `CountryCodes.LAST_UPDATE_REV` | `CountryCodes.LAST_UPDATE_REVISION` |
 | `CountryCodes.SHORTEST_IBAN_LENGTH` *(kiban 0.5.0)* | `CountryCodes.shortestIbanLength` |
 | `CountryCodes.LONGEST_IBAN_LENGTH` *(kiban 0.5.0)* | `CountryCodes.longestIbanLength` |
 | `CountryCodes.getLength(cc)` *(kiban 0.5.0)* | `CountryCodes.ibanLength(cc)` |
+| `CountryCodes.isKnownCountryCode(cc)` | unchanged |
+| `CountryCodes.isSEPACountry(cc)` | `CountryCodes.isSepaCountry(cc)` |
 
 The three names marked *(kiban 0.5.0)* were renamed in 0.6.0, together with
 `Iban.SHORTEST_POSSIBLE_IBAN`, which is now `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH`. All four named a
 length without saying so, and the two `CountryCodes` lengths additionally surfaced on the JVM as
 `getSHORTEST_IBAN_LENGTH()` / `getLONGEST_IBAN_LENGTH()`.
-| `CountryCodes.isKnownCountryCode(cc)` | unchanged |
-| `CountryCodes.isSEPACountry(cc)` | unchanged |
+
+The SEPA accessors and `LAST_UPDATE_REVISION` were renamed in 0.6.0 as well. `isSEPA` /
+`isSEPACountry` came over from java-iban verbatim and spelled a four-letter acronym in full, which
+Kotlin's conventions reserve for two-letter ones; `lastUpdateRevision` was a `const val` in
+lowerCamel. Code written against kiban 0.5.0 or earlier needs the same mechanical fix as code
+coming from java-iban.
 
 ## Composition
 

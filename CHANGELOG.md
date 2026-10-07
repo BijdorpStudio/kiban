@@ -102,9 +102,19 @@
   non-`const` `val`s next to a lowerCamel `const val lastUpdateRevision` — which surfaced on the JVM
   as `getSHORTEST_IBAN_LENGTH()` / `getLONGEST_IBAN_LENGTH()`; lowerCamel makes them
   `getShortestIbanLength()` / `getLongestIbanLength()` and matches every other member of the object
-  (`lastUpdateDate`, `lastUpdateRevision`, `knownCountryCodes`). `Iban`'s constant stays
-  SCREAMING_SNAKE, which is the convention for a `const val`. Renaming after 1.0 would be breaking,
-  so it happens now; every break is a compile error with a mechanical fix.
+  (`lastUpdateDate`, `knownCountryCodes`). `Iban`'s constant stays SCREAMING_SNAKE, which is the
+  convention for a `const val`. Renaming after 1.0 would be breaking, so it happens now; every
+  break is a compile error with a mechanical fix.
+
+* The last two names that disagreed with Kotlin's conventions were settled before the API freeze
+  (#204). `Iban.isSEPA` is now `Iban.isSepa` and `CountryCodes.isSEPACountry(cc)` is now
+  `CountryCodes.isSepaCountry(cc)`: Kotlin capitalizes an acronym in full only when it is two
+  letters long, which is why `isInSwiftRegistry` was already spelled that way — the SEPA pair came
+  over from java-iban verbatim and kept java-iban's casing. `CountryCodes.lastUpdateRevision` is
+  now `CountryCodes.LAST_UPDATE_REVISION`, the casing the same convention gives a `const val` and
+  the one `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH` already used; `lastUpdateDate` keeps lowerCamel
+  because it is a `val` with a getter, not a constant. Both breaks are compile errors with a
+  mechanical fix.
 
 **Fixes**
 

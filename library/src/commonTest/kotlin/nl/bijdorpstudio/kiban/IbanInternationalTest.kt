@@ -67,7 +67,7 @@ val IbanInternationalTest by testSuite {
 
     for (testData in countriesTestData) {
         test("Check is SEPA country for ${testData.name}") {
-            assertThat(Iban(testData.plain).isSEPA).isEqualTo(testData.sepa)
+            assertThat(Iban(testData.plain).isSepa).isEqualTo(testData.sepa)
         }
     }
 

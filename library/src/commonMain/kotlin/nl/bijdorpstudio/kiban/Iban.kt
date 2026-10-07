@@ -29,7 +29,7 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  * throw an [IbanParseException] on failure. Construction itself never fails.
  *
  * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
- * @property isSEPA whether or not this IBAN is of a SEPA participating country.
+ * @property isSepa whether or not this IBAN is of a SEPA participating country.
  * @property plain the IBAN value, without any spaces.
  * @property pretty the IBAN value, with spaces every four characters.
  * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia:
@@ -48,7 +48,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      *
      * @return true this IBAN is of a SEPA participating country, false otherwise.
      */
-    public val isSEPA: Boolean
+    public val isSepa: Boolean
 
     /**
      * Pretty-printed value, lazily initialized.
@@ -67,7 +67,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
     init {
         val countryCode: String = value.substring(0, 2)
         this.isInSwiftRegistry = CountryCodes.isInSwiftRegistry(countryCode)
-        this.isSEPA = CountryCodes.isSEPACountry(countryCode)
+        this.isSepa = CountryCodes.isSepaCountry(countryCode)
     }
 
     public val countryCode: String

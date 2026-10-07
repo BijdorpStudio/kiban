@@ -1,6 +1,6 @@
 public final class nl/bijdorpstudio/kiban/CountryCodes {
 	public static final field INSTANCE Lnl/bijdorpstudio/kiban/CountryCodes;
-	public static final field lastUpdateRevision Ljava/lang/String;
+	public static final field LAST_UPDATE_REVISION Ljava/lang/String;
 	public final fun getKnownCountryCodes ()Ljava/util/List;
 	public final fun getLastUpdateDate ()Lkotlin/time/Instant;
 	public final fun getLongestIbanLength ()I
@@ -8,7 +8,7 @@ public final class nl/bijdorpstudio/kiban/CountryCodes {
 	public final fun ibanLength (Ljava/lang/CharSequence;)Ljava/lang/Integer;
 	public final fun isInSwiftRegistry (Ljava/lang/CharSequence;)Z
 	public final fun isKnownCountryCode (Ljava/lang/CharSequence;)Z
-	public final fun isSEPACountry (Ljava/lang/CharSequence;)Z
+	public final fun isSepaCountry (Ljava/lang/CharSequence;)Z
 }
 
 public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
@@ -27,7 +27,7 @@ public final class nl/bijdorpstudio/kiban/Iban : java/lang/Comparable {
 	public final fun getPretty ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun isInSwiftRegistry ()Z
-	public final fun isSEPA ()Z
+	public final fun isSepa ()Z
 	public static final fun parse (Ljava/lang/CharSequence;)Lnl/bijdorpstudio/kiban/Iban;
 	public fun toString ()Ljava/lang/String;
 }

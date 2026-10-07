@@ -84,7 +84,7 @@ print("verifyCheckDigits: \(Modulo97.shared.verifyCheckDigits(input: candidate))
 guard let sepaIban = IbanKt.toIbanOrNull(candidate) else {
     fatalError("expected a valid IBAN")
 }
-print("isSEPA: \(sepaIban.isSEPA)")
+print("isSepa: \(sepaIban.isSepa)")
 print("isInSwiftRegistry: \(sepaIban.isInSwiftRegistry)")
 
 print(

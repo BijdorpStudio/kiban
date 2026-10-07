@@ -29,7 +29,7 @@ class ConsumptionTest {
         assertEquals("NL91ABNA0417164300", iban.plain)
         assertEquals("NL91 ABNA 0417 1643 00", iban.pretty)
         assertEquals("ABNA", iban.bankIdentifier)
-        assertTrue(iban.isSEPA)
+        assertTrue(iban.isSepa)
         assertTrue(iban.isInSwiftRegistry)
     }
 
@@ -64,7 +64,7 @@ class ConsumptionTest {
         assertTrue(CountryCodes.isKnownCountryCode("NL"))
         assertTrue(CountryCodes.knownCountryCodes.contains("NL"))
         assertEquals(18, CountryCodes.ibanLength("NL"))
-        assertTrue(CountryCodes.lastUpdateRevision.isNotEmpty())
+        assertTrue(CountryCodes.LAST_UPDATE_REVISION.isNotEmpty())
     }
 
     @Test
