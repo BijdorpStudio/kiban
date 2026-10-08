@@ -83,39 +83,40 @@ public object CountryCodes {
     }
 
     /**
-     * Returns the bank identifier from the given IBAN, if available.
+     * Returns the bank identifier from the given plain IBAN, if available.
      *
-     * @param iban an iban to evaluate. Cannot be null.
+     * Takes the already-resolved reference data index rather than looking the country up again: an
+     * [Iban] resolves its index once during construction and every country-dependent property reads
+     * the same row.
+     *
+     * @param index the index returned by [indexOf] for this IBAN's country code.
+     * @param plain the IBAN value, without any spaces.
      * @return the bank ID for this IBAN, or `null` if unknown.
      */
-    internal fun getBankIdentifier(iban: Iban): String? {
-        val index: Int = indexOf(iban.countryCode)
-        if (index > -1) {
-            val data: Int = BANK_CODE_BRANCH_CODE[index]
-            val bankIdBegin = data and BANK_IDENTIFIER_BEGIN_MASK
-            val bankIdEnd = (data and BANK_IDENTIFIER_END_MASK) ushr BANK_IDENTIFIER_END_SHIFT
-            return if (bankIdBegin != 0) iban.plain.substring(bankIdBegin, bankIdEnd) else null
-        }
-        return null
+    internal fun bankIdentifierAt(index: Int, plain: String): String? {
+        if (index < 0) return null
+        val data: Int = BANK_CODE_BRANCH_CODE[index]
+        val bankIdBegin = data and BANK_IDENTIFIER_BEGIN_MASK
+        val bankIdEnd = (data and BANK_IDENTIFIER_END_MASK) ushr BANK_IDENTIFIER_END_SHIFT
+        return if (bankIdBegin != 0) plain.substring(bankIdBegin, bankIdEnd) else null
     }
 
     /**
-     * Returns the branch identifier from the given IBAN, if available.
+     * Returns the branch identifier from the given plain IBAN, if available.
      *
-     * @param iban an iban to evaluate. Cannot be null.
+     * Takes the already-resolved reference data index, for the reason given on [bankIdentifierAt].
+     *
+     * @param index the index returned by [indexOf] for this IBAN's country code.
+     * @param plain the IBAN value, without any spaces.
      * @return the branch ID for this IBAN, or `null` if unknown.
      */
-    internal fun getBranchIdentifier(iban: Iban): String? {
-        val index: Int = indexOf(iban.countryCode)
-        if (index > -1) {
-            val data: Int = BANK_CODE_BRANCH_CODE[index]
-            val branchIdBegin =
-                (data and BRANCH_IDENTIFIER_BEGIN_MASK) ushr BRANCH_IDENTIFIER_BEGIN_SHIFT
-            val branchIdEnd = (data and BRANCH_IDENTIFIER_END_MASK) ushr BRANCH_IDENTIFIER_END_SHIFT
-            return if (branchIdBegin != 0) iban.plain.substring(branchIdBegin, branchIdEnd)
-            else null
-        }
-        return null
+    internal fun branchIdentifierAt(index: Int, plain: String): String? {
+        if (index < 0) return null
+        val data: Int = BANK_CODE_BRANCH_CODE[index]
+        val branchIdBegin =
+            (data and BRANCH_IDENTIFIER_BEGIN_MASK) ushr BRANCH_IDENTIFIER_BEGIN_SHIFT
+        val branchIdEnd = (data and BRANCH_IDENTIFIER_END_MASK) ushr BRANCH_IDENTIFIER_END_SHIFT
+        return if (branchIdBegin != 0) plain.substring(branchIdBegin, branchIdEnd) else null
     }
 
     /**
@@ -139,10 +140,17 @@ public object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return true if SEPA, false if not.
      */
-    public fun isSepaCountry(countryCode: CharSequence): Boolean {
-        val index = indexOf(countryCode.toString())
-        return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
-    }
+    public fun isSepaCountry(countryCode: CharSequence): Boolean =
+        isSepaCountryAt(indexOf(countryCode.toString()))
+
+    /**
+     * Returns whether the country at the given reference data index is in SEPA.
+     *
+     * @param index the index returned by [indexOf], negative for an unknown country code.
+     * @return true if SEPA, false if not or if the index is negative.
+     */
+    internal fun isSepaCountryAt(index: Int): Boolean =
+        index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SEPA) == SEPA
 
     /**
      * Returns whether the source for this IBAN's format and data is the SWIFT IBAN Registry.
@@ -150,10 +158,19 @@ public object CountryCodes {
      * @param countryCode a non-null, uppercase, two-character country code.
      * @return true if our data is from the SWIFT IBAN Registry, false if not.
      */
-    public fun isInSwiftRegistry(countryCode: CharSequence): Boolean {
-        val index = indexOf(countryCode.toString())
-        return index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
-    }
+    public fun isInSwiftRegistry(countryCode: CharSequence): Boolean =
+        isInSwiftRegistryAt(indexOf(countryCode.toString()))
+
+    /**
+     * Returns whether the country at the given reference data index comes from the SWIFT IBAN
+     * Registry.
+     *
+     * @param index the index returned by [indexOf], negative for an unknown country code.
+     * @return true if our data is from the SWIFT IBAN Registry, false if not or if the index is
+     *   negative.
+     */
+    internal fun isInSwiftRegistryAt(index: Int): Boolean =
+        index > -1 && (COUNTRY_IBAN_LENGTHS[index] and SWIFT) == SWIFT
 
     /**
      * The known country codes, upper case, in alphabetical order.
@@ -189,10 +206,12 @@ public object CountryCodes {
      * from Kotlin 2.3 onwards, which is also this library's minimum supported Kotlin version. See
      * `docs/144-instant-api-stability.md` for the analysis behind freezing it into the API.
      *
+     * Parsed once, when this object initializes: the encoded date is a compile-time constant, so
+     * re-parsing it on every read would buy nothing.
+     *
      * @return the last update date of the reference data in this library.
      */
-    public val lastUpdateDate: Instant
-        get() = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
+    public val lastUpdateDate: Instant = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
     /**
      * Returns the version information of the SWIFT IBAN Registry used on [lastUpdateDate].

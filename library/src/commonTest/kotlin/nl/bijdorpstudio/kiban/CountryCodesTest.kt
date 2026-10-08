@@ -168,6 +168,8 @@ val CountryCodesTest by testSuite {
 
     test("lastUpdateDate is a stable value across reads") {
         assertThat(CountryCodes.lastUpdateDate).isEqualTo(CountryCodes.lastUpdateDate)
+        // Parsed once when the object initializes, not on every read.
+        assertThat(CountryCodes.lastUpdateDate).isSameInstanceAs(CountryCodes.lastUpdateDate)
     }
 
     test("LAST_UPDATE_REVISION should not be null") {

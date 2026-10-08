@@ -23,9 +23,9 @@ public object Modulo97 {
      *
      * The input is allowed to contain space characters. Any character outside the ASCII range
      * `[A-Za-z0-9 ]` will cause an [IllegalArgumentException] to be thrown; non-ASCII digits such
-     * as fullwidth `９` or Arabic-Indic `٩` are rejected rather than normalized. This method
-     * allocates a temporary buffer of twice the input length, so it will fail for unreasonably
-     * large inputs.
+     * as fullwidth `９` or Arabic-Indic `٩` are rejected rather than normalized. The checksum is
+     * folded one character at a time, so it allocates nothing beyond what the caller passed in and
+     * has no input size beyond which it breaks down.
      *
      * It is expected but not enforced that the characters at index 2 and 3 are numeric. If the
      * existing check digits are `00` then this method will return the value that, after subtracting
@@ -46,18 +46,11 @@ public object Modulo97 {
                 "The input must be non-null and contain at least five non-space characters: $input"
             )
         }
-        val buffer = CharArray(input.length * 2)
-        var offset: Int = transform(input, 4, input.length, buffer, 0)
-        offset = transform(input, 0, 4, buffer, offset)
-
         // Using the algorithm from
         // https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN
-        val remainder =
-            buffer.concatToString(0, offset).chunked(9).fold(0L) { acc, chunk ->
-                (acc.toString() + chunk).toLong() % 97
-            }
-
-        return remainder.toInt()
+        // The first four characters move to the end, so they are folded in last.
+        val remainder: Int = fold(input, 4, input.length, 0)
+        return fold(input, 0, 4, remainder)
     }
 
     /**
@@ -107,61 +100,69 @@ public object Modulo97 {
     public fun verifyCheckDigits(input: CharSequence): Boolean = checksum(input) == 1
 
     /**
-     * Copies `src[srcPos...srcLen)` into `dest[destPos)` while applying character to numeric
-     * transformation and skipping over space (ASCII 0x20) characters.
+     * Folds `src[srcPos..<srcLen)` into the running MOD97 remainder, applying the character to
+     * numeric transformation and skipping over space (ASCII 0x20) characters.
      *
-     * @param src the data to begin copying, must contain only ASCII characters `[A-Za-z0-9 ]`.
-     * @param srcPos the index in `src` to begin transforming (inclusive).
-     * @param srcLen the number of characters starting from `srcPos` to transform.
-     * @param dest the buffer to write transformed characters into.
-     * @param destPos the index in `dest` to begin writing.
-     * @return the value of `destPos` incremented by the number of characters that were added, i.e.
-     *   the next unused index in `dest`.
+     * Folding each digit in as `remainder = (remainder * 10 + digit) % 97` is the same arithmetic
+     * as reading the whole transformed string as one number and taking it modulo 97, but it needs
+     * no buffer to hold that string: a letter expands into its two digits in place. The remainder
+     * never leaves `0..<97`, so no intermediate exceeds `97 * 10 + 9` and the whole fold fits in an
+     * [Int].
+     *
+     * @param src the data to fold, must contain only ASCII characters `[A-Za-z0-9 ]`.
+     * @param srcPos the index in `src` to begin folding (inclusive).
+     * @param srcLen the index in `src` to stop folding (exclusive).
+     * @param initial the remainder to fold into, `0` to start a fresh calculation.
+     * @return the remainder after folding in every character of the range.
      * @throws [IllegalArgumentException] if `src` contains an unsupported character.
-     * @throws [IndexOutOfBoundsException] if `dest` does not have enough capacity to store the
-     *   transformed result (keep in mind that a single character from `src` can expand to two
-     *   characters in `dest`).
      */
-    private fun transform(
-        src: CharSequence,
-        srcPos: Int,
-        srcLen: Int,
-        dest: CharArray,
-        destPos: Int,
-    ): Int {
-        var offset = destPos
+    private fun fold(src: CharSequence, srcPos: Int, srcLen: Int, initial: Int): Int {
+        var remainder = initial
         for (i in srcPos..<srcLen) {
             val c = src[i]
-            when {
-                // Deliberately not Char.isDigit(): that is Unicode-aware and would accept
-                // fullwidth or Arabic-Indic digits, which are not part of the ISO 13616
-                // character set. See Iban.validate for the same reasoning.
-                c in '0'..'9' -> {
-                    dest[offset++] = c
-                }
+            remainder =
+                when {
+                    // Deliberately not Char.isDigit(): that is Unicode-aware and would accept
+                    // fullwidth or Arabic-Indic digits, which are not part of the ISO 13616
+                    // character set. See Iban.validate for the same reasoning.
+                    c in '0'..'9' -> (remainder * 10 + (c.code - '0'.code)) % 97
 
-                c in 'A'..'Z' -> {
-                    val tmp = 10 + (c.code - 'A'.code)
-                    dest[offset++] = ('0'.code + tmp / 10).toChar()
-                    dest[offset++] = ('0'.code + tmp % 10).toChar()
-                }
+                    c in 'A'..'Z' -> foldLetter(remainder, 10 + (c.code - 'A'.code))
 
-                c in 'a'..'z' -> {
-                    val tmp = 10 + (c.code - 'a'.code)
-                    dest[offset++] = ('0'.code + tmp / 10).toChar()
-                    dest[offset++] = ('0'.code + tmp % 10).toChar()
-                }
+                    c in 'a'..'z' -> foldLetter(remainder, 10 + (c.code - 'a'.code))
 
-                c != ' ' -> {
-                    throw IllegalArgumentException(
-                        "Invalid character '$c'. in ${src.subSequence(srcPos, srcLen)}"
-                    )
+                    c == ' ' -> remainder
+
+                    else ->
+                        throw IllegalArgumentException(
+                            "Invalid character '$c'. in ${src.subSequence(srcPos, srcLen)}"
+                        )
                 }
-            }
         }
-        return offset
+        return remainder
     }
 
-    private fun atLeastFiveNonSpaceCharacters(input: CharSequence): Boolean =
-        input.filter { it != ' ' }.length >= 5
+    /**
+     * Folds the two decimal digits of a letter's numeric value into the remainder. The value is
+     * always in `10..35`, the range ISO 13616 assigns to `A`-`Z`, so it always contributes exactly
+     * two digits.
+     */
+    private fun foldLetter(remainder: Int, value: Int): Int =
+        ((remainder * 10 + value / 10) % 97 * 10 + value % 10) % 97
+
+    /**
+     * Whether the input holds at least five characters that are not a space (ASCII 0x20).
+     *
+     * Counts rather than filtering into a new string: this runs on every checksum, and the count is
+     * all the caller needs.
+     */
+    private fun atLeastFiveNonSpaceCharacters(input: CharSequence): Boolean {
+        var seen = 0
+        for (i in input.indices) {
+            if (input[i] != ' ' && ++seen == 5) {
+                return true
+            }
+        }
+        return false
+    }
 }
