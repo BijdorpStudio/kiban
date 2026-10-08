@@ -35,7 +35,7 @@ ktfmt { kotlinLangStyle() }
 // The archive is not in this repository - it is the previously published site, restored by the
 // 'docs' job in 'publish.yml' and pointed at with this property. The property is deliberately
 // optional: with no value the DirectoryProperty stays unset and Dokka generates exactly the
-// single-version site it did before, which is what a local ':library:dokkaGeneratePublicationHtml'
+// single-version site it did before, which is what a local ':kiban:dokkaGeneratePublicationHtml'
 // wants and what the very first versioned release has to produce anyway (no archive exists yet).
 // See docs/162-versioned-api-docs.md.
 val previousDocVersionsDir: Provider<Directory> =
@@ -48,7 +48,8 @@ val previousDocVersionsDir: Provider<Directory> =
 dependencies { dokkaPlugin(libs.dokka.versioning.plugin) }
 
 dokka {
-    moduleName.set("kiban")
+    // No moduleName: Dokka defaults it to the Gradle project name, which is the published
+    // artifact name (#208).
     pluginsConfiguration.versioning {
         // The version of the docs being generated, which is the version being released: the tag
         // guard in 'publish.yml' has already checked that these agree.
@@ -73,11 +74,11 @@ kotlin {
     // Binary compatibility validation, the tooling the 1.0 guarantee rests on (#150, #179). This is
     // the Kotlin Gradle plugin's own implementation rather than the standalone
     // binary-compatibility-validator, which is in maintenance mode with new work going here
-    // instead (#182). Dumps land in 'library/api' in the same layout and format the standalone
+    // instead (#182). Dumps land in 'kiban/api' in the same layout and format the standalone
     // plugin used, so the committed reference files carried over.
     //
     // Since Kotlin 2.4.20 the android target gets its own JVM-class dump,
-    // 'library/api/android/library.api', alongside the jvm one; 2.4.10 and the standalone plugin
+    // 'kiban/api/android/kiban.api', alongside the jvm one; 2.4.10 and the standalone plugin
     // before it dumped neither (see docs/182-builtin-abi-validation.md). It is byte-identical to
     // the jvm dump and will stay that way while there is no 'androidMain' source set: both
     // targets compile commonMain alone, and jvmMain holds only the 'IBAN' typealias, which is

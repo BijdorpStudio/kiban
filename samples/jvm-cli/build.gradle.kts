@@ -6,6 +6,6 @@ plugins {
 
 ktfmt { kotlinLangStyle() }
 
-dependencies { implementation(project(":library")) }
+dependencies { implementation(project(":kiban")) }
 
 application { mainClass.set("nl.bijdorpstudio.kiban.samples.jvmcli.MainKt") }

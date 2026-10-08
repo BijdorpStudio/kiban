@@ -59,16 +59,16 @@ jobs:
         run: ./gradlew iosSimulatorArm64Test macosArm64Test tvosSimulatorArm64Test watchosSimulatorArm64Test checkKotlinAbi
 
       - name: Assemble the Kiban XCFramework
-        run: ./gradlew :library:assembleKibanDebugXCFramework
+        run: ./gradlew :kiban:assembleKibanDebugXCFramework
 
       - name: Dump the generated Objective-C header
         run: |
-          find library/build/XCFrameworks -iname "*.h" -print -exec cat {} \;
+          find kiban/build/XCFrameworks -iname "*.h" -print -exec cat {} \;
 
       - name: Build and run samples/swift-console
         run: |
           mkdir -p samples/swift-console/Frameworks
-          cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
+          cp -R kiban/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
           cd samples/swift-console
           swift run SwiftConsole
 
@@ -77,5 +77,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ios-interop-verify-test-reports
-          path: library/build/reports/tests/
+          path: kiban/build/reports/tests/
           retention-days: 7

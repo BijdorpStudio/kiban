@@ -9,9 +9,9 @@ ktfmt { kotlinLangStyle() }
 // 'publish.yml' reads the same literal the same way.
 val kibanVersion: String =
     Regex("""^version = "(.*)"$""", RegexOption.MULTILINE)
-        .find(rootDir.resolve("../../library/build.gradle.kts").readText())
+        .find(rootDir.resolve("../../kiban/build.gradle.kts").readText())
         ?.groupValues
-        ?.get(1) ?: error("Could not read 'version' from library/build.gradle.kts.")
+        ?.get(1) ?: error("Could not read 'version' from kiban/build.gradle.kts.")
 
 kotlin {
     // One target per compilation backend - the axis metadata resolution breaks along. Linux-only

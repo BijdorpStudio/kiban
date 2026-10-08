@@ -49,7 +49,7 @@ that here, but you will not learn about it during a release either.
 
 ## Android tasks need an SDK the sandbox doesn't ship
 
-Android-*specific* tasks (`:library:testAndroidHostTest`,
+Android-*specific* tasks (`:kiban:testAndroidHostTest`,
 `assembleAndroidMain`, lint) fail with "SDK location not found. Define a
 valid SDK location with an ANDROID_HOME environment variable". That's a
 missing Android SDK installation, not a network or code problem. JVM tasks
@@ -57,7 +57,7 @@ are unaffected — the Android target's presence in the build breaks nothing
 else.
 
 `checkKotlinAbi` is *not* unaffected, as of Kotlin 2.4.20: the android target
-now gets its own dump (`library/api/android/library.api`), dumping it compiles
+now gets its own dump (`kiban/api/android/kiban.api`), dumping it compiles
 `androidMain`, and so the task fails on the same missing-SDK message before it
 compiles anything. Earlier Kotlin versions dumped only the jvm and klib
 surfaces, which is why older revisions of this file called the full ABI check

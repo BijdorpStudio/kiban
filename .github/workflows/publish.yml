@@ -34,9 +34,9 @@ jobs:
           # The version is a plain literal in the build script, so it is read directly rather than
           # by booting Gradle: this step exists to fail fast, and resolving the project the slow way
           # would defeat that. The pattern anchors on the top-level 'version = "..."' assignment.
-          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' library/build.gradle.kts)"
+          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' kiban/build.gradle.kts)"
           if [ -z "$project_version" ]; then
-            echo "::error::Could not read the project version from library/build.gradle.kts."
+            echo "::error::Could not read the project version from kiban/build.gradle.kts."
             exit 1
           fi
           # Release tags are 'vX.Y.Z'; the Gradle version is 'X.Y.Z'. Strip a single leading 'v'.
@@ -44,7 +44,7 @@ jobs:
           echo "Release tag:     $TAG_NAME (version $tag_version)"
           echo "Project version: $project_version"
           if [ "$tag_version" != "$project_version" ]; then
-            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in library/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
+            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in kiban/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
             exit 1
           fi
           echo "Release tag and project version match."
@@ -135,7 +135,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
         run: |
-          ./gradlew :library:publishToMavenLocal --no-configuration-cache \
+          ./gradlew :kiban:publishToMavenLocal --no-configuration-cache \
             -Pkotlin.native.ignoreDisabledTargets=false \
             -Dmaven.repo.local="$GITHUB_WORKSPACE/build/attestation-staging"
           # An empty tree here would make the attest step fail with "no subjects found", which
@@ -221,16 +221,16 @@ jobs:
           older="$GITHUB_WORKSPACE/docs-archive/versions"
           if [ -d "$older" ] && [ -n "$(ls -A "$older")" ]; then
             echo "Archived versions being merged in: $(ls "$older" | tr '\n' ' ')"
-            ./gradlew :library:dokkaGeneratePublicationHtml -Pkiban.previousDocVersions="$older"
+            ./gradlew :kiban:dokkaGeneratePublicationHtml -Pkiban.previousDocVersions="$older"
           else
             echo "No archived versions restored; generating a single-version site."
-            ./gradlew :library:dokkaGeneratePublicationHtml
+            ./gradlew :kiban:dokkaGeneratePublicationHtml
           fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: library/build/dokka/html
+          path: kiban/build/dokka/html
 
       - name: Deploy to GitHub Pages
         id: deployment

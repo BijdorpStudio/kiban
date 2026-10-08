@@ -15,7 +15,7 @@ import nl.bijdorpstudio.kiban.toIbanOrNull
 
 /**
  * Shallow and wide on purpose: one call per kind of declaration a consumer reaches for, to check
- * that the published artifact resolves and carries them. `:library` covers the behaviour. A
+ * that the published artifact resolves and carries them. `:kiban` covers the behaviour. A
  * declaration that failed to publish fails here as a compile or link error, before any assertion.
  */
 class ConsumptionTest {

@@ -19,7 +19,7 @@ Two parts of the build need more than that, and neither is expected of a contrib
 
 * **Apple targets** (`ios*`, `macos*`, `tvos*`, `watchos*`, `assembleKibanDebugXCFramework` and
   `samples/swift-console`) need macOS with Xcode. They cannot be built on Linux or Windows at all.
-* **Android-specific tasks** (`:library:testAndroidHostTest`, `assembleAndroidMain`, lint) need an
+* **Android-specific tasks** (`:kiban:testAndroidHostTest`, `assembleAndroidMain`, lint) need an
   Android SDK, i.e. `ANDROID_HOME` pointing at an installation. Without one they fail with
   "SDK location not found", which is a missing SDK rather than anything wrong with the change.
 
@@ -37,8 +37,8 @@ These three run on Linux and Windows as well as macOS, and they catch most of wh
 
 * **`jvmTest`** runs the common test suite on the JVM. The same sources run on every other target in
   CI, so a failure here is a failure everywhere.
-* **`checkKotlinAbi`** compares the public API against the dumps committed under `library/api/`
-  (`jvm/library.api`, `android/library.api` and `library.klib.api`). A klib needs no Xcode, so the
+* **`checkKotlinAbi`** compares the public API against the dumps committed under `kiban/api/`
+  (`jvm/kiban.api`, `android/kiban.api` and `kiban.klib.api`). A klib needs no Xcode, so the
   Apple targets are dumped from a Linux host like any other — you do not need a Mac to check the
   API. You do need an Android SDK, as of Kotlin 2.4.20: dumping the android target compiles
   `androidMain`, so without one the task fails on "SDK location not found" rather than on anything
@@ -64,7 +64,7 @@ compatible — see the `@IntroducedAt` rule in [VERSIONING.md](VERSIONING.md) be
 
 ## Tests
 
-Tests live in `library/src/commonTest` and run on every target. The suite uses
+Tests live in `kiban/src/commonTest` and run on every target. The suite uses
 [TestBalloon](https://github.com/infix-de/testBalloon) with [assertk](https://github.com/willowtreeapps/assertk)
 assertions — a test file declares `val SomethingTest by testSuite { … }` holding `test("…") { … }`
 blocks, rather than annotated methods; follow the shape of the neighbouring files. A table of inputs

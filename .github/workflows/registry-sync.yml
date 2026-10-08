@@ -59,8 +59,8 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
-      DATA_FILE: library/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt
-      TEST_DATA_FILE: library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt
+      DATA_FILE: kiban/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt
+      TEST_DATA_FILE: kiban/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt
       REGISTRY_TXT_PATH: scripts/input/iban-registry.txt
       REV: ${{ inputs.rev }}
     steps:
@@ -114,7 +114,7 @@ jobs:
           previous_rev="$(sed -n 's/.*LAST_UPDATE_REV: String = "\(.*\)"$/\1/p' "$DATA_FILE")"
           kotlin scripts/generate_country_data.main.kts \
             --registry "$REGISTRY_TXT_PATH" --rev "$previous_rev" --date "$previous_date"
-          ./gradlew --quiet :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
+          ./gradlew --quiet :kiban:ktfmtFormatKmpCommonMain :kiban:ktfmtFormatKmpCommonTest
 
       - name: Check whether the generated data changed
         id: diff
@@ -143,7 +143,7 @@ jobs:
         run: |
           kotlin scripts/generate_country_data.main.kts \
             --registry "$REGISTRY_TXT_PATH" --rev "$REGISTRY_REV"
-          ./gradlew --quiet :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
+          ./gradlew --quiet :kiban:ktfmtFormatKmpCommonMain :kiban:ktfmtFormatKmpCommonTest
 
       - name: Verify the regenerated data
         if: steps.diff.outputs.changed == 'true'
