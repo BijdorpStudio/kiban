@@ -54,8 +54,15 @@ kotlin {
 }
 ```
 
-Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser), iOS,
-macOS (Apple silicon only), watchOS, tvOS, `linuxX64`, `linuxArm64`, and `mingwX64`.
+Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js and browser),
+`iosArm64`, `iosSimulatorArm64`, `iosX64`, `macosArm64`, `tvosArm64`, `tvosSimulatorArm64`,
+`watchosArm64`, `watchosDeviceArm64`, `watchosSimulatorArm64`, `linuxX64`, `linuxArm64` and
+`mingwX64`.
+
+The set is whatever the Kotlin/Native toolchain supports, so it is not uniform by architecture: a
+target leaves when JetBrains deprecates it, which is why there is no `macosX64` while the Intel iOS
+simulator target `iosX64` is still published. See
+[docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
 
 The `js` and `wasmJs` artifacts serve **Kotlin/JS and Kotlin/Wasm consumers**, not plain
 JavaScript or TypeScript ones. Nothing in the library is annotated `@JsExport`, so none of its
@@ -74,7 +81,7 @@ it — withdrawing it again would not be.
 | Kotlin | **2.4.0 or newer**, for both the consumer's compiler and its `apiVersion` |
 | Java | bytecode level **17**, so a JDK 17 or newer runtime |
 | Android | `minSdk` **24** |
-| macOS | **Apple silicon only** — the macOS artifact and the macOS slice of the `Kiban` XCFramework have been `macosArm64` since 0.5.0 |
+| macOS | **Apple silicon only** — the macOS artifact and the macOS slice of the `Kiban` XCFramework have been `macosArm64` since 0.5.0, because Kotlin/Native deprecated `macosX64`. An Intel Mac building for the iOS simulator is unaffected: `iosX64` is still published |
 
 These are part of the compatibility contract rather than incidental facts about the current build:
 raising any of them breaks consumers who cannot follow, so it only happens in a major release. The

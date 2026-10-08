@@ -146,7 +146,7 @@ follow, so it happens **only in a major release**.
 | Kotlin (consumer compiler and `apiVersion`) | **2.4.0** or newer |
 | Java bytecode / `-Xjdk-release` | **17** |
 | Android `minSdk` | **24** |
-| macOS target | **`macosArm64` only** — no Intel slice since 0.5.0 |
+| macOS target | **`macosArm64` only** — no Intel slice since 0.5.0, because Kotlin/Native deprecated `macosX64`. The Intel iOS *simulator* target `iosX64` is not deprecated and is still published; see [Targets](#targets). |
 
 The Kotlin and Java floors are pinned by the `tapmoc` plugin from single entries in
 `gradle/libs.versions.toml` (`kotlin-version`, `java-version`), so they cannot drift by accident
@@ -175,6 +175,20 @@ release. **Removing one is a major change**, including where the removal is forc
 `macosX64`, `tvosX64` and `watchosX64` went away in 0.5.0 because JetBrains deprecated them in
 Kotlin 2.3.20, and that was still a break for consumers on Intel Macs. Pre-1.0 it cost a minor;
 after 1.0 the same event costs a major.
+
+Which targets are in the set is decided by the toolchain, not by this project:
+
+> The published target set is whatever the Kotlin/Native toolchain supports. A target enters when
+> it becomes available and leaves when JetBrains deprecates it — it is never added or removed for
+> consistency with a sibling architecture.
+
+So a target JetBrains has deprecated is never added, because its removal is already announced and
+would be charged to a major; and a deprecation landing on a target already published is the notice
+that a major is coming, with the compiler warning on `library/build.gradle.kts` as the signal. This
+is why the Apple set is not uniform by architecture: `macosX64` is deprecated and gone, while the
+Intel iOS simulator target `iosX64` is not deprecated and stays, since dropping it would break
+every iOS build on an Intel Mac to buy nothing but symmetry. See
+[docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
 
 The `js` and `wasmJs` artifacts serve Kotlin/JS and Kotlin/Wasm consumers. Nothing is annotated
 `@JsExport`, so no JavaScript- or TypeScript-facing surface exists and none is frozen by 1.0.
