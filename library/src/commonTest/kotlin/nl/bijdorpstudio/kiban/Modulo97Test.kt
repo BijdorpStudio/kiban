@@ -140,4 +140,80 @@ val Modulo97Test by testSuite {
             )
         assertThat(checkDigits).isEqualTo(50)
     }
+
+    test("Single pass checksum should match the reference implementation for every country") {
+        for (testData in countriesTestData) {
+            assertThat(Modulo97.checksum(testData.plain), "plain ${testData.name}")
+                .isEqualTo(referenceChecksum(testData.plain))
+            assertThat(Modulo97.checksum(testData.pretty), "pretty ${testData.name}")
+                .isEqualTo(referenceChecksum(testData.pretty))
+        }
+    }
+
+    test("Single pass checksum should match the reference implementation for every letter") {
+        for (letter in 'A'..'Z') {
+            for (input in
+                listOf("MO00$letter", "MO00${letter + ASCII_CASE_BIT}", "${letter}O00T")) {
+                assertThat(Modulo97.checksum(input), input).isEqualTo(referenceChecksum(input))
+            }
+        }
+    }
+
+    test("Single pass checksum should match the reference implementation for a huge input") {
+        // The buffer the checksum used to allocate was twice the input length, which put a ceiling
+        // on how large an input it could take. Folding the remainder has none, so an input orders
+        // of magnitude longer than any IBAN is no longer a special case.
+        val input = buildString { repeat(1_000) { append(IBAN_CHARACTER_SET) } }
+        assertThat(Modulo97.checksum(input)).isEqualTo(referenceChecksum(input))
+    }
+}
+
+/** The ISO 13616 IBAN character set, in the order the numeric transformation assigns values. */
+private const val IBAN_CHARACTER_SET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+/** The offset between an upper case ASCII letter and its lower case counterpart. */
+private const val ASCII_CASE_BIT = 0x20
+
+/**
+ * The buffer-and-chunk implementation [Modulo97.checksum] carried before it folded the remainder in
+ * a single pass: it expands the input into a buffer of digits, reads that back as a string and
+ * folds it nine characters at a time through [Long] arithmetic.
+ *
+ * Kept here as an independent oracle. It pins the single-pass arithmetic to the algorithm it
+ * replaced, which is the whole claim of that rewrite — a test computing the expectation the same
+ * way the implementation does would agree with any shared mistake.
+ */
+private fun referenceChecksum(input: CharSequence): Int {
+    val buffer = CharArray(input.length * 2)
+    var offset: Int = referenceTransform(input, 4, input.length, buffer, 0)
+    offset = referenceTransform(input, 0, 4, buffer, offset)
+    return buffer
+        .concatToString(0, offset)
+        .chunked(9)
+        .fold(0L) { acc, chunk -> (acc.toString() + chunk).toLong() % 97 }
+        .toInt()
+}
+
+/** Expands `src[srcPos..<srcLen)` into `dest`, as the previous implementation did. */
+private fun referenceTransform(
+    src: CharSequence,
+    srcPos: Int,
+    srcLen: Int,
+    dest: CharArray,
+    destPos: Int,
+): Int {
+    var offset = destPos
+    for (i in srcPos..<srcLen) {
+        val c = src[i]
+        when {
+            c in '0'..'9' -> dest[offset++] = c
+            c in 'A'..'Z' || c in 'a'..'z' -> {
+                val tmp = 10 + ((c.code or ASCII_CASE_BIT) - 'a'.code)
+                dest[offset++] = ('0'.code + tmp / 10).toChar()
+                dest[offset++] = ('0'.code + tmp % 10).toChar()
+            }
+            c != ' ' -> throw IllegalArgumentException("Invalid character '$c'.")
+        }
+    }
+    return offset
 }

@@ -51,23 +51,35 @@ public class Iban private constructor(internal val value: String) : Comparable<I
     public val isSepa: Boolean
 
     /**
-     * Pretty-printed value, lazily initialized.
+     * Pretty-printed value, computed during construction.
      *
-     * [LazyThreadSafetyMode.PUBLICATION] rather than [LazyThreadSafetyMode.NONE]: an [Iban] is an
-     * immutable value type meant to be shared freely between threads, so its lazy initialization
-     * has to be safe under concurrent access. Racing initializers can each compute the value, but
-     * only one result is published, and every reader sees that same string.
+     * Eager rather than `by lazy`: the [Lazy] instance and the published field behind it cost more
+     * memory than the at most 34-character string they would defer, and an [Iban] is an immutable
+     * value shared freely between threads, so a lazy here would have to be the thread-safe kind and
+     * pay for a volatile read on every [toString] as well.
      */
-    public val pretty: String by lazy(LazyThreadSafetyMode.PUBLICATION) { addSpaces(value) }
+    public val pretty: String
+
+    /**
+     * Index of this IBAN's country in the reference data, or negative when the country is unknown.
+     *
+     * Resolved once here rather than per property read: every country-dependent value on an [Iban]
+     * is a lookup into the same row, and the binary search that finds it is the expensive part.
+     * Construction is only reachable through [validate], which rejects an unknown country code, so
+     * this is negative only for an [Iban] that cannot exist.
+     */
+    private val countryIndex: Int
 
     /**
      * Initializing constructor. Validation happens before construction, so this constructor cannot
      * fail. the IBAN value, without any spaces, already validated by the caller.
      */
     init {
-        val countryCode: String = value.substring(0, 2)
-        this.isInSwiftRegistry = CountryCodes.isInSwiftRegistry(countryCode)
-        this.isSepa = CountryCodes.isSepaCountry(countryCode)
+        val index: Int = CountryCodes.indexOf(value.substring(0, 2))
+        this.countryIndex = index
+        this.isInSwiftRegistry = CountryCodes.isInSwiftRegistryAt(index)
+        this.isSepa = CountryCodes.isSepaCountryAt(index)
+        this.pretty = addSpaces(value)
     }
 
     public val countryCode: String
@@ -103,7 +115,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      * @return the bank ID, or `null` if unknown for this country code.
      */
     public val bankIdentifier: String?
-        get() = CountryCodes.getBankIdentifier(this)
+        get() = CountryCodes.bankIdentifierAt(countryIndex, value)
 
     /**
      * Returns the branch identifier embedded in the IBAN, if available.
@@ -111,7 +123,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      * @return the branch ID, or `null` if unknown for this country code.
      */
     public val branchIdentifier: String?
-        get() = CountryCodes.getBranchIdentifier(this)
+        get() = CountryCodes.branchIdentifierAt(countryIndex, value)
 
     /**
      * Returns the IBAN without formatting.
@@ -357,18 +369,37 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          * space that [addSpaces] emits is grouping, every other whitespace character is a character
          * an IBAN cannot contain and is left in place for [validate] to reject.
          *
+         * A stored IBAN usually holds no space at all, so the scan for one comes first: finding
+         * none means the input is already plain and only has to be materialized as a [String],
+         * which costs nothing at all when it is one.
+         *
          * @param input possibly pretty printed IBAN
          * @return plain IBAN
          */
-        internal fun toPlain(input: CharSequence): String = input.filter { it != ' ' }.toString()
+        internal fun toPlain(input: CharSequence): String =
+            if (input.indexOf(' ') < 0) input.toString() else input.filter { it != ' ' }.toString()
 
         /**
-         * Converts a plain to a pretty printed IBAN
+         * Converts a plain to a pretty printed IBAN.
+         *
+         * Writes straight into a [StringBuilder] sized for the result rather than going through
+         * `chunked(4).joinToString(" ")`, which allocates a list and a string per group of four on
+         * a path every [Iban] construction now runs.
          *
          * @param value plain iban
          * @return pretty printed IBAN
          */
-        internal fun addSpaces(value: CharSequence): String = value.chunked(4).joinToString(" ")
+        internal fun addSpaces(value: CharSequence): String {
+            val length: Int = value.length
+            val builder = StringBuilder(length + (length - 1) / GROUP_SIZE)
+            for (i in 0..<length) {
+                if (i != 0 && i % GROUP_SIZE == 0) {
+                    builder.append(' ')
+                }
+                builder.append(value[i])
+            }
+            return builder.toString()
+        }
     }
 }
 
@@ -427,6 +458,9 @@ public fun String.toIbanOrNull(): Iban? =
  * documented there.
  */
 public fun String.isValidIban(): Boolean = Iban.validate(this) == null
+
+/** The number of characters between the grouping spaces [Iban.addSpaces] emits. */
+private const val GROUP_SIZE = 4
 
 /**
  * Bit 5 of an ASCII letter is its case bit: setting it maps `A`-`Z` onto `a`-`z` and clearing it

@@ -636,6 +636,32 @@ val IbanTest by testSuite {
         }
     }
 
+    test("To plain should hand back a space-free input unchanged") {
+        // The fast path returns the input itself rather than a filtered copy. Identity is the
+        // observable part of that: a String carrying no space is already the plain value.
+        assertThat(Iban.toPlain(VALID_IBAN)).isSameInstanceAs(VALID_IBAN)
+    }
+
+    test("Add spaces should match the chunked reference at every length") {
+        // addSpaces writes into a StringBuilder instead of chunking; both are supposed to group
+        // the value in fours, including when the last group is short or the value is empty.
+        val source = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
+        for (length in 0..source.length) {
+            val value = source.substring(0, length)
+            assertThat(Iban.addSpaces(value), "addSpaces of length $length")
+                .isEqualTo(value.chunked(4).joinToString(" "))
+        }
+    }
+
+    test("Pretty should be one string computed once per instance") {
+        // pretty is computed in the constructor rather than lazily, so every read — toString
+        // included — hands back the same instance instead of recomputing or unwrapping a Lazy.
+        val iban = Iban(VALID_IBAN)
+        assertThat(iban.pretty).isEqualTo("NL03 ABNA 0143 2674 69")
+        assertThat(iban.pretty).isSameInstanceAs(iban.pretty)
+        assertThat(iban.toString()).isSameInstanceAs(iban.pretty)
+    }
+
     test("Lexical sort should order IBANs correctly") {
         val expected =
             listOf(

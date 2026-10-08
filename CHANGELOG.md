@@ -165,6 +165,27 @@
   0.4.0 API: the returning name is not the returning shape — 0.4.0's `Iban.parse` returned
   `Result<Iban>`, this one returns `Iban` and throws.
 
+**Performance**
+
+* The parse and checksum path no longer allocates what it does not need (#206).
+  `Modulo97.checksum` folds the remainder one character at a time —
+  `remainder = (remainder * 10 + digit) % 97`, with a letter expanding into its two digits in
+  place — instead of expanding the input into a `CharArray` of twice its length, reading that back
+  as a `String`, chunking it into a `List<String>` and building a new `String` per chunk to parse
+  with `toLong`. It now allocates nothing beyond what the caller passed in, and no longer has an
+  input size beyond which it breaks down.
+
+  Alongside it: `Iban.toPlain` hands back a space-free input as it is rather than always filtering
+  a copy, `Iban.pretty` is computed once in the constructor instead of through a `by lazy` whose
+  `Lazy` instance outweighs the string it defers, an `Iban` resolves its country's reference data
+  row once rather than binary-searching for it again on every country-dependent property, and
+  `CountryCodes.lastUpdateDate` parses its `Instant` when the object initializes rather than on
+  every read.
+
+  No API, behaviour or message change: `Modulo97Test` pins the folded arithmetic against the
+  buffer-and-chunk implementation it replaces, across every country's example IBAN in both plain
+  and pretty form, and the API dumps are untouched.
+
 **Documentation**
 
 * Added [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) (#157). The README invited
