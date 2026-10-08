@@ -6,8 +6,8 @@ let package = Package(
     platforms: [.macOS(.v12)],
     targets: [
         // Populated by CI/a local run before `swift build`: `./gradlew
-        // :library:assembleKibanDebugXCFramework`, then copy
-        // library/build/XCFrameworks/debug/Kiban.xcframework here. See ../README.md.
+        // :kiban:assembleKibanDebugXCFramework`, then copy
+        // kiban/build/XCFrameworks/debug/Kiban.xcframework here. See ../README.md.
         .binaryTarget(name: "Kiban", path: "Frameworks/Kiban.xcframework"),
         .executableTarget(name: "SwiftConsole", dependencies: ["Kiban"]),
     ]

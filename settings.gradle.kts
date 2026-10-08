@@ -15,6 +15,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "kiban"
 
-include(":library")
+include(":kiban")
 
 include(":samples:jvm-cli")

@@ -1,5 +1,5 @@
 // A build of its own on purpose. Included in the root build - or wired up with 'includeBuild' -
-// dependency substitution would replace the coordinates below with ':library', and the probe would
+// dependency substitution would replace the coordinates below with ':kiban', and the probe would
 // pass without reading a published file.
 pluginManagement {
     repositories {

@@ -35,14 +35,14 @@ Two consequences worth stating outright, because they are the cases that usually
 The public API is what the ABI validation built into the Kotlin Gradle plugin dumps, and nothing
 else:
 
-* `library/api/jvm/library.api` — the JVM ABI.
-* `library/api/android/library.api` — the Android ABI. Byte-identical to the JVM dump, and stays so
+* `kiban/api/jvm/kiban.api` — the JVM ABI.
+* `kiban/api/android/kiban.api` — the Android ABI. Byte-identical to the JVM dump, and stays so
   while there is no `androidMain` source set: both targets compile `commonMain` alone. Kotlin dumps
   the two targets separately as of 2.4.20, so the duplication is the tool's rather than a second
   surface to keep in step by hand — `updateKotlinAbi` writes both.
-* `library/api/library.klib.api` — the klib ABI, covering every Kotlin/Native, JS and Wasm target.
+* `kiban/api/kiban.klib.api` — the klib ABI, covering every Kotlin/Native, JS and Wasm target.
 
-The library is built with `explicitApi()` (`library/build.gradle.kts`), so every public declaration
+The library is built with `explicitApi()` (`kiban/build.gradle.kts`), so every public declaration
 has to state its visibility and return type deliberately; nothing reaches the frozen surface by
 omission. Anything `internal` is not part of the contract even where a platform makes it
 technically reachable.
@@ -63,7 +63,7 @@ Three things are deliberately **not** contract, and may change in any release:
 Within a major version, an artifact built against `1.x` links against any later `1.y` (`y >= x`) on
 every published target. That is checked mechanically, not reviewed by eye:
 
-* `checkKotlinAbi` (wired in `library/build.gradle.kts` with `kotlin { abiValidation { } }`) diffs
+* `checkKotlinAbi` (wired in `kiban/build.gradle.kts` with `kotlin { abiValidation { } }`) diffs
   the current API surface against the committed dumps and fails the build on any divergence. Both
   the JVM and the klib dump are produced; klib-based targets need no switching on.
 * It runs on every pull request as its own CI job. Because building the klib dump compiles every
@@ -185,4 +185,4 @@ Adding one later stays possible as a purely additive change; withdrawing it agai
 * [CHANGELOG.md](CHANGELOG.md) — every release, with breaking changes called out first.
 * [MIGRATION.md](MIGRATION.md) — the mapping for each break, from `java-iban` onwards.
 * [RELEASING.md](RELEASING.md) — the mechanical checklist for cutting and publishing a release.
-* The API dumps under `library/api/` — the surface itself, versioned in git.
+* The API dumps under `kiban/api/` — the surface itself, versioned in git.

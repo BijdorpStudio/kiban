@@ -139,8 +139,8 @@ fun argValue(name: String): String? {
 data class Stamp(val rev: String, val date: String)
 
 val repoRoot = __FILE__.absoluteFile.parentFile.parentFile
-val dataFile = repoRoot.resolve("library/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt")
-val testFile = repoRoot.resolve("library/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt")
+val dataFile = repoRoot.resolve("kiban/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt")
+val testFile = repoRoot.resolve("kiban/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt")
 
 /** Invented registry entries covering the parser's edge cases; see --self-check. */
 val syntheticRegistry = repoRoot.resolve("scripts/testdata/synthetic-registry.txt")

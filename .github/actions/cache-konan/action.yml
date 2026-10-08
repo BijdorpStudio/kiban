@@ -4,7 +4,7 @@
 # Every job that compiles a native target, and every job that runs Dokka, needs
 # the Kotlin/Native distribution: Dokka runs the Kotlin analysis frontend rather
 # than scraping comments, so it resolves 'nativeMain'/'appleMain' too and pulls
-# the platform klibs in through ':library:downloadKotlinNativeDistribution'.
+# the platform klibs in through ':kiban:downloadKotlinNativeDistribution'.
 # Without this step that is a fresh 'download.jetbrains.com' fetch per job.
 #
 # The cache key is keyed on 'gradle/libs.versions.toml' because the 'kotlin'

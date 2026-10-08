@@ -66,7 +66,7 @@ jobs:
           # Not a task KGP registers: Kotlin/Native has no Linux/ARM64 *host*
           # compiler, so an 'ubuntu-24.04-arm' runner cannot build the target at
           # all, and the x86_64 host that cross-compiles it cannot execute the
-          # result. ':library' registers 'linuxArm64Test' itself, running the
+          # result. ':kiban' registers 'linuxArm64Test' itself, running the
           # binary under the emulator the toolchain ships (#151); it reports like
           # any other test task from here.
           - target: linuxArm64Test
@@ -77,12 +77,12 @@ jobs:
           - target: checkKotlinAbi
             id: api-check
             os: macos-latest
-          - target: assembleAndroidMain androidCompileLintChecks :library:testAndroidHostTest
+          - target: assembleAndroidMain androidCompileLintChecks :kiban:testAndroidHostTest
             id: android
             os: ubuntu-latest
           # Generation only, no deploy: catches broken KDoc/sourceLink before a
           # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
-          - target: :library:dokkaGeneratePublicationHtml
+          - target: :kiban:dokkaGeneratePublicationHtml
             id: dokka
             os: ubuntu-latest
           - target: ktfmtCheck
@@ -94,9 +94,9 @@ jobs:
           # Assembles the XCFramework the Swift sample consumes; the step below
           # compiles and runs the sample against it (#155). Cheap enough to run
           # per PR: the XCFramework holds a single target (macosArm64, see
-          # ':library'), so this is one debug link plus a 'swift build', next to
+          # ':kiban'), so this is one debug link plus a 'swift build', next to
           # the four full Apple test jobs this matrix already runs.
-          - target: :library:assembleKibanDebugXCFramework
+          - target: :kiban:assembleKibanDebugXCFramework
             id: swift-console
             os: macos-latest
           # Publishes what the step below consumes (#154). Three targets rather
@@ -105,10 +105,10 @@ jobs:
           # macOS runner to check something that is about metadata.
           - target: >-
               -Pkiban.signPublications=false
-              :library:publishKotlinMultiplatformPublicationToMavenLocal
-              :library:publishJvmPublicationToMavenLocal
-              :library:publishLinuxX64PublicationToMavenLocal
-              :library:publishJsPublicationToMavenLocal
+              :kiban:publishKotlinMultiplatformPublicationToMavenLocal
+              :kiban:publishJvmPublicationToMavenLocal
+              :kiban:publishLinuxX64PublicationToMavenLocal
+              :kiban:publishJsPublicationToMavenLocal
             id: consumption-probe
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
@@ -162,7 +162,7 @@ jobs:
 
     # A build of its own, so it resolves kiban by coordinates out of the local
     # repository the step above wrote instead of being substituted back to
-    # ':library'. See samples/consumption-probe.
+    # ':kiban'. See samples/consumption-probe.
     - name: Resolve the published artifact from an independent build
       if: matrix.id == 'consumption-probe'
       shell: bash
@@ -177,7 +177,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p samples/swift-console/Frameworks
-        cp -R library/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
+        cp -R kiban/build/XCFrameworks/debug/Kiban.xcframework samples/swift-console/Frameworks/
         cd samples/swift-console
         swift run SwiftConsole
 
@@ -234,7 +234,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: api-docs-preview
-        path: library/build/dokka/html
+        path: kiban/build/dokka/html
         retention-days: 7
 
     - name: Generate ktfmt diff

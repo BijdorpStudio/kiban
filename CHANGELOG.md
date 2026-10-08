@@ -275,6 +275,18 @@
 
 **Infrastructure**
 
+* Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique
+  name matches the published artifact (#208). It read
+  `Library unique name: <nl.bijdorpstudio.kiban:library>`; it now reads
+  `<nl.bijdorpstudio.kiban:kiban>`, which is the only change in the regenerated dumps. The unique
+  name is derived from the project name and is recorded in every Kotlin/Native consumer's klib
+  metadata, where a change between versions can surface as a duplicate-library warning in a build
+  that mixes versions transitively — so this lands before 1.0 rather than after. Dokka's
+  `moduleName` is gone with it: it was set to `kiban` by hand to cover the same mismatch and is now
+  the project name anyway. The API dumps move to `kiban/api/` and are named after the project
+  (`kiban/api/jvm/kiban.api`, `kiban/api/android/kiban.api`, `kiban/api/kiban.klib.api`). Nothing
+  about the artifact coordinates, the published API or the sources changed.
+
 * Replaced the standalone `binary-compatibility-validator` plugin with the ABI validation built into
   the Kotlin Gradle plugin (#182), acting on the investigation in
   [docs/182-builtin-abi-validation.md](docs/182-builtin-abi-validation.md). `apiCheck` and `apiDump`

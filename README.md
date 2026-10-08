@@ -251,7 +251,7 @@ kotlin scripts/generate_country_data.main.kts --registry scripts/input/iban-regi
 
 # The generator emits unformatted KotlinPoet output; without this the diff is thousands of
 # whitespace-only lines:
-./gradlew :library:ktfmtFormatKmpCommonMain :library:ktfmtFormatKmpCommonTest
+./gradlew :kiban:ktfmtFormatKmpCommonMain :kiban:ktfmtFormatKmpCommonTest
 ```
 
 The registry's release number has to be supplied by hand: the download endpoint sends no filename and the registry page states no release, so neither script can detect it. Read it off the [registry PDF](https://www.swift.com/swift-resource/9606/download) and pass it as `--rev`.
