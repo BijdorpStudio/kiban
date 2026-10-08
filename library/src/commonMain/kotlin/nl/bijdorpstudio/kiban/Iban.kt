@@ -192,11 +192,14 @@ public class Iban private constructor(internal val value: String) : Comparable<I
         public fun parse(input: CharSequence): Iban = invoke(input)
 
         /**
-         * The length of the technically shortest possible IBAN. See
-         * [CountryCodes.shortestIbanLength] for the shortest length any known country actually
-         * uses.
+         * The length of the technically shortest possible IBAN: a two-character country code, two
+         * check digits and at least one BBAN character.
+         *
+         * Internal, because it is the parser's lower bound rather than a number a consumer can act
+         * on — no country issues an IBAN this short. [CountryCodes.shortestIbanLength] is the
+         * shortest length any known country actually uses, and is the one to measure against.
          */
-        public const val SHORTEST_POSSIBLE_IBAN_LENGTH: Int = 5
+        internal const val SHORTEST_POSSIBLE_IBAN_LENGTH: Int = 5
 
         /**
          * Wraps an already-validated, space-stripped IBAN string, without paying for validation a

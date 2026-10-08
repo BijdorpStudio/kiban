@@ -130,6 +130,13 @@
   because it is a `val` with a getter, not a constant. Both breaks are compile errors with a
   mechanical fix.
 
+* `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH` is now `internal` (#205). The constant is the parser's lower
+  bound — a country code, two check digits and one BBAN character — and no country issues an IBAN
+  that short, so there is nothing in it for a consumer to act on:
+  `CountryCodes.shortestIbanLength` is the number that describes real IBANs and is what to measure
+  against. Making the constant internal before 1.0 keeps a `public static final field` on the JVM,
+  and a `const val` with its getter in the klib dump, out of the surface frozen at 1.0.
+
 **Fixes**
 
 * `Iban.compose` now diagnoses a malformed country code as the structural problem it is (#146). It

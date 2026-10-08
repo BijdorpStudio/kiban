@@ -63,7 +63,7 @@ public sealed class IbanParseException(
             /** The input is empty. */
             public data object Empty : Kind()
 
-            /** The input is shorter than [Iban.SHORTEST_POSSIBLE_IBAN_LENGTH]. */
+            /** The input is shorter than five characters. */
             public data object TooShort : Kind()
 
             /** The characters at index 2 and 3 are not both ASCII digits. */

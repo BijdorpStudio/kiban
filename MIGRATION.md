@@ -136,9 +136,14 @@ ground, and `?:` replaces `orElse`.
 | `CountryCodes.isSEPACountry(cc)` | `CountryCodes.isSepaCountry(cc)` |
 
 The three names marked *(kiban 0.5.0)* were renamed in 0.6.0, together with
-`Iban.SHORTEST_POSSIBLE_IBAN`, which is now `Iban.SHORTEST_POSSIBLE_IBAN_LENGTH`. All four named a
-length without saying so, and the two `CountryCodes` lengths additionally surfaced on the JVM as
-`getSHORTEST_IBAN_LENGTH()` / `getLONGEST_IBAN_LENGTH()`.
+`Iban.SHORTEST_POSSIBLE_IBAN`. All four named a length without saying so, and the two
+`CountryCodes` lengths additionally surfaced on the JVM as `getSHORTEST_IBAN_LENGTH()` /
+`getLONGEST_IBAN_LENGTH()`.
+
+`Iban.SHORTEST_POSSIBLE_IBAN` has no public replacement. The renamed
+`Iban.SHORTEST_POSSIBLE_IBAN_LENGTH` is `internal` as of 0.6.0, because it is the parser's lower
+bound rather than a length any country issues; `CountryCodes.shortestIbanLength` is the shortest
+IBAN that actually exists, and is what to measure against.
 
 The SEPA accessors and `LAST_UPDATE_REVISION` were renamed in 0.6.0 as well. `isSEPA` /
 `isSEPACountry` came over from java-iban verbatim and spelled a four-letter acronym in full, which
