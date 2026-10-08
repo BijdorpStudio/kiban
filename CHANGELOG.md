@@ -273,6 +273,16 @@
   `Modulo97.calculateCheckDigits`: those are `java-iban` versions, and kiban has never published a
   1.x release.
 
+* Settled the Intel-target question and wrote the rule behind the published target set down (#207).
+  The target set does not change: the Apple set is not uniform by architecture because `macosX64`
+  is deprecated in Kotlin/Native while the Intel iOS simulator target `iosX64` is not, so the set
+  follows what the toolchain supports rather than one architecture per platform. Reinstating
+  `macosX64` would owe the 1.x line a major release on JetBrains' removal schedule, and dropping
+  `iosX64` would break every iOS build on an Intel Mac to buy symmetry. The rule is now policy in
+  [VERSIONING.md](VERSIONING.md), the README lists the targets by name instead of by platform, and
+  the reasoning and evidence are in
+  [docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
+
 **Infrastructure**
 
 * Replaced the standalone `binary-compatibility-validator` plugin with the ABI validation built into
