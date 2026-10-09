@@ -25,7 +25,7 @@ public object Modulo97 {
      * `[A-Za-z0-9 ]` will cause an [IllegalArgumentException] to be thrown; non-ASCII digits such
      * as fullwidth `９` or Arabic-Indic `٩` are rejected rather than normalized. The checksum is
      * folded one character at a time, so it allocates nothing beyond what the caller passed in and
-     * has no input size beyond which it breaks down.
+     * has no input size beyond which it breaks down (see docs/209-implementation-notes.md).
      *
      * It is expected but not enforced that the characters at index 2 and 3 are numeric. If the
      * existing check digits are `00` then this method will return the value that, after subtracting
@@ -103,11 +103,8 @@ public object Modulo97 {
      * Folds `src[srcPos..<srcLen)` into the running MOD97 remainder, applying the character to
      * numeric transformation and skipping over space (ASCII 0x20) characters.
      *
-     * Folding each digit in as `remainder = (remainder * 10 + digit) % 97` is the same arithmetic
-     * as reading the whole transformed string as one number and taking it modulo 97, but it needs
-     * no buffer to hold that string: a letter expands into its two digits in place. The remainder
-     * never leaves `0..<97`, so no intermediate exceeds `97 * 10 + 9` and the whole fold fits in an
-     * [Int].
+     * Keeping a running remainder rather than building the transformed string is what makes this
+     * allocation-free and overflow-free; see docs/209-implementation-notes.md.
      *
      * @param src the data to fold, must contain only ASCII characters `[A-Za-z0-9 ]`.
      * @param srcPos the index in `src` to begin folding (inclusive).
@@ -122,9 +119,8 @@ public object Modulo97 {
             val c = src[i]
             remainder =
                 when {
-                    // Deliberately not Char.isDigit(): that is Unicode-aware and would accept
-                    // fullwidth or Arabic-Indic digits, which are not part of the ISO 13616
-                    // character set. See Iban.validate for the same reasoning.
+                    // Deliberately not Char.isDigit(), which would accept fullwidth and
+                    // Arabic-Indic digits that ISO 13616 does not allow.
                     c in '0'..'9' -> (remainder * 10 + (c.code - '0'.code)) % 97
 
                     c in 'A'..'Z' -> foldLetter(remainder, 10 + (c.code - 'A'.code))
@@ -151,10 +147,8 @@ public object Modulo97 {
         ((remainder * 10 + value / 10) % 97 * 10 + value % 10) % 97
 
     /**
-     * Whether the input holds at least five characters that are not a space (ASCII 0x20).
-     *
-     * Counts rather than filtering into a new string: this runs on every checksum, and the count is
-     * all the caller needs.
+     * Whether the input holds at least five characters that are not a space (ASCII 0x20). Counts
+     * rather than filtering into a new string: this runs on every checksum.
      */
     private fun atLeastFiveNonSpaceCharacters(input: CharSequence): Boolean {
         var seen = 0

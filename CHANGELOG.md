@@ -188,6 +188,28 @@
 
 **Documentation**
 
+* Rationale essays moved out of source, build and workflow comments into `docs/` (#209). Comments
+  had grown to where `Iban.kt` was 261 comment lines against 462 total and `gradle.yml` 120 against
+  360, most of it "why we did not do X" prose with issue numbers in it — repeated across
+  declarations, duplicated in the README, and sitting in the one place that cannot be read as prose
+  and goes stale without anyone noticing. The reasoning itself was worth keeping, so it moved
+  rather than being deleted: [docs/209-api-design-notes.md](docs/209-api-design-notes.md) holds the
+  public-surface decisions (the `String` receivers, `Iban.parse`, the `IBAN` typealias, ASCII-only
+  rejection, the sealed `Kind`),
+  [docs/209-implementation-notes.md](docs/209-implementation-notes.md) the internal ones (eager
+  `pretty`, the cached country index, the allocation-free fold),
+  [docs/209-build-script-notes.md](docs/209-build-script-notes.md) the Gradle configuration
+  including the `linuxArm64Test` emulator block and the consumer Kotlin floor, and
+  [docs/209-ci-workflow-notes.md](docs/209-ci-workflow-notes.md) the workflows. What stays in the
+  code is the KDoc contract plus a one-line pointer where the choice is not obvious from the
+  signature. No API, behaviour or message change, and the API dumps are untouched; published KDoc
+  loses the design essays and keeps the contract.
+
+  [CONTRIBUTING.md](CONTRIBUTING.md) now carries the rule, so this does not accumulate again: KDoc
+  on a public declaration states the contract, an inline comment explains one non-obvious line in
+  one or two sentences, anything longer is a doc page, and issue numbers belong in the pull request
+  and `git log` rather than in a comment.
+
 * Added [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) (#157). The README invited
   contributions without saying anywhere what a contributor should run, and the only build guidance in
   the repository was [CLAUDE.md](CLAUDE.md) — written for agents in cloud sandboxes, about what those

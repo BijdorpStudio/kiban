@@ -86,6 +86,30 @@ Both scripts under `scripts/` carry their own offline test: `--self-check` on ei
 over its parsing helpers and exits. Changing how the generator reads the registry means extending
 `scripts/testdata/synthetic-registry.txt` — there is no real registry file to test against.
 
+## Comments and documentation
+
+Three levels, and a comment belongs to exactly one of them:
+
+* **KDoc on a public declaration states the contract only** — what it does, what it accepts, what it
+  returns, what it throws, and anything a caller has to know to use it correctly. Not why the
+  signature is shaped that way, not what was considered instead.
+* **An inline comment explains one non-obvious line, in one or two sentences.** If a reader would
+  stop at a line and ask "why like that?", answer it there.
+* **Anything longer is a doc page under [docs/](docs/)**, with a one-line pointer to it from the
+  code. Rationale, alternatives weighed, history, benchmark results and anything that answers "why
+  we did *not* do X" all belong there, where it can be read as prose and updated without touching
+  the file it describes.
+
+Concretely: no source, build or workflow file should carry a comment block longer than about five
+lines that is not a KDoc contract description. `docs/209-api-design-notes.md`,
+`docs/209-implementation-notes.md`, `docs/209-build-script-notes.md` and
+`docs/209-ci-workflow-notes.md` are the general-purpose homes for rationale that has no page of its
+own; a decision big enough to argue over gets its own page.
+
+Do not put issue numbers in code comments. The pull request and `git log` carry them already, and a
+`#182` in a comment ages into a reference nobody follows. Doc pages are the exception — they link
+issues by number and URL, because that is where the reasoning and its history belong.
+
 ## Pull requests
 
 * **One topic per pull request.** Keep unrelated cleanups out of a change that has to be reviewed on

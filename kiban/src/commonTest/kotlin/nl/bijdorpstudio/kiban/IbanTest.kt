@@ -556,8 +556,7 @@ val IbanTest by testSuite {
     }
 
     test("Shortest possible IBAN length should be the five characters ISO 13616 allows") {
-        // The constant is internal (#205) — the parser's lower bound, not a number a consumer can
-        // act on. It is still pinned here, because the two boundary tests below spell the same
+        // Pinned although the constant is internal: the two boundary tests below spell the same
         // threshold as literals and would silently stop testing the boundary if it moved.
         assertThat(Iban.SHORTEST_POSSIBLE_IBAN_LENGTH).isEqualTo(5)
     }

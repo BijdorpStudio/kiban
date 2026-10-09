@@ -11,34 +11,21 @@ java-version = "17"
 junit = "4.13.2"
 kotlin = "2.4.20"
 # @keep this is library kotlin compatibility version
-# This is the minimum Kotlin version a consumer needs, not merely what the library is built with.
-# Raising it is a breaking change for consumers who cannot follow, so after 1.0 it only moves in a
-# major release (see VERSIONING.md) - which is why it moved to 2.4.0 before the freeze rather than
-# after it. Two things depend on the floor:
-#   - @IntroducedAt / ExperimentalVersionOverloading (kotlin package) do not resolve below a 2.4
-#     languageVersion, and they are what lets an optional parameter be added to an already
-#     published function without breaking binary compatibility. See #180.
-#   - kotlin.time.Instant (CountryCodes.lastUpdateDate) is only a non-experimental stdlib
-#     declaration from 2.3, so any floor below that turns a frozen public API into one that demands
-#     @OptIn from callers. Subsumed by the 2.4 floor, but it is the reason the floor can never go
-#     below 2.3. See docs/144-instant-api-stability.md.
+# The minimum Kotlin version a consumer needs, not what the library is built with. Raising it is a
+# breaking change; see docs/209-build-script-notes.md and VERSIONING.md.
 kotlin-version = "2.4.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
-# Test-only. The 1.1.0 line is the first unified release: one artifact set auto-adapting to the
-# Kotlin compiler in use (2.2.0+), instead of 1.0.x's per-Kotlin-version variants, which would have
-# made every Kotlin bump a coupled TestBalloon bump. See docs/82-testballoon-evaluation.md. Keep
-# this on a stable release: the verification suite this gates is what gates publish.yml, so a
-# release candidate or beta here (1.1.0-RC was one until 1.1.0 shipped, see #153) puts a prerelease
-# in front of every publish.
+# Test-only. Keep this on a stable release, and on the unified 1.1.0+ line; see
+# docs/209-build-script-notes.md and docs/82-testballoon-evaluation.md.
 testballoon = "1.1.0"
 versions-catalogue-update-plugin = "1.1.1"
 
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
-# Dokka plugin artifact, not a Gradle plugin: it is added to the 'dokkaPlugin' configuration so
-# the Dokka generator itself loads it. Version-locked to the Dokka Gradle plugin above.
+# Dokka plugin artifact, not a Gradle plugin: it goes on the 'dokkaPlugin' configuration so the
+# Dokka generator itself loads it. Version-locked to the Dokka Gradle plugin above.
 dokka-versioning-plugin = { module = "org.jetbrains.dokka:versioning-plugin", version.ref = "dokka" }
 junit = { module = "junit:junit", version.ref = "junit" }
 testballoon-framework-core = { module = "de.infix.testBalloon:testBalloon-framework-core", version.ref = "testballoon" }

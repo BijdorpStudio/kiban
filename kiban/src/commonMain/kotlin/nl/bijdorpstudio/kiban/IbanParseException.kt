@@ -48,16 +48,12 @@ public sealed class IbanParseException(
     ) : IbanParseException(input, malformedMessage(input, kind)) {
 
         /**
-         * The structural problem that made the input malformed.
+         * The structural problem that made the input malformed. A `when` over this type is
+         * exhaustive without an `else`.
          *
-         * A sealed hierarchy rather than an enum: the problems that can name the offending
-         * character, or the reason behind them, carry it as typed data, so a caller can react to a
-         * rejection instead of parsing [message] for it. A `when` over this type is still
-         * exhaustive without an `else`, as it was over the enum.
-         *
-         * Like the exceptions that carry them, kinds are constructed by kiban only: the subtypes
-         * that carry data have internal constructors, and no `copy` or destructuring, so a caller
-         * cannot build a kind the parser never produced.
+         * Like the exceptions that carry them, kinds are constructed by kiban only, so a caller
+         * cannot build a kind the parser never produced. See docs/209-api-design-notes.md for why
+         * this is a sealed hierarchy rather than an enum.
          */
         public sealed class Kind {
             /** The input is empty. */
@@ -178,8 +174,6 @@ public sealed class IbanParseException(
  *
  * Total over the sealed hierarchy: a kind either has wording of its own or carries the detail its
  * wording needs, so there is no way to build a malformed rejection that cannot describe itself.
- * That used to be a runtime invariant, enforced only once a rejection was turned into an exception;
- * the type system now holds it at the point of construction.
  */
 private fun malformedMessage(input: String, kind: IbanParseException.Malformed.Kind): String =
     when (kind) {
