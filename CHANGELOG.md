@@ -273,6 +273,31 @@
   `Modulo97.calculateCheckDigits`: those are `java-iban` versions, and kiban has never published a
   1.x release.
 
+* Fixed the remaining KDoc leftovers and Java-isms in the public API docs (#210). The `Iban` class
+  listed `@property` tags for `isInSwiftRegistry`, `isSepa`, `plain` and `pretty` that the
+  per-property KDoc already carried, so Dokka rendered each of those four twice; the per-property
+  KDoc is what stays. `countryCode` carried its KDoc on the getter rather than the property, which
+  is where Dokka reads it from, so it rendered with no description at all. The `init` block was
+  headed "Initializing constructor" and trailed off mid-sentence ("the IBAN value, without any
+  spaces, already validated by the caller."), a fragment left behind when a constructor parameter
+  it documented moved.
+
+  `@return` tags on `val`s ("@return true if from SWIFT IBAN Registry") are Javadoc habits — KDoc
+  on a property describes the value directly — and are gone from `Iban` and from
+  `CountryCodes.lastUpdateDate` and `LAST_UPDATE_REVISION`. The class `@see` pointing at Wikipedia
+  through an HTML `<a href>` anchor is a Markdown link now, `Modulo97.calculateCheckDigits` linked
+  `[.checksum]` in the Javadoc style that KDoc does not resolve, and the one-argument overload
+  documents the `IllegalArgumentException` it throws.
+
+  `CountryCodes` described parameters as "a non-null, uppercase, two-character country code" on
+  types that are not nullable, and its own documentation was one thin line; the object now says
+  what it offers — length lookup, SEPA and SWIFT IBAN Registry membership, bank and branch
+  identifier positions — and that its lookups are case-sensitive. `isKnownCountryCode`'s `@return`
+  referred to a parameter named `aCountryCode` that no longer exists.
+
+  Documentation only: no declaration, signature or behaviour changed, and the API dumps are
+  untouched.
+
 * Settled the Intel-target question and wrote the rule behind the published target set down (#207).
   The target set does not change: the Apple set is not uniform by architecture because `macosX64`
   is deprecated in Kotlin/Native while the Intel iOS simulator target `iosX64` is not, so the set

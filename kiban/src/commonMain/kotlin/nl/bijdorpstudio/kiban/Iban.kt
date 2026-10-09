@@ -28,30 +28,18 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
  * [Iban.parse] for callers outside Kotlin, or [Iban.compose] — all of which validate the input and
  * throw an [IbanParseException] on failure. Construction itself never fails.
  *
- * @property isInSwiftRegistry whether or not this IBAN data is from the SWIFT IBAN Registry.
- * @property isSepa whether or not this IBAN is of a SEPA participating country.
- * @property plain the IBAN value, without any spaces.
- * @property pretty the IBAN value, with spaces every four characters.
- * @see <a href="https://en.wikipedia.org/wiki/International_Bank_Account_Number">Wikipedia:
- *   International Bank Account Number</a>
+ * See [Wikipedia](https://en.wikipedia.org/wiki/International_Bank_Account_Number) for the format
+ * itself.
  */
 public class Iban private constructor(internal val value: String) : Comparable<Iban> {
-    /**
-     * Whether or not this IBAN data is from the SWIFT IBAN Registry.
-     *
-     * @return true if from SWIFT IBAN Registry, false otherwise.
-     */
+    /** Whether this IBAN's format and reference data come from the SWIFT IBAN Registry. */
     public val isInSwiftRegistry: Boolean
 
-    /**
-     * Whether or not this IBAN is of a SEPA participating country.
-     *
-     * @return true this IBAN is of a SEPA participating country, false otherwise.
-     */
+    /** Whether this IBAN is of a SEPA participating country. */
     public val isSepa: Boolean
 
     /**
-     * Pretty-printed value, computed during construction.
+     * The IBAN value, with a space every four characters, computed during construction.
      *
      * Eager rather than `by lazy`: the [Lazy] instance and the published field behind it cost more
      * memory than the at most 34-character string they would defer, and an [Iban] is an immutable
@@ -70,10 +58,8 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      */
     private val countryIndex: Int
 
-    /**
-     * Initializing constructor. Validation happens before construction, so this constructor cannot
-     * fail. the IBAN value, without any spaces, already validated by the caller.
-     */
+    // Resolves every country-dependent value once. The value arrives plain and already validated,
+    // so construction cannot fail.
     init {
         val index: Int = CountryCodes.indexOf(value.substring(0, 2))
         this.countryIndex = index
@@ -82,54 +68,32 @@ public class Iban private constructor(internal val value: String) : Comparable<I
         this.pretty = addSpaces(value)
     }
 
+    /** The two-letter country code embedded in the IBAN. */
     public val countryCode: String
-        /**
-         * Returns the Country Code embedded in the IBAN.
-         *
-         * @return the two-letter country code.
-         */
         get() = value.substring(0, 2)
 
-    /**
-     * Returns the check digits of the IBAN.
-     *
-     * @return the two check digits.
-     */
+    /** The two check digits embedded in the IBAN. */
     public val checkDigits: String
         get() = value.substring(2, 4)
 
     /**
-     * Returns the BBAN embedded in the IBAN: everything after the country code and check digits.
+     * The BBAN embedded in the IBAN: everything after the country code and check digits.
      *
      * This is the counterpart of the `bban` argument [Iban.compose] takes, so
      * `Iban.compose(iban.countryCode, iban.bban)` returns an IBAN equal to `iban`.
-     *
-     * @return the basic bank account number.
      */
     public val bban: String
         get() = value.substring(4)
 
-    /**
-     * Returns the bank identifier embedded in the IBAN, if available.
-     *
-     * @return the bank ID, or `null` if unknown for this country code.
-     */
+    /** The bank identifier embedded in the IBAN, or `null` if unknown for this country code. */
     public val bankIdentifier: String?
         get() = CountryCodes.bankIdentifierAt(countryIndex, value)
 
-    /**
-     * Returns the branch identifier embedded in the IBAN, if available.
-     *
-     * @return the branch ID, or `null` if unknown for this country code.
-     */
+    /** The branch identifier embedded in the IBAN, or `null` if unknown for this country code. */
     public val branchIdentifier: String?
         get() = CountryCodes.branchIdentifierAt(countryIndex, value)
 
-    /**
-     * Returns the IBAN without formatting.
-     *
-     * @return the unformatted IBAN number.
-     */
+    /** The IBAN value, without any spaces. */
     public val plain: String
         get() = value
 
@@ -146,8 +110,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
     /**
      * Returns the IBAN in standard formatting, with a space every four characters.
      *
-     * @return the formatted IBAN number.
-     * @see [plain]
+     * @see plain
      */
     override fun toString(): String = pretty
 
