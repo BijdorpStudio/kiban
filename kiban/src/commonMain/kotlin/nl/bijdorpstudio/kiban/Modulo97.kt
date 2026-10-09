@@ -36,9 +36,9 @@ public object Modulo97 {
      *
      * @param input the input, which should be at least five characters excluding spaces.
      * @return the check digits calculated for the given IBAN.
-     * @throws [IllegalArgumentException] if the input is in some way invalid.
-     * @see [calculateCheckDigits]
-     * @see [verifyCheckDigits]
+     * @throws IllegalArgumentException if the input is in some way invalid.
+     * @see calculateCheckDigits
+     * @see verifyCheckDigits
      */
     public fun checksum(input: CharSequence): Int {
         if (!atLeastFiveNonSpaceCharacters(input)) {
@@ -57,8 +57,10 @@ public object Modulo97 {
      * Calculates the check digits to be used in a MOD97 checked string.
      *
      * @param input the input; the characters at indices 2 and 3 **must** be `'0'`. The input must
-     *   also satisfy the criteria defined in [.checksum].
+     *   also satisfy the criteria defined in [checksum].
      * @return the check digits to be used at indices 2 and 3 to make the input MOD97 verifiable.
+     * @throws IllegalArgumentException if the input is shorter than five characters or does not
+     *   carry `'0'` at indices 2 and 3.
      */
     public fun calculateCheckDigits(input: CharSequence): Int {
         if (input.length < 5 || input[2] != '0' || input[3] != '0') {
@@ -75,7 +77,7 @@ public object Modulo97 {
      * @param countryCode the country code. Not validated to be a known country.
      * @param bban the country-specific BBAN. Not validated to required length.
      * @return the check digits to be used at indices 2 and 3 to make the input MOD97 verifiable.
-     * @throws [IllegalArgumentException] if the country code is not two characters or contains a
+     * @throws IllegalArgumentException if the country code is not two characters or contains a
      *   space character.
      */
     public fun calculateCheckDigits(countryCode: CharSequence, bban: CharSequence): Int {
@@ -114,7 +116,7 @@ public object Modulo97 {
      * @param srcLen the index in `src` to stop folding (exclusive).
      * @param initial the remainder to fold into, `0` to start a fresh calculation.
      * @return the remainder after folding in every character of the range.
-     * @throws [IllegalArgumentException] if `src` contains an unsupported character.
+     * @throws IllegalArgumentException if `src` contains an unsupported character.
      */
     private fun fold(src: CharSequence, srcPos: Int, srcLen: Int, initial: Int): Int {
         var remainder = initial
