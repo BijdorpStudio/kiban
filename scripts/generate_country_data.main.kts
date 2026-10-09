@@ -304,7 +304,7 @@ fun generatedKdoc(what: String, stamp: Stamp) =
         "Updated to SWIFT IBAN Registry version ${stamp.rev} on ${stamp.date}.\n"
 
 fun constInt(name: String, format: String, vararg args: Any): PropertySpec =
-    PropertySpec.builder(name, INT, KModifier.CONST)
+    PropertySpec.builder(name, INT, KModifier.INTERNAL, KModifier.CONST)
         .initializer(format, *args)
         .build()
 
@@ -362,13 +362,13 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
         .addModifiers(KModifier.INTERNAL)
         .addKdoc(generatedKdoc("Contains information about IBAN country codes.", stamp))
         .addProperty(
-            PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.CONST)
+            PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.INTERNAL, KModifier.CONST)
                 .addKdoc("The \"yyyy-MM-dd\" datestamp that the embedded IBAN data was updated.\n")
                 .initializer("%S", stamp.date)
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.CONST)
+            PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.INTERNAL, KModifier.CONST)
                 .addKdoc("The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.\n")
                 .initializer("%S", stamp.rev)
                 .build()
@@ -384,7 +384,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
         .addProperty(branchEndShift)
         .addProperty(constInt("BRANCH_IDENTIFIER_END_MASK", "0xFF shl %N", branchEndShift))
         .addProperty(
-            PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING))
+            PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING), KModifier.INTERNAL)
                 .addKdoc(
                     "Known country codes, this list must be sorted to allow binary search. " +
                         "All other lists in this file must use the\nsame indices for the same countries.\n"
@@ -393,7 +393,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("COUNTRY_IBAN_LENGTHS", INT_ARRAY)
+            PropertySpec.builder("COUNTRY_IBAN_LENGTHS", INT_ARRAY, KModifier.INTERNAL)
                 .addKdoc(
                     "Lengths for each country's IBAN. The indices match the indices of [COUNTRY_CODES], " +
                         "the values are the\nexpected length. Values may embed the [SEPA] and [SWIFT] flags " +
@@ -403,7 +403,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("BANK_CODE_BRANCH_CODE", INT_ARRAY)
+            PropertySpec.builder("BANK_CODE_BRANCH_CODE", INT_ARRAY, KModifier.INTERNAL)
                 .addKdoc(
                     "Contains the start- and end-index (as per [String.substring]) of the bank code " +
                         "and branch code\nwithin a country's IBAN format. Mask:\n```\n" +
@@ -612,6 +612,18 @@ fun selfCheck() {
     val exempt = sound.copy(code = "BA", example = "BA90BANK123456789012")
     expectAccepted("an exempt country whose registry examples still disagree", exempt.copy(bankExample = "WRONG"))
     expectRejected("an exempt country whose registry examples now agree", "remove the exception", exempt)
+
+    // Emitted visibility. KotlinPoet writes a declaration's implicit `public` unless the spec
+    // states another visibility, and nothing in either generated file is public API (#211).
+    val stamp = Stamp(rev = "99", date = "2026-01-01")
+    val emittedData = dataFileSpec(merged, stamp).toString()
+    expect("the data object's visibility", true, "internal object CountryCodesData" in emittedData)
+    expect("a generated const's visibility", true, "internal const val LAST_UPDATE_DATE: String" in emittedData)
+    expect("a generated array's visibility", true, "internal val COUNTRY_CODES: Array<String>" in emittedData)
+    expect("a public modifier in the generated data", null, Regex("""\bpublic\b""").find(emittedData)?.value)
+    val emittedTest = testFileSpec(merged, stamp).toString()
+    expect("the test table's visibility", true, "internal val countryTestData:" in emittedTest)
+    expect("a public modifier in the generated test table", null, Regex("""\bpublic\b""").find(emittedTest)?.value)
 
     println("All $checks self-checks passed.")
 }

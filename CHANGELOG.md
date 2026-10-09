@@ -310,6 +310,15 @@
 
 **Infrastructure**
 
+* The generated `CountryCodesData` declares its members `internal` instead of `public` (#211). The
+  object itself has always been `internal`, so the `public const val` / `public val` on each of its
+  members was redundant — `explicitApi()` only asks for visibility on declarations that really are
+  public API — and misleading in a 750-line generated file, where it reads as exposed registry data.
+  KotlinPoet emits a declaration's implicit `public` unless the spec states another visibility, so
+  `scripts/generate_country_data.main.kts` now states `internal`, and its `--self-check` asserts
+  that neither generated file emits a `public` modifier. The regenerated file differs in those
+  modifiers and nothing else; no published API changes and the dumps are unaffected.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique
   name matches the published artifact (#208). It read
   `Library unique name: <nl.bijdorpstudio.kiban:library>`; it now reads

@@ -27,36 +27,36 @@ import kotlin.String
  */
 internal object CountryCodesData {
     /** The "yyyy-MM-dd" datestamp that the embedded IBAN data was updated. */
-    public const val LAST_UPDATE_DATE: String = "2026-07-29"
+    internal const val LAST_UPDATE_DATE: String = "2026-07-29"
 
     /** The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated. */
-    public const val LAST_UPDATE_REV: String = "102"
+    internal const val LAST_UPDATE_REV: String = "102"
 
-    public const val SEPA: Int = 1 shl 8
+    internal const val SEPA: Int = 1 shl 8
 
-    public const val SWIFT: Int = 1 shl 9
+    internal const val SWIFT: Int = 1 shl 9
 
-    public const val REMOVE_METADATA_MASK: Int = 0xFF
+    internal const val REMOVE_METADATA_MASK: Int = 0xFF
 
-    public const val BANK_IDENTIFIER_BEGIN_MASK: Int = 0xFF
+    internal const val BANK_IDENTIFIER_BEGIN_MASK: Int = 0xFF
 
-    public const val BANK_IDENTIFIER_END_SHIFT: Int = 8
+    internal const val BANK_IDENTIFIER_END_SHIFT: Int = 8
 
-    public const val BANK_IDENTIFIER_END_MASK: Int = 0xFF shl BANK_IDENTIFIER_END_SHIFT
+    internal const val BANK_IDENTIFIER_END_MASK: Int = 0xFF shl BANK_IDENTIFIER_END_SHIFT
 
-    public const val BRANCH_IDENTIFIER_BEGIN_SHIFT: Int = 16
+    internal const val BRANCH_IDENTIFIER_BEGIN_SHIFT: Int = 16
 
-    public const val BRANCH_IDENTIFIER_BEGIN_MASK: Int = 0xFF shl BRANCH_IDENTIFIER_BEGIN_SHIFT
+    internal const val BRANCH_IDENTIFIER_BEGIN_MASK: Int = 0xFF shl BRANCH_IDENTIFIER_BEGIN_SHIFT
 
-    public const val BRANCH_IDENTIFIER_END_SHIFT: Int = 24
+    internal const val BRANCH_IDENTIFIER_END_SHIFT: Int = 24
 
-    public const val BRANCH_IDENTIFIER_END_MASK: Int = 0xFF shl BRANCH_IDENTIFIER_END_SHIFT
+    internal const val BRANCH_IDENTIFIER_END_MASK: Int = 0xFF shl BRANCH_IDENTIFIER_END_SHIFT
 
     /**
      * Known country codes, this list must be sorted to allow binary search. All other lists in this
      * file must use the same indices for the same countries.
      */
-    public val COUNTRY_CODES: Array<String> =
+    internal val COUNTRY_CODES: Array<String> =
         arrayOf(
             "AD",
             "AE",
@@ -176,7 +176,7 @@ internal object CountryCodesData {
      * are the expected length. Values may embed the [SEPA] and [SWIFT] flags to indicate the SEPA
      * membership and whether the record is listed in the SWIFT IBAN Registry.
      */
-    public val COUNTRY_IBAN_LENGTHS: IntArray =
+    internal val COUNTRY_IBAN_LENGTHS: IntArray =
         intArrayOf(
             /* AD */ 24 or SWIFT or SEPA,
             /* AE */ 23 or SWIFT,
@@ -301,7 +301,7 @@ internal object CountryCodesData {
      * 0xFF000000 <- end offset branch id
      * ```
      */
-    public val BANK_CODE_BRANCH_CODE: IntArray =
+    internal val BANK_CODE_BRANCH_CODE: IntArray =
         intArrayOf(
             /* AD */ 4 or
                 ((4 + 4) shl BANK_IDENTIFIER_END_SHIFT) or
