@@ -1,4 +1,5 @@
-# Main workflow for check PRs and merges
+# Main workflow for checking pull requests and merges.
+# Why it is wired this way: docs/209-ci-workflow-notes.md.
 
 name: Java CI with Gradle
 
@@ -12,29 +13,21 @@ on:
 permissions:
   contents: read
 
-# The full target matrix - a job per target, several of them on macOS runners - against a commit
-# that has already been superseded tells nobody anything, so a new push to a branch or pull request
-# cancels the run still going for the old head. Two cases keep every run instead:
-#   - 'main', where the per-commit result is the record of what the branch actually passed.
-#   - Release runs, which reach this workflow through 'workflow_call' from publish.yml. There
-#     github.ref is the release tag, and publish.yml fires on both 'prereleased' and 'released', so
-#     promoting a prerelease starts a second run against the same tag - cancelling the first would
-#     fail the 'needs: test' gate and take its publish job down with it.
+# A superseded head's matrix run is cancelled; 'main' and release runs keep every run. See
+# docs/209-ci-workflow-notes.md.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.event_name != 'release' }}
 
 jobs:
   build:
-    # Named off 'matrix.id' alone, so the check name stays stable when a matrix
-    # key is added or reordered: the default name interpolates *every* matrix
-    # value.
+    # Named off 'matrix.id' alone so the check name stays stable when a matrix
+    # key is added or reordered.
     name: ${{ matrix.id }} (${{ matrix.os }})
     strategy:
       matrix:
-        # 'id' is the slug used in artifact names and step conditions: matrix
-        # targets contain spaces and colons, which are not valid in artifact
-        # names, and would collide once sanitised away.
+        # 'id' is the slug used in artifact names and step conditions; a target
+        # is not usable as one. See docs/209-ci-workflow-notes.md.
         include:
           - target: iosSimulatorArm64Test
             id: ios-simulator-arm64-test
@@ -63,12 +56,8 @@ jobs:
           - target: mingwX64Test
             id: mingw-x64-test
             os: windows-latest
-          # Not a task KGP registers: Kotlin/Native has no Linux/ARM64 *host*
-          # compiler, so an 'ubuntu-24.04-arm' runner cannot build the target at
-          # all, and the x86_64 host that cross-compiles it cannot execute the
-          # result. ':kiban' registers 'linuxArm64Test' itself, running the
-          # binary under the emulator the toolchain ships (#151); it reports like
-          # any other test task from here.
+          # Not a task KGP registers: ':kiban' registers it itself and runs the
+          # binary under the toolchain's emulator.
           - target: linuxArm64Test
             id: linux-arm64-test
             os: ubuntu-latest
@@ -92,17 +81,13 @@ jobs:
             id: samples-jvm-cli-run
             os: ubuntu-latest
           # Assembles the XCFramework the Swift sample consumes; the step below
-          # compiles and runs the sample against it (#155). Cheap enough to run
-          # per PR: the XCFramework holds a single target (macosArm64, see
-          # ':kiban'), so this is one debug link plus a 'swift build', next to
-          # the four full Apple test jobs this matrix already runs.
+          # compiles and runs the sample against it.
           - target: :kiban:assembleKibanDebugXCFramework
             id: swift-console
             os: macos-latest
-          # Publishes what the step below consumes (#154). Three targets rather
-          # than the aggregate 'publishToMavenLocal', which also publishes the
-          # Android and Apple variants and so would need an Android SDK and a
-          # macOS runner to check something that is about metadata.
+          # Publishes what the step below consumes. Four publications rather than
+          # the aggregate 'publishToMavenLocal', which would need an Android SDK
+          # and a macOS runner to check something that is about metadata.
           - target: >-
               -Pkiban.signPublications=false
               :kiban:publishKotlinMultiplatformPublicationToMavenLocal
@@ -131,47 +116,31 @@ jobs:
         # Builds on other branches will only read existing entries from the cache.
         cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
         cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-        # Publish a build scan per job to the public scans.gradle.com. #116
-        # (docs/116-develocity-evaluation.md) chose the action inputs over the
-        # 'com.gradle.develocity' settings plugin deliberately: the action injects
-        # the plugin via init script, so 'settings.gradle.kts', the version catalog
-        # and 'gradle.properties' stay untouched, and local plus cloud-sandbox
-        # builds (see CLAUDE.md) never load it, never attempt a publish and never
-        # leak a developer's machine details to a public dashboard.
-        #
-        # Only this workflow is scanned: it owns the 17-job matrix and therefore the
-        # payoff. 'publish.yml', 'registry-sync.yml' and 'ios-interop-verify.yml'
-        # also use setup-gradle but are low-frequency, and stay unscanned.
-        #
-        # Scans are PUBLIC. Everything uploaded originates on an ephemeral public
-        # runner building a public repo — build structure, task/dependency/test data
-        # and console output, no source archives and no developer environment.
-        # Terms of use accepted for the project by the maintainer on #127.
+        # Publishes a PUBLIC build scan per job to scans.gradle.com. Only this
+        # workflow is scanned; see docs/209-ci-workflow-notes.md for what is
+        # uploaded and why the action inputs rather than the settings plugin.
         build-scan-publish: true
         build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
         build-scan-terms-of-use-agree: 'yes'
 
     - name: Build with Gradle
       # 'shell: bash' enables pipefail, so tee does not mask a Gradle failure.
-      # The log is the only diagnosable output for targets that write no report
-      # of their own (e.g. ':samples:jvm-cli:run').
+      # The log is the only output for targets that write no report of their own.
       shell: bash
       run: |
         mkdir -p build/reports/ci
         ./gradlew ${{ matrix.target }} 2>&1 | tee build/reports/ci/gradle-build.log
 
-    # A build of its own, so it resolves kiban by coordinates out of the local
-    # repository the step above wrote instead of being substituted back to
-    # ':kiban'. See samples/consumption-probe.
+    # A build of its own, so it resolves kiban by coordinates rather than being
+    # substituted back to ':kiban'. See samples/consumption-probe.
     - name: Resolve the published artifact from an independent build
       if: matrix.id == 'consumption-probe'
       shell: bash
       run: ./gradlew -p samples/consumption-probe check 2>&1 | tee -a build/reports/ci/gradle-build.log
 
-    # The Gradle step only assembles the framework. The sample is a Swift Package
-    # Manager build outside Gradle, and its 'Package.swift' resolves the binary
-    # target out of 'Frameworks/', which is git-ignored and populated per build.
-    # Same three lines as samples/README.md and 'ios-interop-verify.yml'.
+    # The sample is a Swift Package Manager build outside Gradle, resolving the
+    # binary target out of git-ignored 'Frameworks/'. Same three lines as
+    # samples/README.md and 'ios-interop-verify.yml'.
     - name: Build and run samples/swift-console
       if: matrix.id == 'swift-console'
       shell: bash
@@ -181,23 +150,15 @@ jobs:
         cd samples/swift-console
         swift run SwiftConsole
 
-    # Renders the JUnit XML Gradle already writes into this job's summary, and
-    # annotates failing tests on the run. 'always()' is the point of the step:
-    # per-test results have to reach the summary on a green run too, not just a
-    # red one.
-    #
-    # 'annotate_only' keeps this working under the workflow's 'contents: read'
-    # token and on pull requests from forks: creating a check run instead would
-    # need 'checks: write', which a fork's read-only token does not have.
+    # Renders the JUnit XML Gradle already writes into this job's summary and
+    # annotates failing tests. Every input below is explained in
+    # docs/209-ci-workflow-notes.md.
     - name: Report test results
-      # Five jobs (checkKotlinAbi, dokka, ktfmt and the two sample runs) write
-      # no test XML at all; those skip the step rather than report an empty
+      # Jobs that write no test XML skip the step rather than report an empty
       # suite.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
-      # Reporting is a convenience wrapped around the real signal. If the action
-      # itself breaks it must not fail the job - and, because 'failure()' latches
-      # for the rest of the job once any step fails, it must not make the two
-      # diff steps below fire on an otherwise green run either.
+      # Reporting is a convenience wrapped around the real signal; it must never
+      # fail the job, nor latch 'failure()' for the steps below.
       continue-on-error: true
       uses: mikepenz/action-junit-report@v6
       with:
@@ -206,21 +167,15 @@ jobs:
         annotate_only: true
         detailed_summary: true
         group_suite: true
-        # Counts on green, the grouped failure listing on red. Listing all 1,217
-        # passing tests here as well was tried and reverted: eleven test jobs each
-        # rendering the full per-country table buried the two numbers anyone
-        # opens a summary for. The full listing is still a download away in the
-        # 'test-results-*' artifact.
+        # Counts on green, the grouped failure listing on red; the full listing
+        # is a download away in the 'test-results-*' artifact.
         include_passed: false
-        # The Gradle step has already failed the job by this point. Failing again
-        # here would only replace a diagnosable error with this action's own.
+        # The Gradle step has already failed the job by this point.
         fail_on_failure: false
         require_tests: false
 
-    # Unlike 'Upload failure reports' below, this runs on green too - the XML is a
-    # few hundred KB and it is what the 'ci' job aggregates into a single summary.
-    # On a red run the two artifacts overlap; the failure one is still the richer
-    # of the pair (HTML reports, api dumps) and stays as it is.
+    # Unlike 'Upload failure reports' below, this runs on green too: it is what
+    # the 'ci' job aggregates into a single summary.
     - name: Upload test results
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       uses: actions/upload-artifact@v7
@@ -238,10 +193,8 @@ jobs:
         retention-days: 7
 
     - name: Generate ktfmt diff
-      # ktfmtCheck fails with a bare file list; re-formatting turns that into a
-      # patch that can be downloaded and applied. It is also rendered into the job
-      # summary, because the usual case is a handful of misformatted lines - not
-      # worth a round trip through an artifact download to read.
+      # ktfmtCheck fails with a bare file list; re-formatting turns that into an
+      # applicable patch, rendered into the job summary as well as uploaded.
       if: failure() && matrix.id == 'ktfmt-check'
       shell: bash
       run: |
@@ -255,8 +208,7 @@ jobs:
           echo '`reports-ktfmt-check-ubuntu-latest` artifact and `git apply ktfmt.patch`.'
           echo
           echo '```diff'
-          # Truncated because the step summary is capped at 1 MiB and a run that
-          # blows past this is one where the artifact is the right tool anyway.
+          # The step summary is capped at 1 MiB; the artifact holds the rest.
           head -n 400 build/reports/ktfmt/ktfmt.patch
           echo '```'
           if [ "$(wc -l < build/reports/ktfmt/ktfmt.patch)" -gt 400 ]; then
@@ -265,10 +217,8 @@ jobs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Generate API dump diff
-      # checkKotlinAbi reports a binary-compatibility break as a Gradle failure
-      # whose useful part - what the dump would have to become - is buried in
-      # the log tail. Regenerating the dump surfaces exactly that, as a
-      # reviewable diff.
+      # Regenerating the dump surfaces what checkKotlinAbi buries in its log
+      # tail - what the dump would have to become - as a reviewable diff.
       if: failure() && matrix.id == 'api-check'
       shell: bash
       run: |
@@ -299,31 +249,23 @@ jobs:
           **/build/test-results/**
           **/build/api/**
           !**/build/reports/configuration-cache/**
-        # Not every target writes every kind of report; an empty match is not
-        # itself a failure worth flagging.
+        # Not every target writes every kind of report.
         if-no-files-found: ignore
         retention-days: 7
 
-  # The single check a branch ruleset should require. 'needs' on a matrix job
-  # waits for every entry, so adding, renaming or removing a matrix target never
-  # touches the list of required checks.
+  # The single check a branch ruleset should require: 'needs' on a matrix job
+  # waits for every entry. See docs/209-ci-workflow-notes.md.
   ci:
     name: CI
     needs: build
-    # 'always()' is what makes this usable as a required check: without it the
-    # gate is skipped whenever a matrix entry fails, and a required check that
-    # never reports leaves the PR waiting forever instead of going red.
+    # Without 'always()' the gate is skipped when a matrix entry fails, and a
+    # required check that never reports leaves the pull request waiting.
     if: always()
     runs-on: ubuntu-latest
     steps:
     # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
-    # certain to open. Suite names carry their target ('IbanTest[jvm]',
-    # 'IbanTest[iosSimulatorArm64]', ...), so grouping by suite attributes each
-    # result without the 16 jobs having to be listed out here.
-    #
-    # Both steps are 'continue-on-error' on purpose. This job is the single
-    # required check; a missing artifact or a bad parse has to cost the summary
-    # and nothing else, and must never be able to turn a green matrix red.
+    # certain to open. Both steps are 'continue-on-error' on purpose: this job
+    # is the single required check, so a bad parse must cost the summary only.
     - name: Download test results
       if: always()
       continue-on-error: true
@@ -340,20 +282,18 @@ jobs:
         report_paths: 'test-results/**/*.xml'
         check_name: 'Test results (all targets)'
         annotate_only: true
-        # The matrix jobs have already annotated their own failures; repeating
-        # them here would double every one of them on the pull request.
+        # The matrix jobs have already annotated their own failures.
         skip_annotations: true
         detailed_summary: true
         group_suite: true
-        # Failures only: the per-target listings live on the matrix jobs, and
-        # every passing test across 12 jobs would not fit the summary anyway.
+        # Failures only; the per-target listings live on the matrix jobs.
         include_passed: false
         fail_on_failure: false
         require_tests: false
 
     - name: Check matrix result
-      # 'needs.build.result' is the combined result of all matrix entries:
-      # 'success' only when every one of them succeeded.
+      # The combined result of all matrix entries: 'success' only when every one
+      # of them succeeded.
       if: always()
       run: |
         echo "Build matrix result: ${{ needs.build.result }}"

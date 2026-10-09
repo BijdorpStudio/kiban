@@ -26,18 +26,9 @@ version = "0.6.0"
 
 ktfmt { kotlinLangStyle() }
 
-// Versioned API docs (#162). Every release overwrites GitHub Pages with the Dokka output of the
-// version being published, so without this a consumer still on an older line loses their reference
-// the moment the next release goes out. The versioning plugin turns the site into an archive: it
-// renders a version dropdown, keeps the version being generated at the root (so the Pages URL
-// always lands on the latest docs), and copies the versions handed to it below into 'older/'.
-//
-// The archive is not in this repository - it is the previously published site, restored by the
-// 'docs' job in 'publish.yml' and pointed at with this property. The property is deliberately
-// optional: with no value the DirectoryProperty stays unset and Dokka generates exactly the
-// single-version site it did before, which is what a local ':kiban:dokkaGeneratePublicationHtml'
-// wants and what the very first versioned release has to produce anyway (no archive exists yet).
-// See docs/162-versioned-api-docs.md.
+// The previously published Dokka site, which the versioning plugin puts behind a version
+// dropdown. Deliberately optional: unset, Dokka generates a plain single-version site. See
+// docs/209-build-script-notes.md and docs/162-versioned-api-docs.md.
 val previousDocVersionsDir: Provider<Directory> =
     providers.gradleProperty("kiban.previousDocVersions").map { path ->
         // Absolute in CI; resolved against the project directory otherwise, as Gradle's own
@@ -49,10 +40,9 @@ dependencies { dokkaPlugin(libs.dokka.versioning.plugin) }
 
 dokka {
     // No moduleName: Dokka defaults it to the Gradle project name, which is the published
-    // artifact name (#208).
+    // artifact name.
     pluginsConfiguration.versioning {
-        // The version of the docs being generated, which is the version being released: the tag
-        // guard in 'publish.yml' has already checked that these agree.
+        // The version being released; 'publish.yml' has already checked the tag agrees.
         version.set(project.version.toString())
         olderVersionsDir.set(previousDocVersionsDir)
     }
@@ -71,39 +61,17 @@ tapmoc {
 }
 
 kotlin {
-    // Binary compatibility validation, the tooling the 1.0 guarantee rests on (#150, #179). This is
-    // the Kotlin Gradle plugin's own implementation rather than the standalone
-    // binary-compatibility-validator, which is in maintenance mode with new work going here
-    // instead (#182). Dumps land in 'kiban/api' in the same layout and format the standalone
-    // plugin used, so the committed reference files carried over.
-    //
-    // Since Kotlin 2.4.20 the android target gets its own JVM-class dump,
-    // 'kiban/api/android/kiban.api', alongside the jvm one; 2.4.10 and the standalone plugin
-    // before it dumped neither (see docs/182-builtin-abi-validation.md). It is byte-identical to
-    // the jvm dump and will stay that way while there is no 'androidMain' source set: both
-    // targets compile commonMain alone, and jvmMain holds only the 'IBAN' typealias, which is
-    // erased and so reaches no dump. The duplication is the tool's, not a choice made here -
-    // suppressing it would drop the android surface from validation instead of deduplicating it.
-    //
-    // The consequence for anyone running this task: 'checkKotlinAbi' now needs an Android SDK,
-    // because dumping that target compiles androidMain. See CLAUDE.md.
-    //
-    // Nothing to switch on: calling the block is what enables validation - the 'enabled' property
-    // it took in Kotlin 2.2 is gone, as is the 'klib { enabled }' that turned klib dumping on,
-    // because klib-based targets are now always dumped.
+    // Binary compatibility validation, the tooling the 1.0 guarantee rests on. Calling the block
+    // is what enables it; 'checkKotlinAbi' needs an Android SDK (see CLAUDE.md). See
+    // docs/209-build-script-notes.md and docs/182-builtin-abi-validation.md.
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        // Keeps a target the publishing host cannot build in the dump instead of dropping it,
-        // which is what makes a check on one host agree with a check on another - the counterpart
-        // of 'kotlin.native.ignoreDisabledTargets' in gradle.properties. Not exercised by a Linux
-        // container or by CI's runners: every klib target here compiles on both, Apple ones
-        // included, since a klib needs no Xcode. It is set for the host that cannot.
+        // Keeps a target the publishing host cannot build in the dump instead of dropping it, so a
+        // check on one host agrees with a check on another.
         keepLocallyUnsupportedTargets.set(true)
     }
 
-    // Every public declaration must state its visibility and return type deliberately, so nothing
-    // reaches the frozen API surface by omission. Applies to production source sets only; test
-    // sources are exempt.
+    // Nothing may reach the frozen API surface by omission; production source sets only.
     explicitApi()
 
     jvm()
@@ -147,15 +115,14 @@ kotlin {
             implementation(libs.testballoon.framework.core)
         }
         // TestBalloon runs Android host-side tests through the JUnit 4 runner, which the Android
-        // target does not put on the test classpath by itself.
+        // target does not put on the test classpath itself.
         named("androidHostTest").dependencies { implementation(libs.junit) }
     }
 }
 
 // Off only for the mavenLocal consumption probe (samples/consumption-probe), which has no signing
-// key: applied, every local publish fails on "No configured signatory", and skipping the Sign tasks
-// with '-x' fails on the missing '.asc' files instead. 'publish.yml' never sets this, so a release
-// still signs or fails.
+// key. 'publish.yml' never sets this, so a release still signs or fails. See
+// docs/209-build-script-notes.md.
 val signPublications: Boolean =
     providers.gradleProperty("kiban.signPublications").map(String::toBoolean).getOrElse(true)
 
@@ -168,7 +135,7 @@ mavenPublishing {
 
     coordinates(group.toString(), "kiban", version.toString())
 
-    // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar (see #78).
+    // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar.
     configure(
         KotlinMultiplatform(
             javadocJar = JavadocJar.Empty(),
@@ -213,11 +180,8 @@ mavenPublishing {
     }
 }
 
-// Guards against a publishing that silently ships a partial artifact set: if a declared
-// Kotlin target's toolchain is missing on the publishing host, kotlin.native.ignoreDisabledTargets
-// (needed for local dev and PR CI, where no single host can build every target) would otherwise
-// skip it without failing the build. This diffs the declared targets against the publications
-// the maven-publish plugin actually registered and fails before any upload happens.
+// Guards against a publish that silently ships a partial artifact set, by diffing the declared
+// Kotlin targets against the registered Maven publications. See docs/209-build-script-notes.md.
 val verifyPublicationTargets =
     tasks.register("verifyPublicationTargets") {
         group = "verification"
@@ -248,23 +212,12 @@ val verifyPublicationTargets =
 
 tasks.withType<PublishToMavenRepository>().configureEach { dependsOn(verifyPublicationTargets) }
 
-// linuxArm64 is published but has never run a test. Kotlin/Native has no Linux/ARM64 *host*
-// compiler, so no machine can both build and run the target: an ARM64 runner cannot build it at
-// all, and on the linux-x86_64 host that cross-compiles it the Kotlin Gradle plugin registers no
-// test task, because that host cannot execute what it produces (#151).
+// KGP registers no test task for linuxArm64, so this runs the cross-compiled binary under the
+// qemu-aarch64 emulator the Kotlin/Native toolchain ships. Every detail of this block, and why
+// each guard is there, is in docs/209-build-script-notes.md - read that before changing it.
 //
-// The toolchain that cross-compiles the target ships what it takes to run it anyway.
-// konan.properties declares a qemu-aarch64 user-mode emulator for the linux_x64-linux_arm64 pair,
-// and the aarch64 sysroot the binary is linked against comes down with the same toolchain, so
-// emulator, sysroot and binary always match. Pointing a KotlinNativeHostTest at the emulator gives
-// the target the same treatment as every other one: Gradle reads the results out of the binary's
-// TeamCity service messages, writes the JUnit XML that CI reports from, and fails the build on a
-// failing test. The binary's own exit code says nothing - KGP invokes it with
-// '--ktest_no_exit_code', and it exits 0 whatever the tests did.
-//
-// Guarded on the link task's existence because 'kotlin.native.ignoreDisabledTargets' (set in
-// gradle.properties) drops targets the host cannot build: where there is nothing to link there is
-// nothing to run, and this must not fail configuration for every other task on that host.
+// Guarded on the link task's existence: 'kotlin.native.ignoreDisabledTargets' drops targets the
+// host cannot build, and this must not fail configuration for every other task there.
 if ("linkDebugTestLinuxArm64" in tasks.names) {
 
     val linuxArm64TestLink = tasks.named<KotlinNativeLink>("linkDebugTestLinuxArm64")
@@ -276,12 +229,11 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
         targetName = "linuxArm64"
         workingDir = projectDir.absolutePath
 
-        // linux_x64 is the only host konan.properties declares an emulator for. Elsewhere the
-        // task is disabled rather than failing, which is how KGP treats a test task it cannot run.
+        // linux_x64 is the only host konan.properties declares an emulator for; elsewhere the
+        // task is disabled rather than failing.
         enabled = HostManager.hostOrNull == KonanTarget.LINUX_X64
 
-        // KGP puts these under the task name; they are set explicitly because the helper that
-        // applies that convention lives in an internal package.
+        // Set explicitly because the helper applying KGP's own convention is internal.
         binaryResultsDirectory.set(layout.buildDirectory.dir("test-results/$name/binary"))
         reports.junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/$name"))
         reports.html.outputLocation.set(layout.buildDirectory.dir("reports/tests/$name"))
@@ -292,13 +244,9 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
         // Declaring it keeps a rebuilt binary from being reported as up to date.
         inputs.file(testBinary).withPropertyName("testBinary")
 
-        // The emulator and the sysroot it needs to load an aarch64 binary both live under the
-        // konan dependencies directory, in a directory whose name carries the dependency's
-        // version. Resolved while the task runs rather than while the build is configured: the
-        // link task above is what downloads them, so on a cold machine neither exists yet.
-        //
-        // The lookup is a local function rather than a shared one so that the lambda captures
-        // nothing from the build script, which is what keeps the provider configuration-cacheable.
+        // Resolved while the task runs, because the link task above is what downloads them. The
+        // lookup is local so the lambda captures nothing and the provider stays
+        // configuration-cacheable.
         val emulatorAndSysroot =
             providers
                 .environmentVariable("KONAN_DATA_DIR")
@@ -306,9 +254,8 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
                 .map { konanDataDir ->
                     val dependencies = File(konanDataDir, "dependencies")
                     fun dependency(prefix: String, path: String): File {
-                        // 'listFiles' is in filesystem order, and a Kotlin upgrade can leave the
-                        // previous version's directory behind, so the highest name wins rather
-                        // than whichever one is listed last.
+                        // The highest version wins: 'listFiles' is in filesystem order and a
+                        // Kotlin upgrade can leave the previous version's directory behind.
                         val root =
                             dependencies
                                 .listFiles()
@@ -316,8 +263,8 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
                                 .filter { it.name.startsWith(prefix) }
                                 .maxByOrNull { it.name }
                                 ?: error("No Kotlin/Native dependency '$prefix*' in $dependencies.")
-                        // Checked because 'executable' is '@SkipWhenEmpty': a path that does not
-                        // exist would skip the task silently instead of failing it.
+                        // 'executable' is '@SkipWhenEmpty', so a missing path would skip the
+                        // task silently instead of failing it.
                         return root.resolve(path).also {
                             check(it.exists()) { "Kotlin/Native dependency has no $it." }
                         }
@@ -330,9 +277,8 @@ if ("linkDebugTestLinuxArm64" in tasks.names) {
                 }
 
         executable(emulatorAndSysroot.map { (emulator, _) -> emulator })
-        // 'args' takes no provider, so it is set once the link task has run. The emulator passes
-        // everything after the binary through to it, which is where KGP appends its own
-        // '--ktest_logger=TEAMCITY' and friends: the arguments set here come first.
+        // 'args' takes no provider, so it is set once the link task has run. Everything after the
+        // binary is passed through to it, which is where KGP appends its own arguments.
         doFirst {
             val (_, sysroot) = emulatorAndSysroot.get()
             args = listOf("-L", sysroot.absolutePath, testBinary.get().absolutePath)

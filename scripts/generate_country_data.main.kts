@@ -4,8 +4,7 @@
  *
  * The SWIFT registry TXT ("IBAN Registry (TXT)" on
  * https://www.swift.com/standards/data-standards/iban) must be downloaded manually in a
- * browser - the endpoint blocks non-browser HTTP clients - and must NOT be committed to
- * this repository (it is not redistributable).
+ * browser and must NOT be committed to this repository (it is not redistributable).
  *
  * Usage:
  *     kotlin scripts/generate_country_data.main.kts --registry ~/Downloads/iban-registry-v102.txt --rev 102
@@ -18,13 +17,10 @@
  * Every entry is validated before anything is written:
  *  - the example IBAN passes the mod-97 check, has the declared length and country prefix;
  *  - bank/branch identifiers extracted via the declared positions must equal the registry's
- *    own independent "Bank identifier example" / "Branch identifier example" fields, so the
- *    position encoding is cross-checked against data it was not derived from.
+ *    own independent "Bank identifier example" / "Branch identifier example" fields.
  *
  * --self-check runs the parser, the overlay merge and the validation over the fixtures in
- * scripts/testdata/ - invented countries in the registry's own format, because the real TXT
- * cannot be committed - and exits without writing anything. It is what turns a format-handling
- * regression into a failing check rather than a bad weekly sync.
+ * scripts/testdata/ and exits without writing anything.
  */
 
 @file:DependsOn("com.jsoizo:kotlin-csv-jvm:1.10.0")
@@ -495,9 +491,8 @@ fun generate() {
 // ---------------------------------------------------------------------------
 // Self-check: offline assertions over the parser, against synthetic registries
 //
-// The SWIFT registry TXT cannot be committed, so the fixtures invent their countries on ISO 3166
-// user-assigned codes, which no real registry revision can ever hand out. scripts/testdata/README.md
-// says which quirk each country stands for; keep the two in step when either changes.
+// The fixtures invent their countries on ISO 3166 user-assigned codes; scripts/testdata/README.md
+// says which quirk each one stands for. Keep the two in step.
 // ---------------------------------------------------------------------------
 
 fun selfCheck() {

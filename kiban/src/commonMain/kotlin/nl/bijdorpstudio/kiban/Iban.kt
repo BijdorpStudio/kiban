@@ -50,30 +50,16 @@ public class Iban private constructor(internal val value: String) : Comparable<I
      */
     public val isSepa: Boolean
 
-    /**
-     * Pretty-printed value, computed during construction.
-     *
-     * Eager rather than `by lazy`: the [Lazy] instance and the published field behind it cost more
-     * memory than the at most 34-character string they would defer, and an [Iban] is an immutable
-     * value shared freely between threads, so a lazy here would have to be the thread-safe kind and
-     * pay for a volatile read on every [toString] as well.
-     */
+    /** Pretty-printed value, computed eagerly during construction. */
     public val pretty: String
 
     /**
      * Index of this IBAN's country in the reference data, or negative when the country is unknown.
-     *
-     * Resolved once here rather than per property read: every country-dependent value on an [Iban]
-     * is a lookup into the same row, and the binary search that finds it is the expensive part.
-     * Construction is only reachable through [validate], which rejects an unknown country code, so
-     * this is negative only for an [Iban] that cannot exist.
+     * Resolved once here; see docs/209-implementation-notes.md.
      */
     private val countryIndex: Int
 
-    /**
-     * Initializing constructor. Validation happens before construction, so this constructor cannot
-     * fail. the IBAN value, without any spaces, already validated by the caller.
-     */
+    /** Initializing constructor. Validation happens before construction, so this cannot fail. */
     init {
         val index: Int = CountryCodes.indexOf(value.substring(0, 2))
         this.countryIndex = index
@@ -185,13 +171,8 @@ public class Iban private constructor(internal val value: String) : Comparable<I
 
         /**
          * Parses the given string into an IBAN object and confirms the check digits. Identical to
-         * [invoke] in every way; it exists because `invoke` has no call syntax outside Kotlin.
-         * `Iban(input)` reads as `Iban.Companion.invoke(...)` from Java and
-         * `Iban.companion.invoke(input:)` from Swift, neither of which is an API anyone would write
-         * on purpose. Kotlin callers should keep using `Iban(input)`.
-         *
-         * The name follows the `java-iban` heritage this library continues, and reads naturally
-         * next to [String.toIban] and [String.toIbanOrNull].
+         * [invoke] in every way; it exists because `invoke` has no call syntax outside Kotlin, and
+         * Kotlin callers should keep using `Iban(input)`. See docs/209-api-design-notes.md.
          *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
@@ -264,13 +245,9 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                         Rejection.UnknownCountryCode(value, countryCode)
                     }
             if (expectedLength != value.length) {
-                // A character the IBAN character set does not contain — a tab, a non-breaking
-                // space, a '$' — adds to the length just like a legitimate character does, so the
-                // length is only the interesting failure once the characters are known to be
-                // legitimate. Correct-length input carrying such a character is caught below, by
-                // Modulo97; without this the two paths would blame different things for the same
-                // mistake. Deliberately not hoisted above the length comparison: the scan is
-                // wasted work for the valid input that is the hot path here.
+                // A character outside the IBAN character set adds to the length like any other, so
+                // it is named here rather than reported as a wrong length. Deliberately not
+                // hoisted above the comparison; see docs/209-implementation-notes.md.
                 val invalidCharacter = invalidCharacterIn(value)
                 if (invalidCharacter != null) {
                     return Rejection.Malformed(value, invalidCharacter)
@@ -281,10 +258,8 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                 try {
                     Modulo97.checksum(value)
                 } catch (e: IllegalArgumentException) {
-                    // Modulo97 rejects an input for a character outside the IBAN character set,
-                    // which the scan names, or for holding fewer than five non-space characters,
-                    // which cannot happen here: the length was already matched against the
-                    // country's registered length.
+                    // Only reachable for a character outside the IBAN character set, which the
+                    // scan names; see docs/209-implementation-notes.md.
                     return Rejection.Malformed(
                         value,
                         invalidCharacterIn(value)
@@ -316,9 +291,8 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                     .append(bban)
             val checkDigits =
                 try {
-                    // The two-arg overload validates the country code before assembling the
-                    // check digit input. The one-arg overload would compute against the wrong
-                    // indices when the country code is not exactly two characters.
+                    // The two-arg overload validates the country code first; the one-arg one would
+                    // compute against the wrong indices for a country code of another length.
                     Modulo97.calculateCheckDigits(countryCode, bban)
                 } catch (e: IllegalArgumentException) {
                     throw IbanParseException.Malformed(
@@ -347,16 +321,13 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          * written in the wrong case. Such input stays rejected — kiban rejects rather than
          * normalizes — but it deserves a better diagnosis than "unknown country code", because the
          * country is known.
-         *
-         * Only called once the code has already failed the [CountryCodes.ibanLength] lookup, so
-         * both early returns keep a doomed input from paying for a second binary search.
          */
         private fun isKnownCountryCodeInWrongCase(countryCode: String): Boolean {
             val first: Char = countryCode[0]
             val second: Char = countryCode[1]
+            // Both early returns spare a doomed input a second binary search; see
+            // docs/209-implementation-notes.md.
             if (!first.isAsciiLetter() || !second.isAsciiLetter()) return false
-            // An all-upper-case code that failed the lookup is genuinely unknown: upper-casing it
-            // cannot change the outcome.
             if (!first.isAsciiLowerCase() && !second.isAsciiLowerCase()) return false
             return CountryCodes.ibanLength(
                 charArrayOf(first.uppercaseAscii(), second.uppercaseAscii()).concatToString()
@@ -369,27 +340,23 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          * space that [addSpaces] emits is grouping, every other whitespace character is a character
          * an IBAN cannot contain and is left in place for [validate] to reject.
          *
-         * A stored IBAN usually holds no space at all, so the scan for one comes first: finding
-         * none means the input is already plain and only has to be materialized as a [String],
-         * which costs nothing at all when it is one.
-         *
          * @param input possibly pretty printed IBAN
          * @return plain IBAN
          */
         internal fun toPlain(input: CharSequence): String =
+            // The scan comes first because a stored IBAN usually holds no space at all; see
+            // docs/209-implementation-notes.md.
             if (input.indexOf(' ') < 0) input.toString() else input.filter { it != ' ' }.toString()
 
         /**
          * Converts a plain to a pretty printed IBAN.
          *
-         * Writes straight into a [StringBuilder] sized for the result rather than going through
-         * `chunked(4).joinToString(" ")`, which allocates a list and a string per group of four on
-         * a path every [Iban] construction now runs.
-         *
          * @param value plain iban
          * @return pretty printed IBAN
          */
         internal fun addSpaces(value: CharSequence): String {
+            // Written into a pre-sized StringBuilder rather than through chunked().joinToString();
+            // see docs/209-implementation-notes.md.
             val length: Int = value.length
             val builder = StringBuilder(length + (length - 1) / GROUP_SIZE)
             for (i in 0..<length) {
@@ -408,21 +375,12 @@ public class Iban private constructor(internal val value: String) : Comparable<I
  *
  * The receiver is deliberately [String] and not [CharSequence], even though [Iban.invoke],
  * [Iban.compose], [Modulo97] and [CountryCodes] all accept any [CharSequence]. The asymmetry is the
- * decision, not an oversight:
- * * These three extensions are the Kotlin-idiomatic sugar, and Kotlin's own conversion extensions —
- *   `toInt()`, `toLong()`, `toBoolean()` — are declared on [String] too. Reading
- *   `"NL91ABNA0417164300".toIban()` as a peer of `"42".toInt()` is the whole point of their
- *   existence.
- * * A [String] receiver exports as an `NSString *` parameter of the generated `IbanKt` facade, so
- *   `IbanKt.toIban(_:)` stays type-checked at the Swift call site. A [CharSequence] receiver has no
- *   Objective-C counterpart and erases to an untyped `id`, which moves the mistake of passing the
- *   wrong thing from compile time to a runtime cast failure.
+ * decision, not an oversight; see docs/209-api-design-notes.md.
  *
  * Callers holding something else — a `StringBuilder`, an Android `Editable`, a slice of a larger
  * buffer — are not shut out: [Iban.invoke] and [Iban.parse] take a [CharSequence] directly and
  * parse identically. The exception-free pair has no [CharSequence] counterpart, so
- * `builder.toString().toIbanOrNull()` is the way there — one copy of input that validation
- * materializes into a [String] internally regardless.
+ * `builder.toString().toIbanOrNull()` is the way there.
  *
  * @return the parsed and validated IBAN object.
  * @throws IbanParseException describing why the input was rejected.
@@ -431,8 +389,8 @@ public class Iban private constructor(internal val value: String) : Comparable<I
 @Throws(IbanParseException::class)
 public fun String.toIban(): Iban =
     when (val rejection = Iban.validate(this)) {
-        // Must stay ofValidated, not Iban(...): this is a top-level function, so Iban(...) here
-        // would resolve to invoke and re-run validate() on an input already known to be valid.
+        // Must stay ofValidated: Iban(...) in a top-level function resolves to invoke, which would
+        // validate a second time.
         null -> Iban.ofValidated(Iban.toPlain(this))
         else -> throw rejection.toException()
     }
@@ -464,9 +422,7 @@ private const val GROUP_SIZE = 4
 
 /**
  * Bit 5 of an ASCII letter is its case bit: setting it maps `A`-`Z` onto `a`-`z` and clearing it
- * maps them back. Testing a letter of either case is therefore one range check rather than two, and
- * upper-casing one is a single mask rather than a trip through the Unicode case tables that
- * [Char.uppercaseChar] consults.
+ * maps them back, which is what the helpers below fold with. See docs/209-implementation-notes.md.
  */
 private const val ASCII_CASE_BIT = 0x20
 
@@ -478,8 +434,7 @@ private fun Char.isAsciiDigit(): Boolean = this in '0'..'9'
 
 /**
  * Whether this is an ASCII letter of either case. Deliberately not [Char.isLetter], for the same
- * reason as [isAsciiDigit]: folding the case first keeps this to a single range check, and folding
- * a non-ASCII character can only move it further outside `a`-`z`.
+ * reason as [isAsciiDigit].
  */
 private fun Char.isAsciiLetter(): Boolean = (code or ASCII_CASE_BIT).toChar() in 'a'..'z'
 

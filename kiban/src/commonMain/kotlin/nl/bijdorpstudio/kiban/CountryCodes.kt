@@ -59,9 +59,8 @@ public object CountryCodes {
     /**
      * Returns the index of the given country code by binary search.
      *
-     * Searches [COUNTRY_CODES] directly rather than through `asList().binarySearch(..)`: every
-     * lookup on the parse path goes through here, and the list wrapper is an allocation per call
-     * that buys nothing.
+     * Searches [COUNTRY_CODES] directly rather than through `asList().binarySearch(..)`; see
+     * docs/209-implementation-notes.md.
      *
      * @param countryCode a country code.
      * @return the array index, or the inverted insertion point (`-(insertionPoint + 1)`, always
@@ -85,9 +84,8 @@ public object CountryCodes {
     /**
      * Returns the bank identifier from the given plain IBAN, if available.
      *
-     * Takes the already-resolved reference data index rather than looking the country up again: an
-     * [Iban] resolves its index once during construction and every country-dependent property reads
-     * the same row.
+     * Takes the already-resolved reference data index rather than looking the country up again; see
+     * docs/209-implementation-notes.md.
      *
      * @param index the index returned by [indexOf] for this IBAN's country code.
      * @param plain the IBAN value, without any spaces.
@@ -175,9 +173,8 @@ public object CountryCodes {
     /**
      * The known country codes, upper case, in alphabetical order.
      *
-     * The list is a defensive, immutable copy of the library's reference data: it rejects every
-     * mutation attempt with an [UnsupportedOperationException], including through a cast to
-     * `MutableList`.
+     * A defensive, immutable copy of the library's reference data: it rejects every mutation
+     * attempt with an [UnsupportedOperationException], including through a cast to `MutableList`.
      */
     public val knownCountryCodes: List<String> = buildList { addAll(COUNTRY_CODES) }
 
@@ -196,18 +193,12 @@ public object CountryCodes {
      * Returns the date that the IBAN reference data was last updated.
      *
      * The SWIFT IBAN Registry dates its releases to the day, so the value carried here is a date,
-     * not a moment. With no `LocalDate` in the standard library and a zero-dependency constraint
-     * that rules out `kotlinx-datetime`, it is encoded as the [Instant] at midnight UTC on that
-     * date. That encoding is part of the contract: the returned instant always has a zero
-     * time-of-day component and renders as `yyyy-mm-ddT00:00:00Z`. Read the date off it, not the
-     * time of day, and do not read a local calendar date off it in a non-UTC zone.
-     *
-     * [Instant] is safe to depend on here: it is a stable, non-experimental standard library type
-     * from Kotlin 2.3 onwards, which is also this library's minimum supported Kotlin version. See
-     * `docs/144-instant-api-stability.md` for the analysis behind freezing it into the API.
-     *
-     * Parsed once, when this object initializes: the encoded date is a compile-time constant, so
-     * re-parsing it on every read would buy nothing.
+     * not a moment: it is the [Instant] at midnight UTC on that date. That encoding is part of the
+     * contract — the returned instant always has a zero time-of-day component and renders as
+     * `yyyy-mm-ddT00:00:00Z`. Read the date off it, not the time of day, and do not read a local
+     * calendar date off it in a non-UTC zone. See docs/209-api-design-notes.md for why it is an
+     * [Instant] and docs/144-instant-api-stability.md for the analysis behind freezing that into
+     * the API.
      *
      * @return the last update date of the reference data in this library.
      */
