@@ -22,7 +22,7 @@
   rule is written down in [VERSIONING.md](VERSIONING.md). Note that the feature is experimental —
   `ExperimentalVersionOverloading` is `@RequiresOptIn(level = ERROR)` — and that the 2.3.0 floor's
   original reason (`kotlin.time.Instant` stabilising at 2.3, see
-  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md)) is subsumed by the new
+  [docs/instant-api-stability.md](docs/instant-api-stability.md)) is subsumed by the new
   floor but still bounds it from below.
 
 * `IbanParseException.Malformed.Kind` is a sealed class hierarchy instead of an enum (#148). The
@@ -156,7 +156,7 @@
 * Added `Iban.parse(input)`, a named alias for `Iban(input)`, and made it and `Iban.compose(...)`
   `@JvmStatic` (#139). `Iban(input)` is `operator fun invoke` on the companion object, and Kotlin is
   the only language with call syntax for it: Java reads it as `Iban.Companion.invoke(...)` and — as
-  `docs/9-swift-interop-review.md` confirmed against a real `Kiban.xcframework` — Swift reads it as
+  `docs/swift-interop-review.md` confirmed against a real `Kiban.xcframework` — Swift reads it as
   `Iban.companion.invoke(input:)`, which is why `samples/swift-console` avoided it. `parse` carries
   the same `@Throws(IbanParseException::class)` contract and delegates straight to `invoke`, so
   there is no second parsing path to keep in step; `@JvmStatic` puts `parse` and `compose` directly
@@ -240,7 +240,7 @@
   at 2.3, so a consumer compiling below that `apiVersion` is asked to opt in to read that one
   property; and the midnight-UTC encoding is contract, not an implementation detail of the getter.
   The investigation behind freezing `Instant` into the 1.0 API is in
-  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+  [docs/instant-api-stability.md](docs/instant-api-stability.md).
 
 * Settled the `String` versus `CharSequence` receiver question for `toIban()`, `toIbanOrNull()` and
   `isValidIban()`, and wrote the reasoning down (#143). The extensions keep their `String`
@@ -306,7 +306,18 @@
   `iosX64` would break every iOS build on an Intel Mac to buy symmetry. The rule is now policy in
   [VERSIONING.md](VERSIONING.md), the README lists the targets by name instead of by platform, and
   the reasoning and evidence are in
-  [docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
+  [docs/intel-target-policy.md](docs/intel-target-policy.md).
+
+* Gave `docs/` an index and title-first file names (#214). The ten design write-ups were named by
+  issue number (`9-swift-interop-review.md`, `182-builtin-abi-validation.md`), so finding the Swift
+  interop review meant knowing it was #9 and the directory listing sorted in an order that meant
+  nothing. Each page is now named after its subject (`swift-interop-review.md`,
+  `builtin-abi-validation.md`), and [docs/README.md](docs/README.md) lists all ten with a one-line
+  summary of what each one decides, grouped by API design, build and test tooling, and CI and
+  release infrastructure. The issue each page answers is still in the page's first lines and in the
+  index, so the number is not lost; every link from the README, CHANGELOG, VERSIONING, MIGRATION,
+  RELEASING, the samples, the build scripts, the version catalog and the workflows was updated with
+  the rename, and the README's design section now points at the index.
 
 **Infrastructure**
 
@@ -324,7 +335,7 @@
 
 * Replaced the standalone `binary-compatibility-validator` plugin with the ABI validation built into
   the Kotlin Gradle plugin (#182), acting on the investigation in
-  [docs/182-builtin-abi-validation.md](docs/182-builtin-abi-validation.md). `apiCheck` and `apiDump`
+  [docs/builtin-abi-validation.md](docs/builtin-abi-validation.md). `apiCheck` and `apiDump`
   become `checkKotlinAbi` and `updateKotlinAbi`; the dumps stay where they are, in the same layout
   and format, so `library/api/library.klib.api` comes out byte-identical and every published Native,
   JS and Wasm target is covered exactly as before. The standalone plugin is in maintenance mode by
@@ -347,7 +358,7 @@
   corrected accordingly.
 
 * Migrated the test suite from `kotlin.test` to [TestBalloon](https://github.com/infix-de/testBalloon)
-  (#115), acting on the evaluation in `docs/82-testballoon-evaluation.md`. The country table used to be
+  (#115), acting on the evaluation in `docs/testballoon-evaluation.md`. The country table used to be
   folded into an assertk `Table1` and looped inside a handful of `@Test` methods, so all 111 countries
   collapsed into 3 reported cases: a registry update that broke one country failed one opaque test and
   stopped the loop, which is exactly the report a reviewer reads first on the automated registry-sync
@@ -496,7 +507,7 @@
   configure, including the deployment-branch rule to avoid, since the publish runs on a tag ref.
 
 * Two supply-chain additions for 1.0 (#160), each covering a question nothing here answered before.
-  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md) records the choices, the
+  [docs/supply-chain-posture.md](docs/supply-chain-posture.md) records the choices, the
   options that were rejected, and why the issue's third item needed no change: **CodeQL** is
   already enabled on this repository through default setup, which analyses `java-kotlin` and
   `actions` on every pull request without leaving a file in `.github/workflows` to notice. An
@@ -541,7 +552,7 @@
   release, so it never accumulates history) rather than in `main`, where a full Dokka site per
   release would dominate every clone. The job that pushes that branch is separate from the one that
   runs Gradle, so `contents: write` never sits on a job running project build logic. See
-  [docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
+  [docs/versioned-api-docs.md](docs/versioned-api-docs.md).
 
 * TestBalloon moved from `1.1.0-RC` to the released `1.1.0` (#153). The whole verification suite —
   the thing that gates `publish.yml` — was running on a release candidate, which is not what a 1.0

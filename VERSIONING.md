@@ -162,7 +162,7 @@ The Kotlin floor is load-bearing rather than incidental, and two separate things
   non-experimental from 2.3. That is subsumed by the 2.4 floor, but it is why the floor can never go
   *below* 2.3 — a lower one turns a frozen public API into one that demands
   `@OptIn(kotlin.time.ExperimentalTime::class)` from callers. See
-  [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+  [docs/instant-api-stability.md](docs/instant-api-stability.md).
 
 The floor moved from 2.3.0 to 2.4.0 deliberately before the freeze rather than after it: pre-1.0 the
 break costs a minor, and from 1.0 the rule above would make the same move cost a major and strand
@@ -188,7 +188,7 @@ that a major is coming, with the compiler warning on `library/build.gradle.kts` 
 is why the Apple set is not uniform by architecture: `macosX64` is deprecated and gone, while the
 Intel iOS simulator target `iosX64` is not deprecated and stays, since dropping it would break
 every iOS build on an Intel Mac to buy nothing but symmetry. See
-[docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
+[docs/intel-target-policy.md](docs/intel-target-policy.md).
 
 The `js` and `wasmJs` artifacts serve Kotlin/JS and Kotlin/Wasm consumers. Nothing is annotated
 `@JsExport`, so no JavaScript- or TypeScript-facing surface exists and none is frozen by 1.0.

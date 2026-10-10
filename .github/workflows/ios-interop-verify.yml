@@ -18,7 +18,7 @@
 # gets, with the header dump above it. The #9 interop research probes (Result<Iban> erasure,
 # the IbanParseException hierarchy, undeclared-throw behavior) and the Swift Export experiment
 # live on the swift-export-playground branch, with their findings recorded in
-# docs/9-swift-interop-review.md.
+# docs/swift-interop-review.md.
 name: iOS/Swift interop verification
 
 on:

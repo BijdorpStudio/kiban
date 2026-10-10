@@ -37,7 +37,7 @@ ktfmt { kotlinLangStyle() }
 // optional: with no value the DirectoryProperty stays unset and Dokka generates exactly the
 // single-version site it did before, which is what a local ':kiban:dokkaGeneratePublicationHtml'
 // wants and what the very first versioned release has to produce anyway (no archive exists yet).
-// See docs/162-versioned-api-docs.md.
+// See docs/versioned-api-docs.md.
 val previousDocVersionsDir: Provider<Directory> =
     providers.gradleProperty("kiban.previousDocVersions").map { path ->
         // Absolute in CI; resolved against the project directory otherwise, as Gradle's own
@@ -79,7 +79,7 @@ kotlin {
     //
     // Since Kotlin 2.4.20 the android target gets its own JVM-class dump,
     // 'kiban/api/android/kiban.api', alongside the jvm one; 2.4.10 and the standalone plugin
-    // before it dumped neither (see docs/182-builtin-abi-validation.md). It is byte-identical to
+    // before it dumped neither (see docs/builtin-abi-validation.md). It is byte-identical to
     // the jvm dump and will stay that way while there is no 'androidMain' source set: both
     // targets compile commonMain alone, and jvmMain holds only the 'IBAN' typealias, which is
     // erased and so reaches no dump. The duplication is the tool's, not a choice made here -

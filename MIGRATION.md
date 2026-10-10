@@ -15,7 +15,7 @@ still add to this guide.
 
 0.4.0 made `Iban.parse`, `Iban(...)`, `String.toIban()` and `Iban.compose` return `Result<Iban>` instead of
 throwing. That shape didn't survive the trip to Swift (see
-[`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md)), so 0.5.0 reverts it: parsing is strict again
+[`docs/swift-interop-review.md`](docs/swift-interop-review.md)), so 0.5.0 reverts it: parsing is strict again
 and throws a typed `IbanParseException`. 0.5.0 also removes every member that was `@Deprecated` in 0.4.0 and
 earlier — there are no replacements to reach for beyond what's listed here.
 

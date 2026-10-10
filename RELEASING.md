@@ -126,7 +126,7 @@ What is worth knowing when reading a release:
   the archive starts from that release onwards.
 
 The full reasoning, including the storage options that were rejected, is in
-[docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
+[docs/versioned-api-docs.md](docs/versioned-api-docs.md).
 
 ## After the release — open the next cycle
 
