@@ -23,7 +23,7 @@ This Kotlin Multiplatform library is a continuation and re-implementation of the
 
 ### Background
 
-The original [`java-iban`]((https://github.com/barend/java-iban)) library laid a solid foundation for IBAN validation and utility functions in Java environments. This library reimagines those capabilities with Kotlin's cross-platform features, making it ready for use on multiple platforms such as JVM, Android, iOS, and more.
+The original [`java-iban`](https://github.com/barend/java-iban) library laid a solid foundation for IBAN validation and utility functions in Java environments. This library reimagines those capabilities with Kotlin's cross-platform features, making it ready for use on multiple platforms such as JVM, Android, iOS, and more.
 
 ## Features
 
@@ -83,19 +83,10 @@ it — withdrawing it again would not be.
 | Android | `minSdk` **24** |
 | macOS | **Apple silicon only** — the macOS artifact and the macOS slice of the `Kiban` XCFramework have been `macosArm64` since 0.5.0, because Kotlin/Native deprecated `macosX64`. An Intel Mac building for the iOS simulator is unaffected: `iosX64` is still published |
 
-These are part of the compatibility contract rather than incidental facts about the current build:
-raising any of them breaks consumers who cannot follow, so it only happens in a major release. The
-Kotlin and Java floors are pinned by the `tapmoc` plugin, independently of the compiler the library
-is built with, which moves forward on its own schedule. See [VERSIONING.md](VERSIONING.md).
-
-The Kotlin floor is 2.4.0 so that an optional parameter can be added to a published function
-without breaking binary compatibility: `@IntroducedAt` and `ExperimentalVersionOverloading` do not
-resolve below a 2.4 `languageVersion`. It moved up from 2.3.0 before the 1.0 freeze deliberately,
-since afterwards the same move would cost a major release. A second constraint keeps it from ever
-going below 2.3: `CountryCodes.lastUpdateDate` returns `kotlin.time.Instant`, which the standard
-library only makes non-experimental from 2.3, so a lower floor would ask callers for
-`@OptIn(kotlin.time.ExperimentalTime::class)` to read a frozen public property. See
-[docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+These are part of the compatibility contract rather than incidental facts about the current build,
+so raising any of them only happens in a major release. What holds each floor up, and why the
+Kotlin one can move neither up after 1.0 nor below 2.3, is in
+[VERSIONING.md](VERSIONING.md#consumer-requirements).
 
 ## Use
 
@@ -116,74 +107,75 @@ space mid-IBAN is a paste artifact, not grouping, and is reported as an invalid 
 before parsing if your input layer can produce them.
 
 ``` kotlin
-    // The primary entry point. Throws IbanParseException on invalid input.
-    val iban: Iban = Iban( "NL91ABNA0417164300" )
+// The primary entry point. Throws IbanParseException on invalid input.
+val iban: Iban = Iban("NL91ABNA0417164300")
 
-    // Or use the String extension; same throwing behaviour.
-    val parsed: Iban = "NL91ABNA0417164300".toIban()
+// Or use the String extension; same throwing behaviour.
+val parsed: Iban = "NL91ABNA0417164300".toIban()
 
-    // Exception-free fast paths.
-    val orNull: Iban? = "NL91ABNA0417164301".toIbanOrNull() // null, check digits are wrong
-    val isValid: Boolean = "NL91ABNA0417164300".isValidIban() // true
+// Exception-free fast paths.
+val orNull: Iban? = "NL91ABNA0417164301".toIbanOrNull() // null, check digits are wrong
+val isValid: Boolean = "NL91ABNA0417164300".isValidIban() // true
 
-    // Failures carry a typed reason, so you never have to match on messages.
-    try {
-        Iban( input )
-    } catch ( failure: IbanParseException ) {
-        when ( failure ) {
-            is IbanParseException.UnknownCountryCode -> reportUnknown( failure.countryCode )
-            is IbanParseException.WrongLength -> reportLength( failure.expectedLength, failure.actualLength )
-            is IbanParseException.WrongChecksum -> reportChecksum()
-            is IbanParseException.Malformed -> reportMalformed( failure.kind )
-        }
+// Failures carry a typed reason, so you never have to match on messages.
+try {
+    Iban(input)
+} catch (failure: IbanParseException) {
+    when (failure) {
+        is IbanParseException.UnknownCountryCode -> reportUnknown(failure.countryCode)
+        is IbanParseException.WrongLength ->
+            reportLength(failure.expectedLength, failure.actualLength)
+        is IbanParseException.WrongChecksum -> reportChecksum()
+        is IbanParseException.Malformed -> reportMalformed(failure.kind)
     }
+}
 
-    // toString() emits standard formatting, plain is compact.
-    val formatted = iban.toString() // "NL91 ABNA 0417 1643 00"
-    val plain = iban.plain // "NL91ABNA0417164300"
+// toString() emits standard formatting, plain is compact.
+val formatted = iban.toString() // "NL91 ABNA 0417 1643 00"
+val plain = iban.plain // "NL91ABNA0417164300"
 
-    // Input may be formatted.
-    val anotherIban = Iban( "BE68 5390 0754 7034" )
+// Input may be formatted.
+val anotherIban = Iban("BE68 5390 0754 7034")
 
-    // Iban implements Comparable<T>.
-    val ibans = getListOfIBANs()
-    ibans.sorted() // sorts in lexical order
+// Iban implements Comparable<T>.
+val ibans = getListOfIBANs()
+ibans.sorted() // sorts in lexical order
 
-    // The equals() and hashCode() methods are implemented.
-    val ibansAsKeys = mutableMapOf<Iban, String>()
-    ibansAsKeys.put( iban, "this is fine" )
+// The equals() and hashCode() methods are implemented.
+val ibansAsKeys = mutableMapOf<Iban, String>()
+ibansAsKeys.put(iban, "this is fine")
 
-    // You can use the Modulo97 class directly to compute or verify the check digits on an input.
-    val candidate = "GB29 NWBK 6016 1331 9268 19"
-    val valid = Modulo97.verifyCheckDigits( candidate ) // true
+// You can use the Modulo97 class directly to compute or verify the check digits on an input.
+val candidate = "GB29 NWBK 6016 1331 9268 19"
+val valid = Modulo97.verifyCheckDigits(candidate) // true
 
-    // Compose the IBAN for a country and BBAN; also throws on invalid input.
-    Iban.compose( "BI", "10000100010000332045181" ) // BI4210000100010000332045181
+// Compose the IBAN for a country and BBAN; also throws on invalid input.
+Iban.compose("BI", "10000100010000332045181") // BI4210000100010000332045181
 
-    // You can query whether an IBAN is of a SEPA-participating country
-    val isSepa = Iban( candidate ).isSepa // true
+// You can query whether an IBAN is of a SEPA-participating country
+val isSepa = Iban(candidate).isSepa // true
 
-    // You can query whether an IBAN is in the SWIFT Registry
-    val isRegistered = Iban( candidate ).isInSwiftRegistry // true
+// You can query whether an IBAN is in the SWIFT Registry
+val isRegistered = Iban(candidate).isInSwiftRegistry // true
 
-    // Modulo97 API methods take CharSequence, not just String.
-    val builder = StringBuilder( "LU000019400644750000" )
-    val checkDigits = Modulo97.calculateCheckDigits( builder ) // 28
+// Modulo97 API methods take CharSequence, not just String.
+val builder = StringBuilder("LU000019400644750000")
+val checkDigits = Modulo97.calculateCheckDigits(builder) // 28
 
-    // Modulo97 API can calculate check digits, also for non-iban inputs.
-    // It does assume/require that the check digits are on indices 2 and 3.
-    Modulo97.calculateCheckDigits( "GB", "NWBK60161331926819" ) // 29
-    Modulo97.calculateCheckDigits( "XX", "X" ) // 72
+// Modulo97 API can calculate check digits, also for non-iban inputs.
+// It does assume/require that the check digits are on indices 2 and 3.
+Modulo97.calculateCheckDigits("GB", "NWBK60161331926819") // 29
+Modulo97.calculateCheckDigits("XX", "X") // 72
 
-    // Get the expected IBAN length for a country code:
-    val expectedLength: Int? = CountryCodes.ibanLength( "DK" ) // 18
+// Get the expected IBAN length for a country code:
+val expectedLength: Int? = CountryCodes.ibanLength("DK") // 18
 
-    // Get the Bank Identifier and Branch Identifier:
-    val bankId: String? = iban.bankIdentifier
-    val branchId: String? = iban.branchIdentifier
+// Get the Bank Identifier and Branch Identifier:
+val bankId: String? = iban.bankIdentifier
+val branchId: String? = iban.branchIdentifier
 
-    // Get the BBAN, the counterpart of what Iban.compose() takes:
-    val bban: String = iban.bban // round trips: Iban.compose( iban.countryCode, iban.bban )
+// Get the BBAN, the counterpart of what Iban.compose() takes:
+val bban: String = iban.bban // round trips: Iban.compose(iban.countryCode, iban.bban)
 ```
 
 `Modulo97` is the one part of the library that still throws unconditionally: its inputs are
@@ -201,12 +193,9 @@ For those callers there is `Iban.parse(input)`, a named alias that parses identi
 
 `Iban(...)`, `Iban.parse(...)`, `Iban.compose(...)`, `Modulo97` and `CountryCodes` all take
 `CharSequence`, while `toIban()`, `toIbanOrNull()` and `isValidIban()` are extensions on `String`.
-That split is deliberate. The extensions are the Kotlin sugar, and Kotlin's own conversion
-extensions (`toInt()`, `toBoolean()`) are declared on `String` too; a `String` receiver also exports
-as an `NSString *` parameter of the generated `IbanKt` facade, so `IbanKt.toIban(_:)` stays
-type-checked from Swift, where a `CharSequence` receiver would erase to an untyped `id`. If you hold
-something else — a `StringBuilder`, an Android `Editable` — `Iban(input)` and `Iban.parse(input)`
-take it as-is; for the exception-free pair, convert first (`builder.toString().toIbanOrNull()`).
+So if you hold something else — a `StringBuilder`, an Android `Editable` — `Iban(input)` and
+`Iban.parse(input)` take it as-is, and the exception-free pair needs a conversion first
+(`builder.toString().toIbanOrNull()`). `String.toIban()`'s KDoc has the reasoning behind the split.
 
 Migrating from `java-iban`, from kiban 0.3.0 and earlier, or from the `Result`-returning 0.4.0 API?
 See [MIGRATION.md](MIGRATION.md).
@@ -220,18 +209,31 @@ through Kotlin/Native's Objective-C interop — see
 
 ## Design choices
 
-### Java IBAN library
+### Inherited from java-iban
 
-I [(Barend)](https://github.com/barend) like the Joda-Time library, and I try to follow the same design principles. I'm explicitly targetting Android, which at the time this library started was still on Java 1.6. I'm trying to keep the library as simple as I can.
-* Easy to integrate: don't bring transitive dependencies. The KMP variant follows this too: it depends only on the Kotlin standard library.
-* The `Iban` objects are immutable, and the Iban therein is non-empty and valid. There is no support for partial or invalid IBANs. Note that "valid" isn't as strict as it could be:
-  * It checks that the length is correct (varies per country) and that the check digits are correct.
-  * The national format mask (such as `QA2!n4!a21!c`) is not enforced. This seems to me like more work than necessary. The modulo-97 checksum catches most input errors anyway, and I don't want to force a memory-hungry regex check onto Android users. Speaking of Android, this mask could be used for keyboard switching on an Iban EditText, but that's for a different open-source project.
-  * Any national check digits are not enforced. Doing this right is more work than I want to put into this. I lack the country-specific knowledge of all the gotchas and intricacies. If other countries' check digits are anything like those in the Netherlands, they're going to differ by Bank Identifier.
-* There is no way to configure extra restrictions such as "only SEPA countries" on the `Iban.parse()` method. This, to me, would look too much like Joda-Time's pluggable `Chronology` system, which leads to PoLS violations (background: [Why JSR-310 isn't Joda-Time](https://blog.joda.org/2009/11/why-jsr-310-isn-joda-time_4941.html)).
-* There is no class to represent a partially entered IBAN or a potentially-invalid IBAN. I'm sure there are use cases where you want to shift this sort of data around. As far as this library is concerned, if it's not an Iban it's just a string, and there already exist data types for dealing with those.
-* Any feature that's not present in all IBAN's is kept outside the `Iban` class. Currently, that's the support for extracting Bank and Branch identifiers, which lives in the `CountryCode` class.
-* The library originally supported an SDK 14 (Ice Cream Sandwich) era Android app. This is why it relies on bit-packing to reduce bytecode size.
+kiban keeps the design decisions the original library made, restated here in its own terms:
+
+* **No transitive dependencies.** The only dependency is the Kotlin standard library, which is also
+  what lets the library ship on every Kotlin target.
+* **`Iban` is immutable, non-empty and valid.** There is no type for a partial or a
+  potentially-invalid IBAN: if it is not an `Iban` it is a string, and Kotlin already has types for
+  working with those.
+* **"Valid" means the length and the check digits**, and no more. The national format mask (such as
+  `QA2!n4!a21!c`) and any national check digits are deliberately not enforced: the modulo-97
+  checksum catches most input errors already, enforcing the masks would put a regex engine in the
+  parse path, and national check digits differ per bank identifier and need country-specific
+  knowledge this library does not claim.
+* **Parsing takes no configuration.** There is no "SEPA countries only" switch on `Iban(...)` or
+  `Iban.parse(...)`, because a pluggable policy object is how an API ends up surprising its callers
+  (background: [Why JSR-310 isn't
+  Joda-Time](https://blog.joda.org/2009/11/why-jsr-310-isn-joda-time_4941.html)). `Iban.isSepa` and
+  `Iban.isInSwiftRegistry` let a caller apply such a restriction itself.
+* **Anything that is not present in every IBAN stays out of `Iban`'s core.** Bank and branch
+  identifier positions are country data, so they live in `CountryCodes`; `Iban.bankIdentifier` and
+  `Iban.branchIdentifier` are nullable accessors onto it.
+
+Where those decisions came from, including the Android constraints behind the bit-packed registry
+data, is in [docs/212-java-iban-design-lineage.md](docs/212-java-iban-design-lineage.md).
 
 ### Kotlin library
 
