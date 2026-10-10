@@ -132,7 +132,7 @@ jobs:
         cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
         cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
         # Publish a build scan per job to the public scans.gradle.com. #116
-        # (docs/116-develocity-evaluation.md) chose the action inputs over the
+        # (docs/develocity-evaluation.md) chose the action inputs over the
         # 'com.gradle.develocity' settings plugin deliberately: the action injects
         # the plugin via init script, so 'settings.gradle.kts', the version catalog
         # and 'gradle.properties' stay untouched, and local plus cloud-sandbox

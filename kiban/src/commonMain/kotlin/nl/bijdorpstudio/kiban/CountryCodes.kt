@@ -213,7 +213,7 @@ public object CountryCodes {
      *
      * [Instant] is safe to depend on here: it is a stable, non-experimental standard library type
      * from Kotlin 2.3 onwards, which is also this library's minimum supported Kotlin version. See
-     * `docs/144-instant-api-stability.md` for the analysis behind freezing it into the API.
+     * `docs/instant-api-stability.md` for the analysis behind freezing it into the API.
      *
      * Parsed once, when this object initializes: the encoded date is a compile-time constant, so
      * re-parsing it on every read would buy nothing.

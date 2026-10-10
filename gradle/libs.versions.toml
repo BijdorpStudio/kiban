@@ -21,14 +21,14 @@ kotlin = "2.4.20"
 #   - kotlin.time.Instant (CountryCodes.lastUpdateDate) is only a non-experimental stdlib
 #     declaration from 2.3, so any floor below that turns a frozen public API into one that demands
 #     @OptIn from callers. Subsumed by the 2.4 floor, but it is the reason the floor can never go
-#     below 2.3. See docs/144-instant-api-stability.md.
+#     below 2.3. See docs/instant-api-stability.md.
 kotlin-version = "2.4.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
 # Test-only. The 1.1.0 line is the first unified release: one artifact set auto-adapting to the
 # Kotlin compiler in use (2.2.0+), instead of 1.0.x's per-Kotlin-version variants, which would have
-# made every Kotlin bump a coupled TestBalloon bump. See docs/82-testballoon-evaluation.md. Keep
+# made every Kotlin bump a coupled TestBalloon bump. See docs/testballoon-evaluation.md. Keep
 # this on a stable release: the verification suite this gates is what gates publish.yml, so a
 # release candidate or beta here (1.1.0-RC was one until 1.1.0 shipped, see #153) puts a prerelease
 # in front of every publish.
