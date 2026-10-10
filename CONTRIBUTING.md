@@ -96,8 +96,12 @@ over its parsing helpers and exits. Changing how the generator reads the registr
   passing — CI will run it, and an honest gap is more useful than a claim.
 * **Add a CHANGELOG entry** under the top `## X.Y.Z (unreleased)` section of
   [CHANGELOG.md](CHANGELOG.md) for anything a consumer would notice, in the appropriate group
-  (breaking changes first). The existing entries show the expected level of detail: what changed and
-  why it was the right call, not just what moved.
+  (breaking changes first). One entry per change, two or three lines at most, stating what changed,
+  who is affected and what they have to do — a changelog is read by someone upgrading who wants to
+  know what breaks. Reference the issue as `(#NNN)`, which GitHub renders as a link, and add a
+  Markdown link to the `docs/` page or policy document when one records the reasoning. The *why*
+  belongs there or in the pull request, not in the entry. Repository-internal work a consumer
+  cannot observe gets a single line under **Infrastructure**, or no entry at all.
 * **Let CI go green** before asking for a merge. The matrix is the real verification.
 * Every source file carries the Apache 2.0 licence header — copy it from a neighbouring file when
   adding one.
