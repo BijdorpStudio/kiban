@@ -20,9 +20,13 @@ plugins {
     alias(libs.plugins.testballoon)
 }
 
-group = "nl.bijdorpstudio.kiban"
+// The publication coordinates come from 'GROUP' and 'VERSION_NAME' in the root
+// 'gradle.properties', which the maven-publish plugin reads natively. These assignments are not
+// what publishes them: the plugin leaves 'project.group' and 'project.version' alone, and the klib
+// unique name and the Dokka version below are derived from those.
+group = providers.gradleProperty("GROUP").get()
 
-version = "0.6.0"
+version = providers.gradleProperty("VERSION_NAME").get()
 
 ktfmt { kotlinLangStyle() }
 
@@ -165,8 +169,6 @@ mavenPublishing {
     if (signPublications) {
         signAllPublications()
     }
-
-    coordinates(group.toString(), "kiban", version.toString())
 
     // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar (see #78).
     configure(

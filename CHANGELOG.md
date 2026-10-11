@@ -310,6 +310,13 @@
 
 **Infrastructure**
 
+* The published coordinates are declared once, as `GROUP` and `VERSION_NAME` in the root
+  `gradle.properties`, instead of as literals in `kiban/build.gradle.kts` (#215). Nothing parses
+  Kotlin source for the version any more: the release tag guard in `publish.yml` and
+  `samples/consumption-probe` both read the properties file, where a reformatted assignment cannot
+  break them silently. `RELEASING.md` bumps `VERSION_NAME`. The published group, artifact and
+  version are unchanged.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique
   name matches the published artifact (#208). It read
   `Library unique name: <nl.bijdorpstudio.kiban:library>`; it now reads

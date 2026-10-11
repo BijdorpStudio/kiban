@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   # Fail fast, before the full check matrix and the publish job spin up, if the release tag does
-  # not match the version the build script declares. publish.yml fires on any 'released'/
+  # not match the version the build declares. publish.yml fires on any 'released'/
   # 'prereleased' event and ships whatever the checked-out build says, so tagging 'v1.0.0' against
   # a commit still declaring 0.6.0 would silently (re)publish 0.6.0 — and only fail late at Maven
   # Central, if at all. This guard turns that into an immediate, obvious failure.
@@ -31,12 +31,12 @@ jobs:
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          # The version is a plain literal in the build script, so it is read directly rather than
-          # by booting Gradle: this step exists to fail fast, and resolving the project the slow way
-          # would defeat that. The pattern anchors on the top-level 'version = "..."' assignment.
-          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' kiban/build.gradle.kts)"
+          # The version is a Gradle property, so it is read straight out of the properties file
+          # rather than by booting Gradle: this step exists to fail fast, and resolving the project
+          # the slow way would defeat that.
+          project_version="$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
           if [ -z "$project_version" ]; then
-            echo "::error::Could not read the project version from kiban/build.gradle.kts."
+            echo "::error::Could not read VERSION_NAME from gradle.properties."
             exit 1
           fi
           # Release tags are 'vX.Y.Z'; the Gradle version is 'X.Y.Z'. Strip a single leading 'v'.
@@ -44,7 +44,7 @@ jobs:
           echo "Release tag:     $TAG_NAME (version $tag_version)"
           echo "Project version: $project_version"
           if [ "$tag_version" != "$project_version" ]; then
-            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in kiban/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
+            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in gradle.properties. Bump VERSION_NAME and re-tag (see RELEASING.md)."
             exit 1
           fi
           echo "Release tag and project version match."
