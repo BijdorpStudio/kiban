@@ -439,9 +439,9 @@
 
 * A CI job now resolves the *published* artifact by coordinates from a build that has never heard of
   `:library` (#154). Nothing did before: `samples/jvm-cli` depends on `:library` as a project and so
-  never reads a published file, and `verifyPublicationTargets` counts publications rather than
-  resolving one — between them they could not tell a working publication from Gradle module metadata
-  no consumer can resolve. The job publishes `kiban` to `mavenLocal()` and then runs
+  never reads a published file, and the publication guard of the time counted publications rather
+  than resolving one — between them they could not tell a working publication from Gradle module
+  metadata no consumer can resolve. The job publishes `kiban` to `mavenLocal()` and then runs
   `samples/consumption-probe`, a separate build that depends on
   `nl.bijdorpstudio.kiban:kiban:<version>` and exercises it on `jvm`, `linuxX64` and `js` — one
   target per compilation backend, which is the axis metadata resolution breaks along.
@@ -548,6 +548,14 @@
   should freeze its tooling story on. 1.1.0 is binary compatible with the candidate and still brings
   the same transitive Kotlin Gradle plugin 2.2.0, so the root `apply false` declaration that #182
   needed keeps doing its job and no test, dump or build file changes with it.
+
+* The `verifyPublicationTargets` task is gone (#217). It diffed the declared Kotlin targets against
+  the registered Maven publications and was wired into every `PublishToMavenRepository`, to catch a
+  target `kotlin.native.ignoreDisabledTargets=true` had silently skipped. `publish.yml` already
+  overrides that property to `false` for the publish, which makes the Kotlin Gradle plugin fail
+  configuration on any target the publishing host cannot build — earlier, and on the target itself
+  rather than on a missing publication downstream of it. One guard for one failure; the property
+  override is the one that stays.
 
 ## 0.5.0
 
