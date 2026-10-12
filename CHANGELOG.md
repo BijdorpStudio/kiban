@@ -128,6 +128,12 @@
 
 **Infrastructure**
 
+* `js` and `wasmJs` tests run on Node only; the Karma and headless-Chrome browser runs are gone
+  (#219). The library touches no DOM or browser API, so `jsBrowserTest` and `wasmJsBrowserTest` ran
+  the same common suite a second time behind a Karma setup, and pulled Karma and its webpack bridge
+  into the `js` test workspace. Both targets still declare `nodejs()`; the published artifacts are
+  unchanged, so consuming `kiban` from browser code is unaffected.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique name
   matches the published artifact (#208). The API dumps move to `kiban/api/`; the artifact
   coordinates, the published API and the sources are unchanged.
