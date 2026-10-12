@@ -203,9 +203,10 @@ jobs:
     # token and on pull requests from forks: creating a check run instead would
     # need 'checks: write', which a fork's read-only token does not have.
     - name: Report test results
-      # Not every job runs a test task - 'swift-console' and
-      # 'consumption-probe' write no test XML at all; those skip the step rather
-      # than report an empty suite.
+      # 'swift-console' writes no test XML and skips the step rather than
+      # report an empty suite. It is the only job that does: every other one
+      # runs a test task, 'consumption-probe' included - its own 'commonTest'
+      # runs through the independent build in the step above.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal. If the action
       # itself breaks it must not fail the job - and, because 'failure()' latches
