@@ -308,6 +308,25 @@
   the reasoning and evidence are in
   [docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
 
+* Cleaned up the README (#212). The java-iban link in the Background section had doubled
+  parentheses and rendered with a stray `(` in it. The "Use" samples were written in a style the
+  repository enforces nowhere else — `Iban( "NL91ABNA0417164300" )`, `Modulo97.verifyCheckDigits(
+  candidate )`, the whole block indented four spaces as though it sat inside a function — and now
+  read as ktfmt formats them, matching [`samples/jvm-cli`](samples/jvm-cli), which is what actually
+  runs them.
+
+  The "Design choices" section led with `java-iban`'s first-person text ("I like the Joda-Time
+  library..."), which read as though kiban's decisions belonged to someone else and justified two of
+  them with an SDK 14-era Android app. The decisions are unchanged and now stated as this project's
+  own; the history behind them, and which parts of the reasoning still transfer, moved to
+  [docs/212-java-iban-design-lineage.md](docs/212-java-iban-design-lineage.md). Attribution to
+  Barend Garvelink is untouched — it stays in the per-file license headers and the README's
+  introduction.
+
+  Two passages that restated documentation living elsewhere are now a sentence and a link: the
+  Kotlin-floor reasoning under "Requirements", which [VERSIONING.md](VERSIONING.md) carries as
+  policy, and the `toIban()` receiver rationale, which is `String.toIban()`'s KDoc almost verbatim.
+
 **Infrastructure**
 
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique
