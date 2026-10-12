@@ -144,6 +144,11 @@
   before asking for a revision number, so the runs that find nothing finish silently. A blocked
   download now reports the manual and `--headed` fallbacks instead of a Playwright stack trace.
 
+* Consolidated the pull-request matrix from 17 jobs to 10, six macOS jobs to two (#220): the five
+  tasks that cost seconds once Gradle is configured run in one Linux `checks` job, the four Apple
+  test tasks in one macOS job, and `checkKotlinAbi` moved off macOS because a klib needs no Xcode.
+  Same tasks, same required `CI` check; the job names on a pull request change.
+
 * CI reports what it verified (#129): per-target test results in each job summary, a roll-up in the
   `ci` gate job, failing tests annotated on the run, and the `ktfmt` and ABI dump diffs rendered
   rather than only downloadable. Every added step is non-fatal.
