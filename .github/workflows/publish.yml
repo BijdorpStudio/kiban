@@ -24,7 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Compare release tag to Gradle version
         shell: bash
@@ -81,7 +83,13 @@ jobs:
       url: https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # This job runs the whole Gradle build with the signing key and the Central token in
+          # its environment; it does not need a git credential on top. Nothing here pushes -
+          # 'archive-docs' is the only job that does, with the token it is handed explicitly
+          # (#222).
+          persist-credentials: false
 
       # 'publishToMavenCentral' runs with '-Pkotlin.native.ignoreDisabledTargets=false',
       # so this job compiles every native target and needs the whole Kotlin/Native
@@ -89,13 +97,13 @@ jobs:
       - uses: ./.github/actions/cache-konan
 
       - name: Set up JDK 25
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'zulu'
           java-version: 25
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           # This workflow only ever runs on a release tag ref, never on 'main' or 'release', so the
           # cache is always read-only here. It reuses entries the 'main' CI build wrote; a one-shot
@@ -161,7 +169,7 @@ jobs:
       # the ~51 files (17 publications, each with its artifact, sources jar and javadoc jar) that
       # actually end up on a classpath.
       - name: Attest build provenance for the published artifacts
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
             build/attestation-staging/nl/bijdorpstudio/kiban/**/*.jar
@@ -181,7 +189,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # The versions already published, kept on the 'docs-archive' branch by the job below (#162).
       # 'continue-on-error' covers the one case where that branch does not exist: the first release
@@ -189,10 +199,11 @@ jobs:
       # this job produced before, and the archive starts existing from that release onwards.
       - name: Restore previously published doc versions
         continue-on-error: true
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: docs-archive
           path: docs-archive
+          persist-credentials: false
 
       # Dokka resolves 'nativeMain'/'appleMain' through the Kotlin analysis
       # frontend, so this job downloads the Kotlin/Native distribution as well --
@@ -200,13 +211,13 @@ jobs:
       - uses: ./.github/actions/cache-konan
 
       - name: Set up JDK 25
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'zulu'
           java-version: 25
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           # Release-tag ref only, so the cache is read-only here as well; see the publish job.
           cache-read-only: true
@@ -228,13 +239,13 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: kiban/build/dokka/html
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
   # Adds the version just published to the archive the 'docs' job restores from, so the next release
   # can put it behind the version dropdown (#162).
@@ -253,7 +264,7 @@ jobs:
       contents: write
     steps:
       - name: Download the deployed Pages artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: github-pages
           path: pages-artifact

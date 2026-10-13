@@ -114,18 +114,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        # Every job in this workflow only reads the tree. Leaving the 'GITHUB_TOKEN' in
+        # '.git/config' would hand it to the Gradle build that runs next, and from there to any
+        # dependency's build logic (#222).
+        persist-credentials: false
 
     - uses: ./.github/actions/cache-konan
 
     - name: Set up JDK 25
-      uses: actions/setup-java@v6
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
       with:
         java-version: '25'
         distribution: 'zulu'
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v6
+      uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       with:
         # Only write to the cache for builds on the 'main' and 'release' branches. (Default is 'main' only.)
         # Builds on other branches will only read existing entries from the cache.
@@ -199,7 +204,7 @@ jobs:
       # for the rest of the job once any step fails, it must not make the two
       # diff steps below fire on an otherwise green run either.
       continue-on-error: true
-      uses: mikepenz/action-junit-report@v6
+      uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
       with:
         report_paths: '**/build/test-results/**/*.xml'
         check_name: 'Tests: ${{ matrix.id }}'
@@ -223,7 +228,7 @@ jobs:
     # of the pair (HTML reports, api dumps) and stays as it is.
     - name: Upload test results
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: test-results-${{ matrix.id }}
         path: '**/build/test-results/**/*.xml'
@@ -231,7 +236,7 @@ jobs:
 
     - name: Upload API docs preview
       if: matrix.id == 'dokka'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: api-docs-preview
         path: kiban/build/dokka/html
@@ -291,7 +296,7 @@ jobs:
 
     - name: Upload failure reports
       if: failure()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: reports-${{ matrix.id }}-${{ matrix.os }}
         path: |
@@ -327,7 +332,7 @@ jobs:
     - name: Download test results
       if: always()
       continue-on-error: true
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         pattern: test-results-*
         path: test-results
@@ -335,7 +340,7 @@ jobs:
     - name: Summarise test results
       if: always()
       continue-on-error: true
-      uses: mikepenz/action-junit-report@v6
+      uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
       with:
         report_paths: 'test-results/**/*.xml'
         check_name: 'Test results (all targets)'

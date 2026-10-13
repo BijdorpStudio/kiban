@@ -57,11 +57,37 @@ neither publish nor upload SARIF. `branch_protection_rule` is there because the 
 check reads repository settings rather than files: without it, tightening or loosening a ruleset
 would not be reflected until the next commit or the next Monday.
 
-Expect the initial score to flag things this repository has deliberately not done — unpinned action
-versions being the obvious one, since Dependabot manages the `uses:` majors here rather than SHA
-pins. The alerts are a checklist to work through before 1.0, not a target to chase; a low score on a
-check whose remediation this project has consciously rejected is a fine outcome, provided the
-rejection is written down.
+The alerts a run produces are a checklist to work through before 1.0, not a target to chase; a low
+score on a check whose remediation this project has consciously rejected is a fine outcome, provided
+the rejection is written down. Two checks that would have scored against this repository are now
+done rather than rejected — see below, including why no run has actually said so yet.
+
+## Pinned-Dependencies and token persistence: both done (#222)
+
+Two Scorecard checks had an obvious answer here, and #222 closed both.
+
+**Every `uses:` reference is pinned to a full commit SHA**, with the version it resolved to as a
+trailing comment (`uses: actions/checkout@3d3c42e5… # v7.0.1`). Pinning by major tag — which is what
+these were — means a moved tag silently changes what runs, and one of the jobs it would change is
+`publish`, which holds the signing key and the Central token. Dependabot's `github-actions`
+ecosystem updates SHA pins and rewrites the trailing comment along with them, so the pins do not
+freeze the actions at today's versions; `.github/dependabot.yml` already lists both `/` (the
+workflows) and `/.github/actions/cache-konan` (the composite action, a separate manifest), so
+nothing escapes that coverage.
+
+Pinning also fixed a live failure, and this is the one argument against major-tag pinning that
+reading the file does not give you: `scorecard.yml` referenced `ossf/scorecard-action@v2`, and that
+repository publishes no floating `v2` tag — only `v2.x.y`. All 30 runs since the workflow landed in
+August failed, every one of them in "Set up job" before a step executed, which is where an
+unresolvable `uses:` reference fails. So the workflow has never produced a score; the badge and the
+Security tab have been empty rather than stale. The pin is `v2.5.0`'s commit.
+
+**`persist-credentials: false` on every `actions/checkout` but one.** Without it `actions/checkout`
+leaves the `GITHUB_TOKEN` in `.git/config`, where every later step in the job can read it — in this
+repository that means the Gradle build, and through it any dependency's build logic. The exception
+is `registry-sync.yml`: that job exists to push a branch and open a pull request, so its checkout
+keeps the credential it was handed. `archive-docs` pushes too but needs nothing persisted; it builds
+a fresh repository and pushes with the token in the remote URL.
 
 ## Provenance, not an SBOM
 
