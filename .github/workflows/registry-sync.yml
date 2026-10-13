@@ -58,6 +58,10 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Downloads the registry, regenerates the two data files, runs 'jvmTest' and opens a pull
+    # request - about two minutes in practice. The cap is for the fetch of the registry document
+    # from SWIFT hanging, which is the one step here that waits on a third party.
+    timeout-minutes: 20
     env:
       DATA_FILE: kiban/src/commonMain/kotlin/nl/bijdorpstudio/kiban/CountryCodesData.kt
       TEST_DATA_FILE: kiban/src/commonTest/kotlin/nl/bijdorpstudio/kiban/CountryTestData.kt

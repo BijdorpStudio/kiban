@@ -112,6 +112,14 @@ jobs:
             id: consumption-probe
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
+    # Without this a job inherits GitHub's six-hour default. The slowest entry on a
+    # warm cache is the iOS simulator test at about four minutes, so half an hour
+    # leaves room for a cold Kotlin/Native download and still means that an entry
+    # past it is stuck - an unbooted simulator, a test runner waiting on a socket,
+    # the qemu-emulated linuxArm64 binary that never exits. The cap matters most off
+    # 'main': the concurrency group above is keyed on the ref, so one hung job holds
+    # up every later push to that branch.
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v7
@@ -315,6 +323,10 @@ jobs:
     # never reports leaves the PR waiting forever instead of going red.
     if: always()
     runs-on: ubuntu-latest
+    # Two artifact steps, both 'continue-on-error' - this job's own work is seconds.
+    # The cap is for the download step hanging on a slow artifact, not for the parse:
+    # 'needs: build' already bounds the wait on the matrix.
+    timeout-minutes: 15
     steps:
     # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
     # certain to open. Suite names carry their target ('IbanTest[jvm]',

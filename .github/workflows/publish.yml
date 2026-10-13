@@ -22,6 +22,9 @@ jobs:
   verify-version:
     name: Verify tag matches project version
     runs-on: ubuntu-latest
+    # A checkout and a 'sed'. This exists to fail fast, so anything beyond a few minutes here is
+    # the runner, not the check.
+    timeout-minutes: 15
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -51,6 +54,9 @@ jobs:
 
   # Run the full check matrix (tests on every target plus checkKotlinAbi) before publishing
   # anything.
+  #
+  # No 'timeout-minutes' on this one: GitHub rejects the key on a job that is a 'uses:' call, and
+  # it would be redundant - every job gradle.yml defines carries its own cap.
   test:
     name: Check
     needs: verify-version
@@ -61,6 +67,11 @@ jobs:
     name: Release build and publish
     needs: test
     runs-on: macOS-latest
+    # The long pole: a release build of every target on a macOS runner, signing, the Sonatype
+    # upload and the attestation. 45 rather than the matrix's 30 because a cold konan cache, a
+    # slow Central staging repository or a Sigstore round trip all land on this one job - and
+    # because dying halfway through an upload is worse than taking a while.
+    timeout-minutes: 45
     permissions:
       contents: read
       # Build provenance for the published artifacts (#160). 'attestations: write' records the
@@ -172,6 +183,10 @@ jobs:
     name: Publish API docs
     needs: publish
     runs-on: macos-latest
+    # A full Dokka generation plus the Pages deployment, and the deploy waits on GitHub's own
+    # pages-build-deployment run. Generous because it is the release path: a timeout here means
+    # the artifacts published but the docs did not.
+    timeout-minutes: 45
     permissions:
       contents: read
       pages: write
@@ -249,6 +264,9 @@ jobs:
     name: Archive published API docs
     needs: docs
     runs-on: ubuntu-latest
+    # Downloads one Pages artifact, rearranges files and pushes them - it runs no project code.
+    # The cap guards the artifact download and the push to the docs branch.
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

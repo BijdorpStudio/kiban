@@ -30,6 +30,10 @@ jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
+    # The analysis queries this repository's history, workflows and run data through the API, then
+    # uploads a SARIF file; it finishes in under a minute. Scheduled, so a hung run would sit on a
+    # runner unnoticed until the next one.
+    timeout-minutes: 20
     permissions:
       # Uploading the SARIF result into the Security tab.
       security-events: write

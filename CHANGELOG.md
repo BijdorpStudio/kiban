@@ -192,6 +192,10 @@
   `publish.yml` no longer runs on a release candidate. Binary compatible: no test, dump or build
   file changed with it.
 
+* Every CI job declares a `timeout-minutes` (#221), instead of inheriting GitHub's six-hour default:
+  30 for the build matrix, 45 for the release and docs jobs, 15 or 20 for the rest. A hung job now
+  fails in minutes rather than holding a runner and, off `main`, the branch's concurrency group.
+
 ## 0.5.0
 
 **Breaking changes**
