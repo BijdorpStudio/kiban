@@ -128,6 +128,11 @@
 
 **Infrastructure**
 
+* GitHub's dependency graph now carries the resolved Gradle dependency tree, submitted from `main`
+  by `dependency-submission.yml` (#224), so Dependabot alerts reach transitive dependencies and not
+  only the versions the catalog declares. See
+  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique name
   matches the published artifact (#208). The API dumps move to `kiban/api/`; the artifact
   coordinates, the published API and the sources are unchanged.
