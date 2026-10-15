@@ -203,6 +203,10 @@
   `publish.yml` no longer runs on a release candidate. Binary compatible: no test, dump or build
   file changed with it.
 
+* The `verifyPublicationTargets` task is gone (#217). `publish.yml` already overrides
+  `kotlin.native.ignoreDisabledTargets` to `false` for the publish, which fails configuration on any
+  target the publishing host cannot build — earlier than the task did, and on the target itself.
+
 ## 0.5.0
 
 **Breaking changes**
