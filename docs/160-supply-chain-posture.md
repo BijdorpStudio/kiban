@@ -131,3 +131,35 @@ publication layout, or Gradle ignoring `-Dmaven.repo.local`) it hit.
 Subjects are the binaries only: `.jar`, `.klib` and `.aar`. The `.pom` and `.module` files are
 metadata nothing executes, and leaving them out keeps the list to the ~51 files that end up on a
 consumer's classpath.
+
+## The dependency graph: what the SBOM question was really asking
+
+The SBOM was declined above because the POM and the Gradle module metadata already publish what
+kiban depends on. That holds for *consumers* of a release. It does not cover the other direction —
+what GitHub knows about this repository's own build — and #224 closed that gap with
+`.github/workflows/dependency-submission.yml`.
+
+The distinction matters because the two look interchangeable and are not. `.github/dependabot.yml`
+gives version updates: Dependabot reads `gradle/libs.versions.toml` and opens a pull request when a
+declared version moves. Dependabot *alerts* work from the dependency graph instead, and until
+something submits one, the graph for a Gradle repository holds only what the catalog scan found —
+the declared modules, none of their transitive dependencies. A CVE in something kiban pulls in
+rather than declares would therefore raise nothing at all, which is the one gap the rest of this
+posture leaves open: Scorecard scores the repository's practices and provenance binds an artifact
+to the run that built it; neither looks at what is on the classpath.
+
+`gradle/actions/dependency-submission` closes it by resolving every configuration in every project
+and posting the result to the Dependency Submission API, so the graph is Gradle's own resolution
+result rather than an approximation of it — all sixteen targets, not just the JVM.
+
+Two things about the workflow are deliberate and worth not re-deriving:
+
+* **`main` only, no `pull_request` trigger.** Submission needs `contents: write`, which the token
+  of a pull request from a fork does not get, and the graph is a property of the default branch —
+  the same two reasons `scorecard.yml` has no `pull_request` trigger either. A proposed dependency
+  change is reviewed in the version catalog diff.
+* **`--no-configuration-cache`.** `org.gradle.configuration-cache` is on in `gradle.properties`,
+  and the action's injected dependency-graph plugin does not document configuration-cache support;
+  the action's own documentation uses this flag as its example for `additional-arguments`. The job
+  is one resolution pass on `main`, so configuring from scratch costs nothing worth the risk — and
+  the failure it avoids is the quiet one, a graph that stops being updated rather than a red check.
