@@ -141,7 +141,7 @@
 * GitHub's dependency graph now carries the resolved Gradle dependency tree, submitted from `main`
   by `dependency-submission.yml` (#224), so Dependabot alerts reach transitive dependencies and not
   only the versions the catalog declares. See
-  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+  [docs/supply-chain-posture.md](docs/supply-chain-posture.md).
 
 * `js` and `wasmJs` tests run on Node only; the Karma and headless-Chrome browser runs are gone
   (#219). The library touches no DOM or browser API, so `jsBrowserTest` and `wasmJsBrowserTest` ran

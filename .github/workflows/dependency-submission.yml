@@ -7,7 +7,7 @@
 # matched against, as well as what Insights -> Dependency graph shows a consumer. Without a
 # submission, a vulnerability reachable only through a transitive dependency raises nothing here.
 #
-# This is the open item of the posture written up in docs/160-supply-chain-posture.md: build
+# This is the open item of the posture written up in docs/supply-chain-posture.md: build
 # provenance answers "which workflow and commit produced this artifact", Scorecard scores the
 # repository, and this answers "what went into the build".
 #
