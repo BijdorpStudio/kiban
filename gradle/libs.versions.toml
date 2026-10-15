@@ -12,13 +12,13 @@ junit = "4.13.2"
 kotlin = "2.4.21"
 # @keep this is library kotlin compatibility version
 # The minimum Kotlin version a consumer needs, not what the library is built with. Raising it is a
-# breaking change; see docs/209-build-script-notes.md and VERSIONING.md.
+# breaking change; see docs/build-script-notes.md and VERSIONING.md.
 kotlin-version = "2.4.0"
 ktfmt-plugin = "0.27.0"
 maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.4.2"
 # Test-only. Keep this on a stable release, and on the unified 1.1.0+ line; see
-# docs/209-build-script-notes.md and docs/82-testballoon-evaluation.md.
+# docs/build-script-notes.md and docs/testballoon-evaluation.md.
 testballoon = "1.1.0"
 versions-catalogue-update-plugin = "1.1.1"
 

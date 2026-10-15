@@ -4,7 +4,7 @@ Issue: [#209](https://github.com/BijdorpStudio/kiban/issues/209)
 
 Why `kiban/build.gradle.kts` and `gradle/libs.versions.toml` are configured the way they are. The
 CI workflows that drive these tasks have their own page,
-[209-ci-workflow-notes.md](209-ci-workflow-notes.md). What a contributor has to *run* is in
+[ci-workflow-notes.md](ci-workflow-notes.md). What a contributor has to *run* is in
 [CONTRIBUTING.md](../CONTRIBUTING.md); what a sandbox can run is in [CLAUDE.md](../CLAUDE.md).
 
 ## `explicitApi()`
@@ -18,7 +18,7 @@ exempt.
 Binary compatibility validation is the tooling the 1.0 guarantee rests on. This is the Kotlin Gradle
 plugin's own implementation rather than the standalone `binary-compatibility-validator`, which is in
 maintenance mode with new work going here instead — see
-[182-builtin-abi-validation.md](182-builtin-abi-validation.md). Dumps land in `kiban/api` in the
+[builtin-abi-validation.md](builtin-abi-validation.md). Dumps land in `kiban/api` in the
 same layout and format the standalone plugin used, so the committed reference files carried over.
 
 There is nothing to switch on: calling the block is what enables validation. The `enabled` property
@@ -50,7 +50,7 @@ without the versioning plugin a consumer still on an older line loses their refe
 next release goes out. The plugin turns the site into an archive: it renders a version dropdown,
 keeps the version being generated at the root (so the Pages URL always lands on the latest docs),
 and copies the versions handed to it into `older/`. See
-[162-versioned-api-docs.md](162-versioned-api-docs.md).
+[versioned-api-docs.md](versioned-api-docs.md).
 
 The archive is not in this repository — it is the previously published site, restored by the `docs`
 job in `publish.yml` and pointed at with the `kiban.previousDocVersions` property. That property is
@@ -96,7 +96,7 @@ Two things depend on the floor:
 * `kotlin.time.Instant` (`CountryCodes.lastUpdateDate`) is only a non-experimental stdlib
   declaration from 2.3, so any floor below that turns a frozen public API into one that demands
   `@OptIn` from callers. It is subsumed by the 2.4 floor, but it is the reason the floor can never go
-  below 2.3. See [144-instant-api-stability.md](144-instant-api-stability.md).
+  below 2.3. See [instant-api-stability.md](instant-api-stability.md).
 
 ## The TestBalloon plugin is declared in the root build script
 
@@ -106,14 +106,14 @@ version conflict against the one this build pins. TestBalloon 1.1.0 brings `kotl
 2.2.0 with it; applied only in the subproject, that 2.2.0 is the sole KGP on the subproject's own
 script classpath and shadows the pinned version — which is what made `kotlin { abiValidation { } }`
 an unresolved reference. See
-[182-builtin-abi-validation.md](182-builtin-abi-validation.md) for how that was diagnosed.
+[builtin-abi-validation.md](builtin-abi-validation.md) for how that was diagnosed.
 
 ## `testballoon`
 
 Test-only. The 1.1.0 line is the first unified release: one artifact set auto-adapting to the Kotlin
 compiler in use (2.2.0+), instead of 1.0.x's per-Kotlin-version variants, which would have made
 every Kotlin bump a coupled TestBalloon bump. See
-[82-testballoon-evaluation.md](82-testballoon-evaluation.md).
+[testballoon-evaluation.md](testballoon-evaluation.md).
 
 Keep it on a stable release: the verification suite it gates is what gates `publish.yml`, so a
 release candidate or beta here puts a prerelease in front of every publish.

@@ -1,5 +1,5 @@
 # Main workflow for checking pull requests and merges.
-# Why it is wired this way: docs/209-ci-workflow-notes.md.
+# Why it is wired this way: docs/ci-workflow-notes.md.
 
 # Named 'CI' rather than the starter template's "Java CI with Gradle" it carried until #224: this
 # name is what the README badge and the pull request check list show, and what this workflow checks
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 # A superseded head's matrix run is cancelled; 'main' and release runs keep every run. See
-# docs/209-ci-workflow-notes.md.
+# docs/ci-workflow-notes.md.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.event_name != 'release' }}
@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         # 'id' is the slug used in artifact names and step conditions; a target
-        # is not usable as one. See docs/209-ci-workflow-notes.md.
+        # is not usable as one. See docs/ci-workflow-notes.md.
         include:
           # Everything that costs seconds once Gradle is configured, in one
           # Linux job (#220). As five separate matrix entries these paid five
@@ -141,7 +141,7 @@ jobs:
         cache-read-only: ${{ github.ref != 'refs/heads/main' }}
         cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
         # Publishes a PUBLIC build scan per job to scans.gradle.com. Only this
-        # workflow is scanned; see docs/209-ci-workflow-notes.md for what is
+        # workflow is scanned; see docs/ci-workflow-notes.md for what is
         # uploaded and why the action inputs rather than the settings plugin.
         build-scan: true
 
@@ -174,7 +174,7 @@ jobs:
 
     # Renders the JUnit XML Gradle already writes into this job's summary and
     # annotates failing tests. Every input below is explained in
-    # docs/209-ci-workflow-notes.md.
+    # docs/ci-workflow-notes.md.
     - name: Report test results
       # Jobs that write no test XML skip the step rather than report an empty
       # suite; 'swift-console' is the only one.
@@ -313,7 +313,7 @@ jobs:
         retention-days: 7
 
   # The single check a branch ruleset should require: 'needs' on a matrix job
-  # waits for every entry. See docs/209-ci-workflow-notes.md.
+  # waits for every entry. See docs/ci-workflow-notes.md.
   ci:
     name: CI
     needs: build

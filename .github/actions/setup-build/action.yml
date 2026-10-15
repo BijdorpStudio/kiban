@@ -45,7 +45,7 @@ inputs:
     description: >-
       Whether to publish a build scan per job to the public scans.gradle.com.
       Off by default: only the high-frequency check matrix earns the payoff
-      (#116, docs/116-develocity-evaluation.md), and scans are PUBLIC.
+      (#116, docs/develocity-evaluation.md), and scans are PUBLIC.
     required: false
     default: 'false'
 
@@ -94,7 +94,7 @@ runs:
       with:
         cache-read-only: ${{ inputs.cache-read-only }}
         cache-encryption-key: ${{ inputs.cache-encryption-key }}
-        # #116 (docs/116-develocity-evaluation.md) chose these action inputs
+        # #116 (docs/develocity-evaluation.md) chose these action inputs
         # over the 'com.gradle.develocity' settings plugin deliberately: the
         # action injects the plugin via init script, so 'settings.gradle.kts',
         # the version catalog and 'gradle.properties' stay untouched, and local

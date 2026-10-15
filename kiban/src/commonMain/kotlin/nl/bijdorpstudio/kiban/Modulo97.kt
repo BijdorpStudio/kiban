@@ -25,7 +25,7 @@ public object Modulo97 {
      * `[A-Za-z0-9 ]` will cause an [IllegalArgumentException] to be thrown; non-ASCII digits such
      * as fullwidth `９` or Arabic-Indic `٩` are rejected rather than normalized. The checksum is
      * folded one character at a time, so it allocates nothing beyond what the caller passed in and
-     * has no input size beyond which it breaks down (see docs/209-implementation-notes.md).
+     * has no input size beyond which it breaks down (see docs/implementation-notes.md).
      *
      * It is expected but not enforced that the characters at index 2 and 3 are numeric. If the
      * existing check digits are `00` then this method will return the value that, after subtracting
@@ -106,7 +106,7 @@ public object Modulo97 {
      * numeric transformation and skipping over space (ASCII 0x20) characters.
      *
      * Keeping a running remainder rather than building the transformed string is what makes this
-     * allocation-free and overflow-free; see docs/209-implementation-notes.md.
+     * allocation-free and overflow-free; see docs/implementation-notes.md.
      *
      * @param src the data to fold, must contain only ASCII characters `[A-Za-z0-9 ]`.
      * @param srcPos the index in `src` to begin folding (inclusive).

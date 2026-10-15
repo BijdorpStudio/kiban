@@ -3,7 +3,7 @@
 Issue: [#209](https://github.com/BijdorpStudio/kiban/issues/209)
 
 Why the workflows under `.github/` are wired the way they are. The Gradle configuration they drive
-has its own page, [209-build-script-notes.md](209-build-script-notes.md). `RELEASING.md` is the
+has its own page, [build-script-notes.md](build-script-notes.md). `RELEASING.md` is the
 procedure; this is the reasoning behind the mechanics.
 
 ## `gradle.yml` — the check matrix
@@ -62,7 +62,7 @@ A few entries are not simply "run the target's test task":
 ### Build scans
 
 Scans go to the public `scans.gradle.com`.
-[116-develocity-evaluation.md](116-develocity-evaluation.md) chose the `setup-gradle` action inputs
+[develocity-evaluation.md](develocity-evaluation.md) chose the `setup-gradle` action inputs
 over the `com.gradle.develocity` settings plugin deliberately: the action injects the plugin via init
 script, so `settings.gradle.kts`, the version catalog and `gradle.properties` stay untouched, and
 local plus cloud-sandbox builds never load it, never attempt a publish and never leak a developer's
@@ -157,7 +157,7 @@ job needs the whole Kotlin/Native distribution and so the konan cache.
 
 ### Build provenance
 
-See [160-supply-chain-posture.md](160-supply-chain-posture.md) for the posture this is part of.
+See [supply-chain-posture.md](supply-chain-posture.md) for the posture this is part of.
 `attestations: write` records the attestation against this repository; `id-token: write` is how the
 run proves to Sigstore that it is this workflow on this commit, rather than by holding a signing key.
 Neither widens what the job can do to the repository's contents.
@@ -333,7 +333,7 @@ on-demand run answers an interop question against the same artifact a consumer g
 dump above it. The interop research probes (`Result<Iban>` erasure, the `IbanParseException`
 hierarchy, undeclared-throw behaviour) and the Swift Export experiment live on the
 `swift-export-playground` branch, with their findings recorded in
-[9-swift-interop-review.md](9-swift-interop-review.md).
+[swift-interop-review.md](swift-interop-review.md).
 
 ## `scorecard.yml` — OpenSSF Scorecard
 
@@ -342,7 +342,7 @@ dependencies, token permissions, signed releases, whether a CI test workflow exi
 on — and files what it finds as code scanning alerts. Two audiences for that here: consumers in
 regulated environments increasingly look the score up before taking a dependency, and the checks
 themselves are a maintenance checklist for a repository heading to 1.0. See
-[160-supply-chain-posture.md](160-supply-chain-posture.md).
+[supply-chain-posture.md](supply-chain-posture.md).
 
 `publish_results: true` sends the result to the OpenSSF's public API, which is what backs the badge
 in `README.md` and what a consumer querying deps.dev or the Scorecard API reads. It works only from

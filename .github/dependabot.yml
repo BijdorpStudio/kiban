@@ -1,14 +1,14 @@
 # Dependency updates for the two ecosystems this repository uses: the Gradle
 # version catalog and the actions the workflows depend on. It complements rather
 # than replaces `./gradlew versionCatalogUpdate`; see
-# docs/209-ci-workflow-notes.md.
+# docs/ci-workflow-notes.md.
 version: 2
 
 updates:
   # Dependabot reads `gradle/libs.versions.toml` directly; the `# @keep`
   # versions are not dependency declarations and are left alone. What to expect
   # of the pull requests, and the open question about AGP coverage, are in
-  # docs/209-ci-workflow-notes.md.
+  # docs/ci-workflow-notes.md.
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:

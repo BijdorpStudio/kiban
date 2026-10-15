@@ -43,7 +43,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
 
     /**
      * Index of this IBAN's country in the reference data, or negative when the country is unknown.
-     * Resolved once here; see docs/209-implementation-notes.md.
+     * Resolved once here; see docs/implementation-notes.md.
      */
     private val countryIndex: Int
 
@@ -138,7 +138,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
         /**
          * Parses the given string into an IBAN object and confirms the check digits. Identical to
          * [invoke] in every way; it exists because `invoke` has no call syntax outside Kotlin, and
-         * Kotlin callers should keep using `Iban(input)`. See docs/209-api-design-notes.md.
+         * Kotlin callers should keep using `Iban(input)`. See docs/api-design-notes.md.
          *
          * @param input the input, which can be either plain ("CC11ABCD123...") or formatted with
          *   (ASCII 0x20) space characters ("CC11 ABCD 123. ..").
@@ -213,7 +213,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
             if (expectedLength != value.length) {
                 // A character outside the IBAN character set adds to the length like any other, so
                 // it is named here rather than reported as a wrong length. Deliberately not
-                // hoisted above the comparison; see docs/209-implementation-notes.md.
+                // hoisted above the comparison; see docs/implementation-notes.md.
                 val invalidCharacter = invalidCharacterIn(value)
                 if (invalidCharacter != null) {
                     return Rejection.Malformed(value, invalidCharacter)
@@ -225,7 +225,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
                     Modulo97.checksum(value)
                 } catch (e: IllegalArgumentException) {
                     // Only reachable for a character outside the IBAN character set, which the
-                    // scan names; see docs/209-implementation-notes.md.
+                    // scan names; see docs/implementation-notes.md.
                     return Rejection.Malformed(
                         value,
                         invalidCharacterIn(value)
@@ -292,7 +292,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
             val first: Char = countryCode[0]
             val second: Char = countryCode[1]
             // Both early returns spare a doomed input a second binary search; see
-            // docs/209-implementation-notes.md.
+            // docs/implementation-notes.md.
             if (!first.isAsciiLetter() || !second.isAsciiLetter()) return false
             if (!first.isAsciiLowerCase() && !second.isAsciiLowerCase()) return false
             return CountryCodes.ibanLength(
@@ -311,7 +311,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          */
         internal fun toPlain(input: CharSequence): String =
             // The scan comes first because a stored IBAN usually holds no space at all; see
-            // docs/209-implementation-notes.md.
+            // docs/implementation-notes.md.
             if (input.indexOf(' ') < 0) input.toString() else input.filter { it != ' ' }.toString()
 
         /**
@@ -322,7 +322,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
          */
         internal fun addSpaces(value: CharSequence): String {
             // Written into a pre-sized StringBuilder rather than through chunked().joinToString();
-            // see docs/209-implementation-notes.md.
+            // see docs/implementation-notes.md.
             val length: Int = value.length
             val builder = StringBuilder(length + (length - 1) / GROUP_SIZE)
             for (i in 0..<length) {
@@ -341,7 +341,7 @@ public class Iban private constructor(internal val value: String) : Comparable<I
  *
  * The receiver is deliberately [String] and not [CharSequence], even though [Iban.invoke],
  * [Iban.compose], [Modulo97] and [CountryCodes] all accept any [CharSequence]. The asymmetry is the
- * decision, not an oversight; see docs/209-api-design-notes.md.
+ * decision, not an oversight; see docs/api-design-notes.md.
  *
  * Callers holding something else — a `StringBuilder`, an Android `Editable`, a slice of a larger
  * buffer — are not shut out: [Iban.invoke] and [Iban.parse] take a [CharSequence] directly and
@@ -388,7 +388,7 @@ private const val GROUP_SIZE = 4
 
 /**
  * Bit 5 of an ASCII letter is its case bit: setting it maps `A`-`Z` onto `a`-`z` and clearing it
- * maps them back, which is what the helpers below fold with. See docs/209-implementation-notes.md.
+ * maps them back, which is what the helpers below fold with. See docs/implementation-notes.md.
  */
 private const val ASCII_CASE_BIT = 0x20
 

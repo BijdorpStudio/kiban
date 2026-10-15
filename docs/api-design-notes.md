@@ -105,7 +105,7 @@ local calendar date off it in a non-UTC zone.
 
 `Instant` is safe to depend on here: it is a stable, non-experimental standard library type from
 Kotlin 2.3 onwards, and this library's minimum supported Kotlin version is 2.4. See
-[144-instant-api-stability.md](144-instant-api-stability.md) for the analysis behind freezing it
+[instant-api-stability.md](instant-api-stability.md) for the analysis behind freezing it
 into the API.
 
 ## `CountryCodes.knownCountryCodes` is a defensive copy

@@ -3,7 +3,7 @@
 Issue: [#209](https://github.com/BijdorpStudio/kiban/issues/209)
 
 Why the internals do things the slightly unusual way, where the signature does not say. None of this
-is visible to a consumer — [209-api-design-notes.md](209-api-design-notes.md) covers the public
+is visible to a consumer — [api-design-notes.md](api-design-notes.md) covers the public
 surface. The declarations carry a one-line pointer here where the choice is not obvious.
 
 Parsing is the hot path: `Iban.validate` runs on every `toIban`, `toIbanOrNull` and `isValidIban`
@@ -81,7 +81,7 @@ letter: every other character comes back mangled, not unchanged.
 `Char.isLetter` and `Char.isLetterOrDigit` because the standard library ones are Unicode-aware on
 every platform and accept fullwidth (`９`), Arabic-Indic (`٩`) and other non-ASCII characters that
 ISO 13616 does not allow — see
-[209-api-design-notes.md](209-api-design-notes.md#ascii-only-and-reject-rather-than-normalize). The
+[api-design-notes.md](api-design-notes.md#ascii-only-and-reject-rather-than-normalize). The
 same reasoning applies to the digit branch in `Modulo97.fold`.
 
 ## `CountryCodes.indexOf` searches the array directly

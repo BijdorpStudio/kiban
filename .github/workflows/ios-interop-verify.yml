@@ -2,8 +2,8 @@
 # that pulls real, inspectable build output (framework headers, toolchain versions) and runs
 # samples/swift-console, which gradle.yml keeps compiling on every pull request anyway.
 #
-# Why it exists and what it costs: docs/209-ci-workflow-notes.md. The interop findings themselves
-# are in docs/9-swift-interop-review.md.
+# Why it exists and what it costs: docs/ci-workflow-notes.md. The interop findings themselves
+# are in docs/swift-interop-review.md.
 name: iOS/Swift interop verification
 
 on:

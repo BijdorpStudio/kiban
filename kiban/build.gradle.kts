@@ -27,7 +27,7 @@ ktfmt { kotlinLangStyle() }
 
 // The previously published Dokka site, which the versioning plugin puts behind a version
 // dropdown. Deliberately optional: unset, Dokka generates a plain single-version site. See
-// docs/209-build-script-notes.md and docs/162-versioned-api-docs.md.
+// docs/build-script-notes.md and docs/versioned-api-docs.md.
 val previousDocVersionsDir: Provider<Directory> =
     providers.gradleProperty("kiban.previousDocVersions").map { path ->
         // Absolute in CI; resolved against the project directory otherwise, as Gradle's own
@@ -62,7 +62,7 @@ tapmoc {
 kotlin {
     // Binary compatibility validation, the tooling the 1.0 guarantee rests on. Calling the block
     // is what enables it; 'checkKotlinAbi' needs an Android SDK (see CLAUDE.md). See
-    // docs/209-build-script-notes.md and docs/182-builtin-abi-validation.md.
+    // docs/build-script-notes.md and docs/builtin-abi-validation.md.
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
         // Keeps a target the publishing host cannot build in the dump instead of dropping it, so a
@@ -114,7 +114,7 @@ kotlin {
 
 // Off only for the mavenLocal consumption probe (samples/consumption-probe), which has no signing
 // key. 'publish.yml' never sets this, so a release still signs or fails. See
-// docs/209-build-script-notes.md.
+// docs/build-script-notes.md.
 val signPublications: Boolean =
     providers.gradleProperty("kiban.signPublications").map(String::toBoolean).getOrElse(true)
 

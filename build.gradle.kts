@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.compat.tapmoc) apply false
     // Declared here, and not only in ':kiban' where it is applied, so that its transitive Kotlin
     // Gradle plugin loses the version conflict against the one this build pins. See
-    // docs/209-build-script-notes.md.
+    // docs/build-script-notes.md.
     alias(libs.plugins.testballoon) apply false
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.ktfmt)

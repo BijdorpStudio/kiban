@@ -1,7 +1,7 @@
 # OpenSSF Scorecard analysis: scores this repository against the OpenSSF's checks and files what
 # it finds as code scanning alerts. 'publish_results' backs the badge in README.md and works only
 # from the default branch, which is why there is no 'pull_request' trigger. See
-# docs/209-ci-workflow-notes.md and docs/160-supply-chain-posture.md.
+# docs/ci-workflow-notes.md and docs/supply-chain-posture.md.
 
 name: OpenSSF Scorecard
 

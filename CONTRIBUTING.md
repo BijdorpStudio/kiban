@@ -109,9 +109,9 @@ Three levels, and a comment belongs to exactly one of them:
   the file it describes.
 
 Concretely: no source, build or workflow file should carry a comment block longer than about five
-lines that is not a KDoc contract description. `docs/209-api-design-notes.md`,
-`docs/209-implementation-notes.md`, `docs/209-build-script-notes.md` and
-`docs/209-ci-workflow-notes.md` are the general-purpose homes for rationale that has no page of its
+lines that is not a KDoc contract description. `docs/api-design-notes.md`,
+`docs/implementation-notes.md`, `docs/build-script-notes.md` and
+`docs/ci-workflow-notes.md` are the general-purpose homes for rationale that has no page of its
 own; a decision big enough to argue over gets its own page.
 
 Do not put issue numbers in code comments. The pull request and `git log` carry them already, and a

@@ -68,8 +68,8 @@
 **Documentation**
 
 * Design rationale moved out of source, build and workflow comments into `docs/` (#209):
-  [API design](docs/209-api-design-notes.md), [implementation](docs/209-implementation-notes.md),
-  [build script](docs/209-build-script-notes.md) and [CI workflow](docs/209-ci-workflow-notes.md)
+  [API design](docs/api-design-notes.md), [implementation](docs/implementation-notes.md),
+  [build script](docs/build-script-notes.md) and [CI workflow](docs/ci-workflow-notes.md)
   notes. KDoc keeps the contract, and [CONTRIBUTING.md](CONTRIBUTING.md) now carries the comment
   rule. No API, behaviour or message change.
 
@@ -91,7 +91,7 @@
 
 * Documented that `CountryCodes.lastUpdateDate` carries the registry date as the instant at midnight
   UTC, which is contract rather than an implementation detail (#144). The case for freezing `Instant`
-  into the 1.0 API is in [docs/144-instant-api-stability.md](docs/144-instant-api-stability.md).
+  into the 1.0 API is in [docs/instant-api-stability.md](docs/instant-api-stability.md).
 
 * `toIban()`, `toIbanOrNull()` and `isValidIban()` keep their `String` receivers while `Iban(...)`,
   `Modulo97` and `CountryCodes` keep taking `CharSequence` (#143). No API change; a caller holding a
@@ -111,7 +111,7 @@
 
 * Settled the Intel-target question (#207). The published target set does not change; the rule
   behind it is now policy in [VERSIONING.md](VERSIONING.md) and the evidence is in
-  [docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
+  [docs/intel-target-policy.md](docs/intel-target-policy.md).
 
 * Cleaned up the README (#212). The java-iban link in the Background section had doubled
   parentheses and rendered with a stray `(` in it. The "Use" samples were written in a style the
@@ -124,7 +124,7 @@
   library..."), which read as though kiban's decisions belonged to someone else and justified two of
   them with an SDK 14-era Android app. The decisions are unchanged and now stated as this project's
   own; the history behind them, and which parts of the reasoning still transfer, moved to
-  [docs/212-java-iban-design-lineage.md](docs/212-java-iban-design-lineage.md). Attribution to
+  [docs/java-iban-design-lineage.md](docs/java-iban-design-lineage.md). Attribution to
   Barend Garvelink is untouched — it stays in the per-file license headers and the README's
   introduction.
 
@@ -132,12 +132,16 @@
   Kotlin-floor reasoning under "Requirements", which [VERSIONING.md](VERSIONING.md) carries as
   policy, and the `toIban()` receiver rationale, which is `String.toIban()`'s KDoc almost verbatim.
 
+* Gave `docs/` an index, [docs/README.md](docs/README.md), and named each page after its subject
+  rather than its issue number (#214), so `docs/9-swift-interop-review.md` is now
+  `docs/swift-interop-review.md`. The issue each page answers is still in its first lines.
+
 **Infrastructure**
 
 * GitHub's dependency graph now carries the resolved Gradle dependency tree, submitted from `main`
   by `dependency-submission.yml` (#224), so Dependabot alerts reach transitive dependencies and not
   only the versions the catalog declares. See
-  [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+  [docs/supply-chain-posture.md](docs/supply-chain-posture.md).
 
 * `js` and `wasmJs` tests run on Node only; the Karma and headless-Chrome browser runs are gone
   (#219). The library touches no DOM or browser API, so `jsBrowserTest` and `wasmJsBrowserTest` ran
@@ -159,11 +163,11 @@
 
 * Replaced the standalone `binary-compatibility-validator` plugin with the Kotlin Gradle plugin's
   built-in ABI validation (#182): `apiCheck` and `apiDump` are now `checkKotlinAbi` and
-  `updateKotlinAbi`. See [docs/182-builtin-abi-validation.md](docs/182-builtin-abi-validation.md).
+  `updateKotlinAbi`. See [docs/builtin-abi-validation.md](docs/builtin-abi-validation.md).
 
 * Migrated the test suite from `kotlin.test` to TestBalloon (#115), which registers each country as
   its own test: 78 reported tests became 1,217 with no loss of coverage, so a registry update that
-  breaks one country names it. See [docs/82-testballoon-evaluation.md](docs/82-testballoon-evaluation.md).
+  breaks one country names it. See [docs/testballoon-evaluation.md](docs/testballoon-evaluation.md).
 
 * The SWIFT registry sync runs unattended (#53): it regenerates, formats and diffs the country data
   before asking for a revision number, so the runs that find nothing finish silently. A blocked
@@ -209,7 +213,7 @@
 
 * Two supply-chain additions (#160): OpenSSF Scorecard, which backs the new README badge, and build
   provenance on every published `.jar`, `.klib` and `.aar`, verifiable with `gh attestation verify`.
-  See [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+  See [docs/supply-chain-posture.md](docs/supply-chain-posture.md).
 
 * `scripts/generate_country_data.main.kts` grew a `--self-check` (#161) that runs the parser, the
   overlay merge and the validation against synthetic fixtures under `scripts/testdata/`, since the
@@ -217,7 +221,7 @@
 
 * Versioned API docs (#162). A release no longer overwrites the whole GitHub Pages site: the version
   being released stays at the root and earlier ones are reachable from a dropdown, archived on a
-  `docs-archive` branch. See [docs/162-versioned-api-docs.md](docs/162-versioned-api-docs.md).
+  `docs-archive` branch. See [docs/versioned-api-docs.md](docs/versioned-api-docs.md).
 
 * TestBalloon moved from `1.1.0-RC` to the released `1.1.0` (#153), so the suite that gates
   `publish.yml` no longer runs on a release candidate. Binary compatible: no test, dump or build
@@ -233,7 +237,7 @@
 
 * Every workflow action is pinned to a commit SHA, and no checkout but the registry sync's leaves
   the `GITHUB_TOKEN` in `.git/config` (#222) — including in the `publish` job that holds the signing
-  key. See [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+  key. See [docs/supply-chain-posture.md](docs/supply-chain-posture.md).
 
 ## 0.5.0
 

@@ -1,5 +1,5 @@
 # Publishes the library to Maven Central, then the API docs to GitHub Pages.
-# Why it is wired this way: docs/209-ci-workflow-notes.md.
+# Why it is wired this way: docs/ci-workflow-notes.md.
 
 name: Publish
 on:
@@ -67,14 +67,14 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
-      # Build provenance for the published artifacts; see docs/209-ci-workflow-notes.md. Neither
+      # Build provenance for the published artifacts; see docs/ci-workflow-notes.md. Neither
       # widens what the job can do to the repository's contents.
       attestations: write
       id-token: write
     # The only job holding the Maven Central credentials and the GPG signing key. The 'release'
     # environment is what scopes those secrets and gates the publish on a human; it is a
     # repository setting rather than workflow content, so see RELEASING.md and
-    # docs/209-ci-workflow-notes.md.
+    # docs/ci-workflow-notes.md.
     environment:
       name: release
       url: https://central.sonatype.com/artifact/nl.bijdorpstudio.kiban/kiban
@@ -106,7 +106,7 @@ jobs:
 
       # Attestation needs the published files as subjects under a single path, which only a
       # repository layout gives. A second write of what the publish already built, not a second
-      # build; see docs/209-ci-workflow-notes.md.
+      # build; see docs/ci-workflow-notes.md.
       - name: Stage the published artifacts for attestation
         shell: bash
         env:
@@ -129,7 +129,7 @@ jobs:
           fi
 
       # Binaries only: a consumer runs 'gh attestation verify' on what lands on their classpath,
-      # not on the '.pom' and '.module' metadata. See docs/209-ci-workflow-notes.md.
+      # not on the '.pom' and '.module' metadata. See docs/ci-workflow-notes.md.
       - name: Attest build provenance for the published artifacts
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
@@ -201,7 +201,7 @@ jobs:
 
   # Adds the version just published to the archive the 'docs' job restores from. A job of its own
   # because 'contents: write' must not sit on a job that runs the Gradle build; see
-  # docs/209-ci-workflow-notes.md.
+  # docs/ci-workflow-notes.md.
   archive-docs:
     name: Archive published API docs
     needs: docs

@@ -52,8 +52,8 @@ public sealed class IbanParseException(
          * exhaustive without an `else`.
          *
          * Like the exceptions that carry them, kinds are constructed by kiban only, so a caller
-         * cannot build a kind the parser never produced. See docs/209-api-design-notes.md for why
-         * this is a sealed hierarchy rather than an enum.
+         * cannot build a kind the parser never produced. See docs/api-design-notes.md for why this
+         * is a sealed hierarchy rather than an enum.
          */
         public sealed class Kind {
             /** The input is empty. */

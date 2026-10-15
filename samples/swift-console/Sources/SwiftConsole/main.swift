@@ -3,7 +3,7 @@ import Kiban
 
 // Top-level Kotlin extension functions (toIbanOrNull, isValidIban, toIban) are exported as
 // static methods on an `IbanKt` facade class, not as Swift extensions on String — so the call is
-// `IbanKt.toIbanOrNull("x")`, not `"x".toIbanOrNull()`. See docs/9-swift-interop-review.md.
+// `IbanKt.toIbanOrNull("x")`, not `"x".toIbanOrNull()`. See docs/swift-interop-review.md.
 
 guard let iban = IbanKt.toIbanOrNull("NL91ABNA0417164300") else {
     fatalError("expected a valid IBAN")
@@ -38,7 +38,7 @@ do {
     fatalError("expected a valid IBAN, got \(error)")
 }
 
-// The open question left by docs/9-swift-interop-review.md: a caught IbanParseException is
+// The open question left by docs/swift-interop-review.md: a caught IbanParseException is
 // reachable as a description string, but does userInfo["KotlinException"] downcast to the real
 // typed exception? This prints the answer either way rather than asserting one, so the run reports
 // what the toolchain actually does.

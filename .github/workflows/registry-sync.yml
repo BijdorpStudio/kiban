@@ -3,7 +3,7 @@
 # design - downloading the TXT by hand and running the generator stays the fallback.
 #
 # How it works, which token it needs and what a maintainer has to configure:
-# docs/209-ci-workflow-notes.md. Read that before changing this.
+# docs/ci-workflow-notes.md. Read that before changing this.
 
 name: SWIFT registry sync
 
@@ -63,13 +63,13 @@ jobs:
 
       # Headed, with no headless attempt first: headless Chromium is blocked on the client
       # fingerprint rather than the IP, so an attempt is ~60s per run buying nothing. Do not re-add
-      # it as an optimisation; see docs/209-ci-workflow-notes.md.
+      # it as an optimisation; see docs/ci-workflow-notes.md.
       - name: Download the registry TXT (headed, under Xvfb)
         run: xvfb-run -a kotlin scripts/fetch_registry.main.kts --out "$REGISTRY_TXT_PATH" --headed ${REV:+--rev "$REV"}
 
       # Regenerated with the committed revision and datestamp, so a run where the registry did not
       # change stays byte-identical to HEAD. ktfmt is not optional: KotlinPoet's raw output differs
-      # from the committed files in whitespace alone. See docs/209-ci-workflow-notes.md.
+      # from the committed files in whitespace alone. See docs/ci-workflow-notes.md.
       - name: Regenerate the country data as currently committed
         run: |
           previous_date="$(sed -n 's/.*LAST_UPDATE_DATE: String = "\(.*\)"$/\1/p' "$DATA_FILE")"

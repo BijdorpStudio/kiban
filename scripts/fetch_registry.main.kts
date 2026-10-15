@@ -21,7 +21,7 @@
  * follow.
  *
  * Why a browser engine, why --headed is a real fallback, why the revision cannot be detected and
- * why this whole path is best-effort: docs/209-ci-workflow-notes.md.
+ * why this whole path is best-effort: docs/ci-workflow-notes.md.
  */
 
 @file:DependsOn("com.microsoft.playwright:playwright:1.62.0")

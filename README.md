@@ -62,7 +62,7 @@ Supported targets: JVM, Android, `js` (Node.js and browser), `wasmJs` (Node.js a
 The set is whatever the Kotlin/Native toolchain supports, so it is not uniform by architecture: a
 target leaves when JetBrains deprecates it, which is why there is no `macosX64` while the Intel iOS
 simulator target `iosX64` is still published. See
-[docs/207-intel-target-policy.md](docs/207-intel-target-policy.md).
+[docs/intel-target-policy.md](docs/intel-target-policy.md).
 
 The `js` and `wasmJs` artifacts serve **Kotlin/JS and Kotlin/Wasm consumers**, not plain
 JavaScript or TypeScript ones. Nothing in the library is annotated `@JsExport`, so none of its
@@ -203,7 +203,7 @@ See [MIGRATION.md](MIGRATION.md).
 Every example above is walked through by [`samples/jvm-cli`](samples/jvm-cli), a runnable demo
 of the API; see [`samples/`](samples) for that and a Swift consumer exercising the library
 through Kotlin/Native's Objective-C interop — see
-[`docs/9-swift-interop-review.md`](docs/9-swift-interop-review.md) for the review that found the
+[`docs/swift-interop-review.md`](docs/swift-interop-review.md) for the review that found the
 0.4.0 `Result`-returning API didn't survive the trip to Swift, which is what this strict,
 `@Throws`-annotated API is meant to fix.
 
@@ -233,7 +233,7 @@ kiban keeps the design decisions the original library made, restated here in its
   `Iban.branchIdentifier` are nullable accessors onto it.
 
 Where those decisions came from, including the Android constraints behind the bit-packed registry
-data, is in [docs/212-java-iban-design-lineage.md](docs/212-java-iban-design-lineage.md).
+data, is in [docs/java-iban-design-lineage.md](docs/java-iban-design-lineage.md).
 
 ### Kotlin library
 
@@ -242,6 +242,10 @@ Adopted design choices from the Java library, plus:
 * Parsing is strict and throws a sealed `IbanParseException` on invalid input, rather than returning a `Result`. The exception type extends `IllegalArgumentException`, and callers who want typed errors can catch it and inspect the failure instead of matching on messages. Every throwing entry point carries `@Throws(IbanParseException::class)`, which is load-bearing for Kotlin/Native's Objective-C interop: an exception escaping an unannotated function aborts the process there, rather than surfacing as a catchable Swift error.
 * `Modulo97` keeps throwing: it is a low-level utility whose errors indicate a contract violation, not invalid user input.
 * Zero dependencies: only the Kotlin standard library, which is what lets the library ship on every Kotlin target.
+
+The decisions too long to fit here — whether `Iban` should be a value class, whether
+`kotlin.time.Instant` is safe to freeze into the API, how that API reads from Swift — are written up
+one per page under [`docs/`](docs/README.md), which indexes what each page decides.
 
 ## Updating the IBAN registry data
 
