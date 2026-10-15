@@ -134,6 +134,10 @@
 
 **Infrastructure**
 
+* The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
+  inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
+  No published API changes and the dumps are unaffected.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique name
   matches the published artifact (#208). The API dumps move to `kiban/api/`; the artifact
   coordinates, the published API and the sources are unchanged.
