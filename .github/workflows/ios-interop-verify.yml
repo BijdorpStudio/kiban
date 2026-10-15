@@ -19,21 +19,19 @@ concurrency:
 jobs:
   verify:
     runs-on: macos-latest
+    # Assembles the XCFramework and builds and runs the Swift sample on a macOS runner, cold konan
+    # cache included. Matched to publish.yml's Apple jobs rather than the 30 the gradle.yml matrix
+    # uses: this one is 'workflow_dispatch'-only, so the cost of a high cap is a runner nobody is
+    # waiting on, while a cap that cuts a real run short wastes a maintainer's manual dispatch.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
-        with:
-          java-version: '25'
-          distribution: 'zulu'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          cache-read-only: true
+      # Dispatch-only and never on 'main', so the Gradle cache stays read-only --
+      # the action's default. No encryption key is passed, as before: without one
+      # setup-gradle skips the configuration-cache part of the entry and restores
+      # the rest, which is all an on-demand diagnostic run needs.
+      - uses: ./.github/actions/setup-build
 
       - name: Report Xcode and Swift toolchain versions
         run: |

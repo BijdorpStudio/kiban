@@ -94,20 +94,22 @@ jobs:
             id: consumption-probe
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
+    # Without this a job inherits GitHub's six-hour default. The slowest entry on a
+    # warm cache is the iOS simulator test at about four minutes, so half an hour
+    # leaves room for a cold Kotlin/Native download and still means that an entry
+    # past it is stuck - an unbooted simulator, a test runner waiting on a socket,
+    # the qemu-emulated linuxArm64 binary that never exits. The cap matters most off
+    # 'main': the concurrency group above is keyed on the ref, so one hung job holds
+    # up every later push to that branch.
+    timeout-minutes: 30
 
     steps:
+    # Checkout stays here rather than inside the setup action: a local action is
+    # resolved out of the workspace, so it cannot be found before the checkout
+    # that creates it.
     - uses: actions/checkout@v7
 
-    - uses: ./.github/actions/cache-konan
-
-    - name: Set up JDK 25
-      uses: actions/setup-java@v6
-      with:
-        java-version: '25'
-        distribution: 'zulu'
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v6
+    - uses: ./.github/actions/setup-build
       with:
         # Only write to the cache for builds on the 'main' and 'release' branches. (Default is 'main' only.)
         # Builds on other branches will only read existing entries from the cache.
@@ -116,9 +118,7 @@ jobs:
         # Publishes a PUBLIC build scan per job to scans.gradle.com. Only this
         # workflow is scanned; see docs/ci-workflow-notes.md for what is
         # uploaded and why the action inputs rather than the settings plugin.
-        build-scan-publish: true
-        build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-        build-scan-terms-of-use-agree: 'yes'
+        build-scan: true
 
     - name: Build with Gradle
       # 'shell: bash' enables pipefail, so tee does not mask a Gradle failure.
@@ -259,6 +259,10 @@ jobs:
     # required check that never reports leaves the pull request waiting.
     if: always()
     runs-on: ubuntu-latest
+    # Two artifact steps, both 'continue-on-error' - this job's own work is seconds.
+    # The cap is for the download step hanging on a slow artifact, not for the parse:
+    # 'needs: build' already bounds the wait on the matrix.
+    timeout-minutes: 15
     steps:
     # A roll-up of every matrix job's JUnit XML, on the one job a reviewer is
     # certain to open. Both steps are 'continue-on-error' on purpose: this job

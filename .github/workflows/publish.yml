@@ -16,6 +16,9 @@ jobs:
   verify-version:
     name: Verify tag matches project version
     runs-on: ubuntu-latest
+    # A checkout and a 'sed'. This exists to fail fast, so anything beyond a few minutes here is
+    # the runner, not the check.
+    timeout-minutes: 15
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -25,11 +28,11 @@ jobs:
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          # Read with sed rather than by booting Gradle, because this step exists to fail fast.
-          # The pattern anchors on the top-level 'version = "..."' assignment.
-          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' kiban/build.gradle.kts)"
+          # Read straight out of the properties file rather than by booting Gradle, because this
+          # step exists to fail fast.
+          project_version="$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
           if [ -z "$project_version" ]; then
-            echo "::error::Could not read the project version from kiban/build.gradle.kts."
+            echo "::error::Could not read VERSION_NAME from gradle.properties."
             exit 1
           fi
           # Release tags are 'vX.Y.Z'; the Gradle version is 'X.Y.Z'. Strip a single leading 'v'.
@@ -37,12 +40,14 @@ jobs:
           echo "Release tag:     $TAG_NAME (version $tag_version)"
           echo "Project version: $project_version"
           if [ "$tag_version" != "$project_version" ]; then
-            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in kiban/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
+            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in gradle.properties. Bump VERSION_NAME and re-tag (see RELEASING.md)."
             exit 1
           fi
           echo "Release tag and project version match."
 
   # The full check matrix (tests on every target plus checkKotlinAbi), before anything is shipped.
+  # No 'timeout-minutes': GitHub rejects the key on a 'uses:' job, and every job in gradle.yml
+  # carries its own.
   test:
     name: Check
     needs: verify-version
@@ -53,6 +58,11 @@ jobs:
     name: Release build and publish
     needs: test
     runs-on: macOS-latest
+    # The long pole: a release build of every target on a macOS runner, signing, the Sonatype
+    # upload and the attestation. 45 rather than the matrix's 30 because a cold konan cache, a
+    # slow Central staging repository or a Sigstore round trip all land on this one job - and
+    # because dying halfway through an upload is worse than taking a while.
+    timeout-minutes: 45
     permissions:
       contents: read
       # Build provenance for the published artifacts; see docs/ci-workflow-notes.md. Neither
@@ -71,20 +81,10 @@ jobs:
         uses: actions/checkout@v7
 
       # This job compiles every native target, so it needs the whole Kotlin/Native distribution.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
+      # Release-tag ref only, so the cache stays read-only (the action's default): a one-shot
+      # release build has nothing worth writing back.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          # Release-tag ref only, so the cache is read-only: a one-shot release build has nothing
-          # worth writing back.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Publish to MavenCentral
@@ -136,6 +136,10 @@ jobs:
     name: Publish API docs
     needs: publish
     runs-on: macos-latest
+    # A full Dokka generation plus the Pages deployment, and the deploy waits on GitHub's own
+    # pages-build-deployment run. Generous because it is the release path: a timeout here means
+    # the artifacts published but the docs did not.
+    timeout-minutes: 45
     permissions:
       contents: read
       pages: write
@@ -158,20 +162,9 @@ jobs:
           path: docs-archive
 
       # Dokka resolves 'nativeMain'/'appleMain' through the Kotlin analysis frontend, so this job
-      # needs the Kotlin/Native distribution too.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
+      # needs the Kotlin/Native distribution too. Read-only cache, as in the publish job.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          # Release-tag ref only, so the cache is read-only here as well; see the publish job.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Generate Dokka HTML
@@ -204,6 +197,9 @@ jobs:
     name: Archive published API docs
     needs: docs
     runs-on: ubuntu-latest
+    # Downloads one Pages artifact, rearranges files and pushes them - it runs no project code.
+    # The cap guards the artifact download and the push to the docs branch.
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

@@ -126,8 +126,8 @@ blows past that is one where the artifact is the right tool anyway.
 tag does not match the version the build declares. The workflow fires on any
 `released`/`prereleased` event and ships whatever the checked-out build says, so tagging `v1.0.0`
 against a commit still declaring an older version would silently republish that version — and only
-fail late at Maven Central, if at all. The version is read with `sed` rather than by booting Gradle
-because the whole point of the job is to fail fast.
+fail late at Maven Central, if at all. The version is read straight out of `gradle.properties` rather than
+by booting Gradle, because the whole point of the job is to fail fast.
 
 `permissions: contents: read` at the workflow level is least privilege for every job. Without it the
 `GITHUB_TOKEN` falls back to the repository default, which is read-write for repositories created
@@ -343,7 +343,12 @@ run could neither publish nor upload SARIF, and the score is a property of `main
 proposed change. The `branch_protection_rule` trigger is there because the Branch-Protection check
 reads settings rather than files, so it can go stale without a commit.
 
-## `.github/actions/cache-konan`
+## `.github/actions/setup-build`
+
+The build prelude every Gradle job shares: the `~/.konan` cache, `setup-java` and `setup-gradle`,
+so the JDK version and cache policy are set in one place. `actions/checkout` stays at each call
+site, because a local `uses: ./...` reference is resolved out of the workspace and so needs the
+repository checked out first.
 
 Every job that compiles a native target, and every job that runs Dokka, needs the Kotlin/Native
 distribution: Dokka runs the Kotlin analysis frontend rather than scraping comments, so it resolves
