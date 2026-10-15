@@ -67,6 +67,12 @@
 
 **Documentation**
 
+* Design rationale moved out of source, build and workflow comments into `docs/` (#209):
+  [API design](docs/209-api-design-notes.md), [implementation](docs/209-implementation-notes.md),
+  [build script](docs/209-build-script-notes.md) and [CI workflow](docs/209-ci-workflow-notes.md)
+  notes. KDoc keeps the contract, and [CONTRIBUTING.md](CONTRIBUTING.md) now carries the comment
+  rule. No API, behaviour or message change.
+
 * Added [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) (#157): what to run before
   pushing, which checks need a toolchain most machines do not have, and the private channel for
   reporting a vulnerability, with the scope line this library needs drawn around it.
@@ -133,6 +139,10 @@
   only the versions the catalog declares. See
   [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
 
+* The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
+  inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
+  No published API changes and the dumps are unaffected.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique name
   matches the published artifact (#208). The API dumps move to `kiban/api/`; the artifact
   coordinates, the published API and the sources are unchanged.
@@ -161,9 +171,10 @@
   has to be stated while it is written rather than caught in a dump afterwards. Mechanical: nothing
   became public or stopped being public.
 
-* CI runs the test suite on `mingwX64` and `linuxArm64` (#151), both published targets that had only
-  ever been compiled. `linuxArm64` runs under the `qemu-aarch64` emulator the Kotlin/Native
-  toolchain already ships, registered as a real test task so its results reach the `ci` roll-up.
+* CI runs the test suite on `mingwX64` (#151), a published target that had only ever been compiled.
+  `linuxArm64` stays compile-verified by `checkKotlinAbi` alone: the emulator-based test task added
+  for it is gone again (#218), because no machine can both build and run the target and the library
+  has no `linuxArm64`-specific source for `linuxX64Test` not to cover.
 
 * CI resolves the published artifact by coordinates from a build that has never heard of `:kiban`
   (#154), via `samples/consumption-probe` against `mavenLocal()` on `jvm`, `linuxX64` and `js`.
