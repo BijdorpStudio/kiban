@@ -1,22 +1,13 @@
-# OpenSSF Scorecard analysis (#160).
-#
-# Scorecard scores a repository against the checks the OpenSSF publishes - branch protection,
-# pinned dependencies, token permissions, signed releases, whether a CI test workflow exists and
-# runs, and so on - and files what it finds as code scanning alerts. Two audiences for that here:
-# consumers in regulated environments increasingly look the score up before taking a dependency,
-# and the checks themselves are a maintenance checklist for a repository heading to 1.0.
-#
-# 'publish_results: true' sends the result to the OpenSSF's public API, which is what backs the
-# badge in README.md and what a consumer querying deps.dev or the Scorecard API reads. It works
-# only from the default branch of a public repository, which is why the triggers below are what
-# they are: no 'pull_request', because a fork's run could neither publish nor upload SARIF, and the
-# score is a property of 'main' rather than of a proposed change.
+# OpenSSF Scorecard analysis: scores this repository against the OpenSSF's checks and files what
+# it finds as code scanning alerts. 'publish_results' backs the badge in README.md and works only
+# from the default branch, which is why there is no 'pull_request' trigger. See
+# docs/209-ci-workflow-notes.md and docs/160-supply-chain-posture.md.
 
 name: OpenSSF Scorecard
 
 on:
   # The Branch-Protection check reads settings rather than files, so it can go stale without a
-  # commit. This event fires when a branch ruleset changes and re-scores immediately.
+  # commit; this event re-scores when a ruleset changes.
   branch_protection_rule:
   schedule:
     - cron: '18 4 * * 2'
