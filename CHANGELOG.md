@@ -134,6 +134,10 @@
 
 **Infrastructure**
 
+* The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
+  inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
+  No published API changes and the dumps are unaffected.
+
 * Renamed the Gradle subproject and its directory from `library` to `kiban`, so the klib unique name
   matches the published artifact (#208). The API dumps move to `kiban/api/`; the artifact
   coordinates, the published API and the sources are unchanged.
@@ -198,6 +202,10 @@
 * TestBalloon moved from `1.1.0-RC` to the released `1.1.0` (#153), so the suite that gates
   `publish.yml` no longer runs on a release candidate. Binary compatible: no test, dump or build
   file changed with it.
+
+* The `verifyPublicationTargets` task is gone (#217). `publish.yml` already overrides
+  `kotlin.native.ignoreDisabledTargets` to `false` for the publish, which fails configuration on any
+  target the publishing host cannot build — earlier than the task did, and on the target itself.
 
 * Every workflow action is pinned to a commit SHA, and no checkout but the registry sync's leaves
   the `GITHUB_TOKEN` in `.git/config` (#222) — including in the `publish` job that holds the signing
