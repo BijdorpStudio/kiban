@@ -2,14 +2,6 @@
 /*
  * Downloads the SWIFT IBAN Registry TXT through a real browser engine.
  *
- * Swift blocks unrecognised clients below the HTTP layer, so no shell script or HTTP library ever
- * sees a status code - the connection just hangs and is eventually reset. This covers the
- * registry page itself, not only the download endpoint, which is why failures surface as
- * navigation timeouts rather than as a bot-check page. A real Chromium context that has actually
- * loaded the page can fetch it: a programmatic fetch() from page context returns the TXT with
- * HTTP 200. Headless Chromium is itself blocked from some networks even where headed works, so
- * --headed is a genuine fallback and not just a debugging aid.
- *
  * The downloaded TXT is NOT redistributable and must never be committed. The default output
  * path lives under scripts/input/, which is gitignored; only the artifacts generated from it
  * (CountryCodesData.kt, CountryTestData.kt) belong in the repository.
@@ -22,21 +14,14 @@
  *     kotlin scripts/generate_country_data.main.kts --registry scripts/input/iban-registry.txt --rev <NN>
  *
  * --rev records the registry revision; --self-check runs the offline assertions over the parsing
- * helpers and exits. The revision cannot currently be detected: the download endpoint sends no
- * Content-Disposition header at all, and the registry page names no release number anywhere. The
- * detection below is therefore best-effort against a page that may start stating one again, and
- * an unknown revision is the normal outcome rather than a failure - it only has to be resolved
- * once the registry TXT has actually changed, which is why registry-sync.yml regenerates and
- * diffs first and demands a revision second.
- *
- * Bot detection is an arms race this project does not control, so treat the automated path as
- * best-effort convenience: downloading the TXT manually in a browser into scripts/input/ and
- * running the generator by hand stays the guaranteed fallback, and nothing is lost but
- * convenience if this stops working.
+ * helpers and exits. An unknown revision is the normal outcome rather than a failure.
  *
  * Inside GitHub Actions (when $GITHUB_ENV is set) the script exports REGISTRY_TXT,
  * REGISTRY_SHA256, REGISTRY_LAST_MODIFIED and - when known - REGISTRY_REV for the steps that
  * follow.
+ *
+ * Why a browser engine, why --headed is a real fallback, why the revision cannot be detected and
+ * why this whole path is best-effort: docs/209-ci-workflow-notes.md.
  */
 
 @file:DependsOn("com.microsoft.playwright:playwright:1.62.0")
