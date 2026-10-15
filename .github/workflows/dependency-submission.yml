@@ -1,0 +1,93 @@
+# Submits the resolved Gradle dependency tree to GitHub's dependency graph (#224).
+#
+# Dependabot already watches 'gradle/libs.versions.toml' (see .github/dependabot.yml), but that is
+# a catalog scan: it reads the versions this repository declares and knows nothing about what those
+# modules bring with them. The dependency graph is the resolved tree - every transitive dependency
+# of every configuration, as Gradle actually resolves it - and it is what Dependabot *alerts* are
+# matched against, as well as what Insights -> Dependency graph shows a consumer. Without a
+# submission, a vulnerability reachable only through a transitive dependency raises nothing here.
+#
+# This is the open item of the posture written up in docs/160-supply-chain-posture.md: build
+# provenance answers "which workflow and commit produced this artifact", Scorecard scores the
+# repository, and this answers "what went into the build".
+#
+# 'main' only, never on a pull request, for the same two reasons scorecard.yml skips them: the
+# snapshot is a property of the default branch, and submission needs 'contents: write', which the
+# token of a pull request from a fork does not have. A proposed change to the declared dependencies
+# is reviewed in the version catalog diff.
+name: Dependency submission
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Only the newest snapshot means anything - GitHub keeps one graph per branch, and a submission for
+# a commit 'main' has already moved past would simply be overwritten - so a new push cancels a run
+# still going. (gradle.yml deliberately does the opposite on 'main', where the per-commit matrix
+# result is the record of what the branch passed.)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-submission:
+    name: Submit resolved Gradle dependencies
+    runs-on: ubuntu-latest
+    # Resolves dependencies and builds nothing; a few minutes at most.
+    timeout-minutes: 20
+    permissions:
+      # What the Dependency Submission API needs to record the snapshot against this repository.
+      # It is the only permission this job holds beyond reading the tree, and the job runs no
+      # project code: Gradle resolves configurations and compiles nothing.
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          # The submission authenticates to the API with GITHUB_TOKEN, not through git, so nothing
+          # in this job needs the credential checkout would otherwise leave in '.git/config'.
+          persist-credentials: false
+
+      # The Kotlin/Native distribution is fetched through a resolvable configuration like anything
+      # else, so a job whose whole purpose is to resolve every configuration can reach it. Sharing
+      # the '~/.konan' entry the rest of CI already maintains is the cheap way to be sure this one
+      # never pays for the bundle itself; if resolution turns out not to touch it, the step costs a
+      # cache lookup. The step is '.github/actions/setup-build''s own cache step rather than that
+      # action whole, because the action also runs setup-gradle, which dependency-submission does
+      # itself.
+      - name: Cache the Kotlin/Native distribution
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: ${{ runner.os }}-konan-
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v6
+        with:
+          # The matrix build on 'main' owns cache writes. This job resolves dependencies and builds
+          # nothing, so it has nothing worth writing back - the same reasoning as publish.yml.
+          cache-read-only: true
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          # Left on the action's default resolution task, which walks every project and every
+          # resolvable configuration. That breadth is the point here: the graph then covers all
+          # sixteen targets' compile and runtime classpaths, and the samples, rather than the
+          # single JVM view a narrower task would give.
+          #
+          # 'org.gradle.configuration-cache' is on in gradle.properties, and the dependency-graph
+          # plugin this action injects is not documented as supporting it (the action's own
+          # documentation uses this flag as its example). A one-shot job on 'main' loses nothing by
+          # configuring from scratch, so it is not worth finding out the hard way, on the one
+          # workflow whose failure mode is a silently stale dependency graph.
+          additional-arguments: --no-configuration-cache
