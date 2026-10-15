@@ -82,27 +82,15 @@ jobs:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # This job runs the whole Gradle build with the signing key and the Central token in
-          # its environment; it does not need a git credential on top. Nothing here pushes -
-          # 'archive-docs' is the only job that does, with the token it is handed explicitly
-          # (#222).
+          # This job holds the signing key and the Central token; it does not need a git credential
+          # on top. Nothing here pushes.
           persist-credentials: false
 
       # This job compiles every native target, so it needs the whole Kotlin/Native distribution.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      # Release-tag ref only, so the cache stays read-only (the action's default): a one-shot
+      # release build has nothing worth writing back.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-        with:
-          # Release-tag ref only, so the cache is read-only: a one-shot release build has nothing
-          # worth writing back.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Publish to MavenCentral
@@ -183,20 +171,9 @@ jobs:
           persist-credentials: false
 
       # Dokka resolves 'nativeMain'/'appleMain' through the Kotlin analysis frontend, so this job
-      # needs the Kotlin/Native distribution too.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      # needs the Kotlin/Native distribution too. Read-only cache, as in the publish job.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-        with:
-          # Release-tag ref only, so the cache is read-only here as well; see the publish job.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Generate Dokka HTML

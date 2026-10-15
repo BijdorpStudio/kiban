@@ -104,23 +104,16 @@ jobs:
     timeout-minutes: 30
 
     steps:
+    # Checkout stays here rather than inside the setup action: a local action is
+    # resolved out of the workspace, so it cannot be found before the checkout
+    # that creates it.
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        # Every job in this workflow only reads the tree. Leaving the 'GITHUB_TOKEN' in
-        # '.git/config' would hand it to the Gradle build that runs next, and from there to any
-        # dependency's build logic (#222).
+        # Every job here only reads the tree; a credential left in '.git/config' would reach the
+        # Gradle build and any dependency's build logic.
         persist-credentials: false
 
-    - uses: ./.github/actions/cache-konan
-
-    - name: Set up JDK 25
-      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-      with:
-        java-version: '25'
-        distribution: 'zulu'
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+    - uses: ./.github/actions/setup-build
       with:
         # Only write to the cache for builds on the 'main' and 'release' branches. (Default is 'main' only.)
         # Builds on other branches will only read existing entries from the cache.
@@ -129,9 +122,7 @@ jobs:
         # Publishes a PUBLIC build scan per job to scans.gradle.com. Only this
         # workflow is scanned; see docs/209-ci-workflow-notes.md for what is
         # uploaded and why the action inputs rather than the settings plugin.
-        build-scan-publish: true
-        build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-        build-scan-terms-of-use-agree: 'yes'
+        build-scan: true
 
     - name: Build with Gradle
       # 'shell: bash' enables pipefail, so tee does not mask a Gradle failure.
