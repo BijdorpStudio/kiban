@@ -4,8 +4,7 @@
  *
  * The SWIFT registry TXT ("IBAN Registry (TXT)" on
  * https://www.swift.com/standards/data-standards/iban) must be downloaded manually in a
- * browser - the endpoint blocks non-browser HTTP clients - and must NOT be committed to
- * this repository (it is not redistributable).
+ * browser and must NOT be committed to this repository (it is not redistributable).
  *
  * Usage:
  *     kotlin scripts/generate_country_data.main.kts --registry ~/Downloads/iban-registry-v102.txt --rev 102
@@ -18,13 +17,10 @@
  * Every entry is validated before anything is written:
  *  - the example IBAN passes the mod-97 check, has the declared length and country prefix;
  *  - bank/branch identifiers extracted via the declared positions must equal the registry's
- *    own independent "Bank identifier example" / "Branch identifier example" fields, so the
- *    position encoding is cross-checked against data it was not derived from.
+ *    own independent "Bank identifier example" / "Branch identifier example" fields.
  *
  * --self-check runs the parser, the overlay merge and the validation over the fixtures in
- * scripts/testdata/ - invented countries in the registry's own format, because the real TXT
- * cannot be committed - and exits without writing anything. It is what turns a format-handling
- * regression into a failing check rather than a bad weekly sync.
+ * scripts/testdata/ and exits without writing anything.
  */
 
 @file:DependsOn("com.jsoizo:kotlin-csv-jvm:1.10.0")
@@ -304,7 +300,7 @@ fun generatedKdoc(what: String, stamp: Stamp) =
         "Updated to SWIFT IBAN Registry version ${stamp.rev} on ${stamp.date}.\n"
 
 fun constInt(name: String, format: String, vararg args: Any): PropertySpec =
-    PropertySpec.builder(name, INT, KModifier.CONST)
+    PropertySpec.builder(name, INT, KModifier.INTERNAL, KModifier.CONST)
         .initializer(format, *args)
         .build()
 
@@ -362,13 +358,13 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
         .addModifiers(KModifier.INTERNAL)
         .addKdoc(generatedKdoc("Contains information about IBAN country codes.", stamp))
         .addProperty(
-            PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.CONST)
+            PropertySpec.builder("LAST_UPDATE_DATE", STRING, KModifier.INTERNAL, KModifier.CONST)
                 .addKdoc("The \"yyyy-MM-dd\" datestamp that the embedded IBAN data was updated.\n")
                 .initializer("%S", stamp.date)
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.CONST)
+            PropertySpec.builder("LAST_UPDATE_REV", STRING, KModifier.INTERNAL, KModifier.CONST)
                 .addKdoc("The revision of the SWIFT IBAN Registry to which the embedded IBAN data was updated.\n")
                 .initializer("%S", stamp.rev)
                 .build()
@@ -384,7 +380,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
         .addProperty(branchEndShift)
         .addProperty(constInt("BRANCH_IDENTIFIER_END_MASK", "0xFF shl %N", branchEndShift))
         .addProperty(
-            PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING))
+            PropertySpec.builder("COUNTRY_CODES", ARRAY.parameterizedBy(STRING), KModifier.INTERNAL)
                 .addKdoc(
                     "Known country codes, this list must be sorted to allow binary search. " +
                         "All other lists in this file must use the\nsame indices for the same countries.\n"
@@ -393,7 +389,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("COUNTRY_IBAN_LENGTHS", INT_ARRAY)
+            PropertySpec.builder("COUNTRY_IBAN_LENGTHS", INT_ARRAY, KModifier.INTERNAL)
                 .addKdoc(
                     "Lengths for each country's IBAN. The indices match the indices of [COUNTRY_CODES], " +
                         "the values are the\nexpected length. Values may embed the [SEPA] and [SWIFT] flags " +
@@ -403,7 +399,7 @@ fun dataFileSpec(countries: List<Country>, stamp: Stamp): FileSpec {
                 .build()
         )
         .addProperty(
-            PropertySpec.builder("BANK_CODE_BRANCH_CODE", INT_ARRAY)
+            PropertySpec.builder("BANK_CODE_BRANCH_CODE", INT_ARRAY, KModifier.INTERNAL)
                 .addKdoc(
                     "Contains the start- and end-index (as per [String.substring]) of the bank code " +
                         "and branch code\nwithin a country's IBAN format. Mask:\n```\n" +
@@ -495,9 +491,8 @@ fun generate() {
 // ---------------------------------------------------------------------------
 // Self-check: offline assertions over the parser, against synthetic registries
 //
-// The SWIFT registry TXT cannot be committed, so the fixtures invent their countries on ISO 3166
-// user-assigned codes, which no real registry revision can ever hand out. scripts/testdata/README.md
-// says which quirk each country stands for; keep the two in step when either changes.
+// The fixtures invent their countries on ISO 3166 user-assigned codes; scripts/testdata/README.md
+// says which quirk each one stands for. Keep the two in step.
 // ---------------------------------------------------------------------------
 
 fun selfCheck() {
@@ -612,6 +607,18 @@ fun selfCheck() {
     val exempt = sound.copy(code = "BA", example = "BA90BANK123456789012")
     expectAccepted("an exempt country whose registry examples still disagree", exempt.copy(bankExample = "WRONG"))
     expectRejected("an exempt country whose registry examples now agree", "remove the exception", exempt)
+
+    // Emitted visibility. KotlinPoet writes a declaration's implicit `public` unless the spec
+    // states another visibility, and nothing in either generated file is public API (#211).
+    val stamp = Stamp(rev = "99", date = "2026-01-01")
+    val emittedData = dataFileSpec(merged, stamp).toString()
+    expect("the data object's visibility", true, "internal object CountryCodesData" in emittedData)
+    expect("a generated const's visibility", true, "internal const val LAST_UPDATE_DATE: String" in emittedData)
+    expect("a generated array's visibility", true, "internal val COUNTRY_CODES: Array<String>" in emittedData)
+    expect("a public modifier in the generated data", null, Regex("""\bpublic\b""").find(emittedData)?.value)
+    val emittedTest = testFileSpec(merged, stamp).toString()
+    expect("the test table's visibility", true, "internal val countryTestData:" in emittedTest)
+    expect("a public modifier in the generated test table", null, Regex("""\bpublic\b""").find(emittedTest)?.value)
 
     println("All $checks self-checks passed.")
 }
