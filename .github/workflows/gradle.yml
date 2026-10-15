@@ -29,21 +29,51 @@ jobs:
         # 'id' is the slug used in artifact names and step conditions; a target
         # is not usable as one. See docs/209-ci-workflow-notes.md.
         include:
-          - target: iosSimulatorArm64Test
-            id: ios-simulator-arm64-test
-            os: macos-latest
-          - target: macosArm64Test
-            id: macos-arm64-test
-            os: macos-latest
-          - target: tvosSimulatorArm64Test
-            id: tvos-simulator-arm64-test
-            os: macos-latest
-          - target: watchosSimulatorArm64Test
-            id: watchos-simulator-arm64-test
-            os: macos-latest
-          - target: jvmTest
-            id: jvm-test
+          # Everything that costs seconds once Gradle is configured, in one
+          # Linux job (#220). As five separate matrix entries these paid five
+          # checkouts, five JDK installs, five Gradle cache restores and five
+          # configuration phases to run tasks that finish in seconds.
+          #
+          # 'checkKotlinAbi' is here rather than on a macOS runner because a
+          # klib needs no Xcode: a Linux host compiles every Apple target and
+          # dumps its ABI (#182, see CLAUDE.md), so this entry is still the
+          # compile check for the Apple targets, and for 'linuxArm64', which
+          # no machine can both build and run (#218).
+          #
+          # Dokka is generation only, no deploy: it catches broken KDoc or
+          # sourceLink before a release tag is cut. The actual publish to GitHub
+          # Pages stays in 'publish.yml'.
+          #
+          # '--continue' keeps what the split gave. One Gradle invocation stops
+          # at the first failing task by default, so without it a ktfmt
+          # violation would hide the ABI and Dokka results behind it - five jobs
+          # reported independently and this has to as well.
+          - target: >-
+              --continue
+              jvmTest
+              checkKotlinAbi
+              ktfmtCheck
+              :kiban:dokkaGeneratePublicationHtml
+              :samples:jvm-cli:run
+            id: checks
             os: ubuntu-latest
+          # The four Apple test tasks in one macOS job (#220). They shared
+          # nothing as four entries and each paid its own konan distribution
+          # restore and configuration phase, on the runner that is the matrix's
+          # long pole.
+          #
+          # Per-target results survive the merge: Kotlin suffixes every suite
+          # name with its target ('IbanTest[iosSimulatorArm64]'), and the JUnit
+          # report action groups by suite. '--continue' is what gets all four
+          # into that report on a run where one of them fails.
+          - target: >-
+              --continue
+              iosSimulatorArm64Test
+              macosArm64Test
+              tvosSimulatorArm64Test
+              watchosSimulatorArm64Test
+            id: apple-tests
+            os: macos-latest
           - target: linuxX64Test
             id: linux-x64-test
             os: ubuntu-latest
@@ -56,26 +86,8 @@ jobs:
           - target: mingwX64Test
             id: mingw-x64-test
             os: windows-latest
-          # checkKotlinAbi builds a klib for every target the host supports, so
-          # it doubles as the compile check for the targets no job above runs:
-          # the Apple ones, and 'linuxArm64', which no machine can both build
-          # and run (#218).
-          - target: checkKotlinAbi
-            id: api-check
-            os: macos-latest
           - target: assembleAndroidMain androidCompileLintChecks :kiban:testAndroidHostTest
             id: android
-            os: ubuntu-latest
-          # Generation only, no deploy: catches broken KDoc/sourceLink before a
-          # release tag is cut. Actual publish to GitHub Pages stays in publish.yml.
-          - target: :kiban:dokkaGeneratePublicationHtml
-            id: dokka
-            os: ubuntu-latest
-          - target: ktfmtCheck
-            id: ktfmt-check
-            os: ubuntu-latest
-          - target: :samples:jvm-cli:run
-            id: samples-jvm-cli-run
             os: ubuntu-latest
           # Assembles the XCFramework the Swift sample consumes; the step below
           # compiles and runs the sample against it.
@@ -156,7 +168,7 @@ jobs:
     # docs/209-ci-workflow-notes.md.
     - name: Report test results
       # Jobs that write no test XML skip the step rather than report an empty
-      # suite.
+      # suite; 'swift-console' is the only one.
       if: always() && hashFiles('**/build/test-results/**/*.xml') != ''
       # Reporting is a convenience wrapped around the real signal; it must never
       # fail the job, nor latch 'failure()' for the steps below.
@@ -186,27 +198,63 @@ jobs:
         retention-days: 7
 
     - name: Upload API docs preview
-      if: matrix.id == 'dokka'
+      if: matrix.id == 'checks'
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: api-docs-preview
         path: kiban/build/dokka/html
         retention-days: 7
 
+    # 'checks' runs five tasks, so 'matrix.id' no longer says which of them
+    # failed and the two diff steps below cannot key off it any more (#220).
+    # The Gradle log does say: a failing task names itself in "Execution failed
+    # for task ':kiban:ktfmtCheckKmpCommonMain'". This reads the names out of
+    # the log the build step teed and hands each diff step its own gate, so a
+    # failing 'jvmTest' no longer drags both of them in behind it.
+    - name: Identify the failing tasks
+      id: failed
+      if: failure() && matrix.id == 'checks'
+      shell: bash
+      run: |
+        log=build/reports/ci/gradle-build.log
+        # 'failure()' also covers a step before the build - a failed checkout or
+        # JDK install leaves no log, and 'shell: bash' means '-e', so reading it
+        # would fail this step on top of the one that actually broke.
+        if [ ! -f "$log" ]; then
+          echo 'No Gradle log: the build never ran.'
+          exit 0
+        fi
+        tasks=$(sed -n "s/.*Execution failed for task '\([^']*\)'.*/\1/p" \
+          "$log" | sort -u | tr '\n' ' ')
+        echo "Failing tasks: ${tasks:-<none reported>}"
+        # Substring matches, not exact names: ktfmt fails in a per-source-set
+        # 'ktfmtCheckKmp*' task rather than the 'ktfmtCheck' lifecycle task, and
+        # the ABI check is reachable as both 'checkKotlinAbi' and the deprecated
+        # 'checkLegacyAbi' alias.
+        case "$tasks" in
+          *ktfmtCheck*) echo 'ktfmt=true' >> "$GITHUB_OUTPUT" ;;
+        esac
+        case "$tasks" in
+          *Abi*) echo 'api=true' >> "$GITHUB_OUTPUT" ;;
+        esac
+
     - name: Generate ktfmt diff
       # ktfmtCheck fails with a bare file list; re-formatting turns that into an
       # applicable patch, rendered into the job summary as well as uploaded.
-      if: failure() && matrix.id == 'ktfmt-check'
+      if: failure() && steps.failed.outputs.ktfmt == 'true'
       shell: bash
       run: |
         ./gradlew ktfmtFormat || true
         mkdir -p build/reports/ktfmt
-        git diff > build/reports/ktfmt/ktfmt.patch
+        # Scoped to Kotlin sources: both diff steps run in the same job now, and
+        # an unscoped 'git diff' would put the reformatting into the API patch
+        # as well (or the regenerated dumps into this one, depending on order).
+        git diff -- '*.kt' '*.kts' > build/reports/ktfmt/ktfmt.patch
         {
           echo '## ktfmt'
           echo
           echo 'Run `./gradlew ktfmtFormat` to apply this, or download the'
-          echo '`reports-ktfmt-check-ubuntu-latest` artifact and `git apply ktfmt.patch`.'
+          echo '`reports-checks-ubuntu-latest` artifact and `git apply ktfmt.patch`.'
           echo
           echo '```diff'
           # The step summary is capped at 1 MiB; the artifact holds the rest.
@@ -220,12 +268,13 @@ jobs:
     - name: Generate API dump diff
       # Regenerating the dump surfaces what checkKotlinAbi buries in its log
       # tail - what the dump would have to become - as a reviewable diff.
-      if: failure() && matrix.id == 'api-check'
+      if: failure() && steps.failed.outputs.api == 'true'
       shell: bash
       run: |
         ./gradlew updateKotlinAbi || true
         mkdir -p build/reports/api-dump
-        git diff > build/reports/api-dump/api-dump.patch
+        # Scoped to the dump directory, for the reason the ktfmt step gives.
+        git diff -- kiban/api > build/reports/api-dump/api-dump.patch
         {
           echo '## API dump'
           echo
