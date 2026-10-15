@@ -37,15 +37,19 @@ once sanitised away.
 
 A few entries are not simply "run the target's test task":
 
-* **`checkKotlinAbi`** builds a klib for every target the host supports, so it doubles as the
-  compile check for the targets no other entry runs: the Apple ones, and `linuxArm64`, which no
-  machine can both build and run.
-* **`dokka`** is generation only, no deploy: it catches broken KDoc or `sourceLink` before a release
-  tag is cut. The actual publish to GitHub Pages stays in `publish.yml`.
+* **`checks`** runs everything that costs seconds once Gradle is configured — `jvmTest`,
+  `checkKotlinAbi`, `ktfmtCheck`, Dokka and `:samples:jvm-cli:run` — in one Linux job, with
+  `--continue` so one failing task does not hide the others' results. `checkKotlinAbi` runs on Linux
+  because a klib needs no Xcode, so it doubles as the compile check for the targets no other entry
+  runs: the Apple ones, and `linuxArm64`, which no machine can both build and run. Dokka is
+  generation only, no deploy: it catches broken KDoc or `sourceLink` before a release tag is cut.
+* **`apple-tests`** runs the four Apple test tasks in one macOS job, also with `--continue`.
+  Per-target results survive because Kotlin suffixes every suite name with its target and the JUnit
+  report groups by suite.
 * **`swift-console`** assembles the XCFramework the Swift sample consumes, and a later step compiles
   and runs the sample against it. Cheap enough to run per pull request: the XCFramework holds a
-  single target (`macosArm64`), so this is one debug link plus a `swift build`, next to the four
-  full Apple test jobs the matrix already runs. The sample is a Swift Package Manager build outside
+  single target (`macosArm64`), so this is one debug link plus a `swift build`, next to the Apple
+  test job the matrix already runs. The sample is a Swift Package Manager build outside
   Gradle, and its `Package.swift` resolves the binary target out of `Frameworks/`, which is
   git-ignored and populated per build — the same three lines as `samples/README.md` and
   `ios-interop-verify.yml`.
@@ -119,6 +123,10 @@ dump surfaces exactly that, as a reviewable diff. Both are also rendered into th
 because the usual case is a handful of lines, not worth a round trip through an artifact download to
 read. Both are truncated to 400 lines, because the step summary is capped at 1 MiB and a run that
 blows past that is one where the artifact is the right tool anyway.
+
+Because `checks` runs several tasks, `matrix.id` no longer says which of them failed. A preceding
+step reads the failing task names out of the Gradle log and gives each diff step its own gate, so a
+failing `jvmTest` does not drag both diffs in behind it.
 
 ## `publish.yml`
 
