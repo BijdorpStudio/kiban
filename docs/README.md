@@ -29,6 +29,9 @@ the issue it answers in its first lines, and the issue is listed below too.
 * [instant-api-stability.md](instant-api-stability.md) — whether `kotlin.time.Instant`, the type
   of `CountryCodes.lastUpdateDate`, is stable enough to freeze into the 1.0 API. Conclusion: yes;
   it is non-experimental from Kotlin 2.3, which is what pins the Kotlin floor from below. (#144)
+* [java-iban-design-lineage.md](java-iban-design-lineage.md) — where the design decisions kiban
+  inherited from `java-iban` come from, and which parts of the original reasoning still transfer
+  now that an SDK 14-era Android app no longer sets the constraints. (#212)
 * [test-fixtures-investigation.md](test-fixtures-investigation.md) — where consumer-facing test
   helpers such as a per-country `Iban.random()` should live, given they should not ship in the main
   artifact. Recommends a separate published `kiban-test` multiplatform module over Gradle's
