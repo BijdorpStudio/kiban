@@ -13,8 +13,8 @@ mechanical sequence; that one is the policy.
 ## What the tag guard enforces
 
 `publish.yml` runs a `verify-version` job first that compares the release tag (minus a leading `v`)
-against `version` in `kiban/build.gradle.kts` and fails the whole workflow on a mismatch. So the
-one thing you cannot get away with is tagging a version the build script does not declare: if you
+against `VERSION_NAME` in `gradle.properties` and fails the whole workflow on a mismatch. So the
+one thing you cannot get away with is tagging a version the build does not declare: if you
 skip the version bump below, the publish fails fast instead of silently shipping the old version.
 Everything else in this checklist is not machine-enforced — follow it.
 
@@ -50,8 +50,9 @@ did before.
 
 Prepare all of these in one release-prep pull request and merge it to `main`:
 
-1. **Bump the version.** In `kiban/build.gradle.kts`, set `version = "X.Y.Z"` to the version you
-   are about to release. This is the value the tag guard checks against.
+1. **Bump the version.** In `gradle.properties`, set `VERSION_NAME=X.Y.Z` to the version you
+   are about to release. This is the only place the version string exists, and the value the tag
+   guard checks against.
 
 2. **Finalise the CHANGELOG.** In `CHANGELOG.md`, replace the `## X.Y.Z (unreleased)` marker at the
    top with `## X.Y.Z`, so the section reads as released. Make sure it lists every user-facing
@@ -82,9 +83,13 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
 
 6. **Watch the publish workflow, and approve the publish.** Creating the release triggers
    `publish.yml`: `verify-version` → the full check matrix → `publishToMavenCentral` (every target,
-   on macOS) → the Dokka API docs deploy to GitHub Pages. The publish job pauses for the `release`
-   environment's required reviewers once the matrix is green — approve it from the run page to let
-   it upload (see [The publish approval gate](#the-publish-approval-gate)). If `verify-version`
+   on macOS) → the Dokka API docs deploy to GitHub Pages. The publish runs with
+   `-Pkotlin.native.ignoreDisabledTargets=false`, overriding the `true` that `gradle.properties`
+   keeps for local dev and PR CI, where no single host builds every target: a target the publishing
+   runner cannot build fails configuration instead of being skipped into a partial artifact set.
+   The publish job pauses for the `release` environment's required reviewers once the matrix is
+   green — approve it from the run page to let it upload (see
+   [The publish approval gate](#the-publish-approval-gate)). If `verify-version`
    fails, the tag and the project version disagree — fix the version on `main` (step 1), delete the
    release/tag, and start again from step 5.
 
@@ -133,7 +138,7 @@ The full reasoning, including the storage options that were rejected, is in
 8. **Reopen the CHANGELOG.** Add a fresh `## X.Y.(Z+1) (unreleased)` section (or the next minor/
    major, as appropriate) at the top of `CHANGELOG.md` to collect subsequent entries.
 
-9. **Bump the development version.** Set `version` in `kiban/build.gradle.kts` to the next
+9. **Bump the development version.** Set `VERSION_NAME` in `gradle.properties` to the next
    version so `main` no longer claims the just-released one.
 
    The README install snippets are **not** touched here: they stay pointed at the version that was
