@@ -24,8 +24,8 @@ import nl.bijdorpstudio.kiban.IbanParseException.Malformed.Kind
 /**
  * Tests for the value semantics of the data-carrying [Kind] subtypes. They are plain classes rather
  * than `data class`es, so that a consumer cannot construct or `copy` a kind the parser never
- * produced (#203); `equals`, `hashCode` and `toString` are written out by hand instead, and these
- * tests are what keeps them honest.
+ * produced; `equals`, `hashCode` and `toString` are written out by hand instead, and these tests
+ * are what keeps them honest.
  */
 val MalformedKindTest by testSuite {
     test("InvalidBoundaryCharacter equals another carrying the same character and end") {

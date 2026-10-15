@@ -16,6 +16,20 @@ newer answer lives.
 File names are title-first, so the directory listing reads as a table of contents. Each page links
 the issue it answers in its first lines, and the issue is listed below too.
 
+## Notes on the current code
+
+Unlike the decision records below, these four explain the code as it stands and change with it: the
+reasoning that source, build and workflow comments point to rather than carry. (#209)
+
+* [api-design-notes.md](api-design-notes.md) — why the public surface is shaped the way it is: the
+  `String` receivers, `Iban.parse`, the `IBAN` typealias, ASCII-only rejection, the sealed `Kind`.
+* [implementation-notes.md](implementation-notes.md) — the internals whose signature does not say
+  why: eager `pretty`, the cached country index, the allocation-free checksum fold.
+* [build-script-notes.md](build-script-notes.md) — why `kiban/build.gradle.kts` and
+  `gradle/libs.versions.toml` are configured the way they are.
+* [ci-workflow-notes.md](ci-workflow-notes.md) — why the workflows under `.github/` are wired the
+  way they are.
+
 ## API and library design
 
 * [swift-interop-review.md](swift-interop-review.md) — how kiban's API surfaces through
