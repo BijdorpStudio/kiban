@@ -56,8 +56,16 @@ jobs:
       # else, so a job whose whole purpose is to resolve every configuration can reach it. Sharing
       # the '~/.konan' entry the rest of CI already maintains is the cheap way to be sure this one
       # never pays for the bundle itself; if resolution turns out not to touch it, the step costs a
-      # cache lookup.
-      - uses: ./.github/actions/cache-konan
+      # cache lookup. The step is '.github/actions/setup-build''s own cache step rather than that
+      # action whole, because the action also runs setup-gradle, which dependency-submission does
+      # itself.
+      - name: Cache the Kotlin/Native distribution
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: ${{ runner.os }}-konan-
 
       - name: Set up JDK 25
         uses: actions/setup-java@v6
