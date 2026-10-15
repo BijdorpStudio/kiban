@@ -67,6 +67,12 @@
 
 **Documentation**
 
+* Design rationale moved out of source, build and workflow comments into `docs/` (#209):
+  [API design](docs/209-api-design-notes.md), [implementation](docs/209-implementation-notes.md),
+  [build script](docs/209-build-script-notes.md) and [CI workflow](docs/209-ci-workflow-notes.md)
+  notes. KDoc keeps the contract, and [CONTRIBUTING.md](CONTRIBUTING.md) now carries the comment
+  rule. No API, behaviour or message change.
+
 * Added [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) (#157): what to run before
   pushing, which checks need a toolchain most machines do not have, and the private channel for
   reporting a vulnerability, with the scope line this library needs drawn around it.
