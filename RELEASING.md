@@ -13,8 +13,8 @@ mechanical sequence; that one is the policy.
 ## What the tag guard enforces
 
 `publish.yml` runs a `verify-version` job first that compares the release tag (minus a leading `v`)
-against `version` in `kiban/build.gradle.kts` and fails the whole workflow on a mismatch. So the
-one thing you cannot get away with is tagging a version the build script does not declare: if you
+against `VERSION_NAME` in `gradle.properties` and fails the whole workflow on a mismatch. So the
+one thing you cannot get away with is tagging a version the build does not declare: if you
 skip the version bump below, the publish fails fast instead of silently shipping the old version.
 Everything else in this checklist is not machine-enforced — follow it.
 
@@ -50,8 +50,9 @@ did before.
 
 Prepare all of these in one release-prep pull request and merge it to `main`:
 
-1. **Bump the version.** In `kiban/build.gradle.kts`, set `version = "X.Y.Z"` to the version you
-   are about to release. This is the value the tag guard checks against.
+1. **Bump the version.** In `gradle.properties`, set `VERSION_NAME=X.Y.Z` to the version you
+   are about to release. This is the only place the version string exists, and the value the tag
+   guard checks against.
 
 2. **Finalise the CHANGELOG.** In `CHANGELOG.md`, replace the `## X.Y.Z (unreleased)` marker at the
    top with `## X.Y.Z`, so the section reads as released. Make sure it lists every user-facing
@@ -137,7 +138,7 @@ The full reasoning, including the storage options that were rejected, is in
 8. **Reopen the CHANGELOG.** Add a fresh `## X.Y.(Z+1) (unreleased)` section (or the next minor/
    major, as appropriate) at the top of `CHANGELOG.md` to collect subsequent entries.
 
-9. **Bump the development version.** Set `version` in `kiban/build.gradle.kts` to the next
+9. **Bump the development version.** Set `VERSION_NAME` in `gradle.properties` to the next
    version so `main` no longer claims the just-released one.
 
    The README install snippets are **not** touched here: they stay pointed at the version that was

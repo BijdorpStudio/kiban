@@ -134,6 +134,16 @@
 
 **Infrastructure**
 
+* `js` and `wasmJs` tests run on Node only; the Karma and headless-Chrome browser runs are gone
+  (#219). The library touches no DOM or browser API, so `jsBrowserTest` and `wasmJsBrowserTest` ran
+  the same common suite a second time behind a Karma setup, and pulled Karma and its webpack bridge
+  into the `js` test workspace. Both targets still declare `nodejs()`; the published artifacts are
+  unchanged, so consuming `kiban` from browser code is unaffected.
+
+* The published coordinates are declared once, as `GROUP` and `VERSION_NAME` in the root
+  `gradle.properties` (#215), so the release tag guard and `samples/consumption-probe` no longer
+  parse the build script for the version. The published group, artifact and version are unchanged.
+
 * The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
   inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
   No published API changes and the dumps are unaffected.
@@ -206,6 +216,10 @@
 * The `verifyPublicationTargets` task is gone (#217). `publish.yml` already overrides
   `kotlin.native.ignoreDisabledTargets` to `false` for the publish, which fails configuration on any
   target the publishing host cannot build — earlier than the task did, and on the target itself.
+
+* Every CI job declares a `timeout-minutes` (#221), instead of inheriting GitHub's six-hour default:
+  30 for the build matrix, 45 for the release and docs jobs, 15 or 20 for the rest. A hung job now
+  fails in minutes rather than holding a runner and, off `main`, the branch's concurrency group.
 
 * Every workflow action is pinned to a commit SHA, and no checkout but the registry sync's leaves
   the `GITHUB_TOKEN` in `.git/config` (#222) — including in the `publish` job that holds the signing

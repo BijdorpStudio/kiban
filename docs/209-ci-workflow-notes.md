@@ -126,8 +126,8 @@ blows past that is one where the artifact is the right tool anyway.
 tag does not match the version the build declares. The workflow fires on any
 `released`/`prereleased` event and ships whatever the checked-out build says, so tagging `v1.0.0`
 against a commit still declaring an older version would silently republish that version — and only
-fail late at Maven Central, if at all. The version is read with `sed` rather than by booting Gradle
-because the whole point of the job is to fail fast.
+fail late at Maven Central, if at all. The version is read straight out of `gradle.properties` rather than
+by booting Gradle, because the whole point of the job is to fail fast.
 
 `permissions: contents: read` at the workflow level is least privilege for every job. Without it the
 `GITHUB_TOKEN` falls back to the repository default, which is read-write for repositories created

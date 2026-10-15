@@ -19,6 +19,11 @@ concurrency:
 jobs:
   verify:
     runs-on: macos-latest
+    # Assembles the XCFramework and builds and runs the Swift sample on a macOS runner, cold konan
+    # cache included. Matched to publish.yml's Apple jobs rather than the 30 the gradle.yml matrix
+    # uses: this one is 'workflow_dispatch'-only, so the cost of a high cap is a runner nobody is
+    # waiting on, while a cap that cuts a real run short wastes a maintainer's manual dispatch.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
