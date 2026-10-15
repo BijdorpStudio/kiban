@@ -32,7 +32,14 @@ import nl.bijdorpstudio.kiban.CountryCodesData.REMOVE_METADATA_MASK
 import nl.bijdorpstudio.kiban.CountryCodesData.SEPA
 import nl.bijdorpstudio.kiban.CountryCodesData.SWIFT
 
-/** Contains information about IBAN country codes. */
+/**
+ * The IBAN reference data this library carries: the IBAN length of each known country, its SEPA and
+ * SWIFT IBAN Registry membership, and the positions of the bank and branch identifiers inside an
+ * IBAN of that country.
+ *
+ * Every lookup here is case-sensitive. Country codes are upper case by definition, so a lower or
+ * mixed case code reads as unknown rather than being normalized.
+ */
 public object CountryCodes {
     /** The length of the shortest IBAN among the known countries. */
     public val shortestIbanLength: Int
@@ -120,8 +127,8 @@ public object CountryCodes {
     /**
      * Returns the IBAN length for a given country code.
      *
-     * @param countryCode a non-null, uppercase, two-character country code.
-     * @return the IBAN length for the given country, or null if the input is not a known,
+     * @param countryCode an upper case, two-character country code.
+     * @return the IBAN length for the given country, or `null` if the input is not a known,
      *   two-character country code.
      */
     public fun ibanLength(countryCode: CharSequence): Int? {
@@ -135,8 +142,9 @@ public object CountryCodes {
     /**
      * Returns whether the given country code is in SEPA.
      *
-     * @param countryCode a non-null, uppercase, two-character country code.
-     * @return true if SEPA, false if not.
+     * @param countryCode an upper case, two-character country code.
+     * @return `true` if the country participates in SEPA, `false` if not or if the country code is
+     *   unknown.
      */
     public fun isSepaCountry(countryCode: CharSequence): Boolean =
         isSepaCountryAt(indexOf(countryCode.toString()))
@@ -153,8 +161,9 @@ public object CountryCodes {
     /**
      * Returns whether the source for this IBAN's format and data is the SWIFT IBAN Registry.
      *
-     * @param countryCode a non-null, uppercase, two-character country code.
-     * @return true if our data is from the SWIFT IBAN Registry, false if not.
+     * @param countryCode an upper case, two-character country code.
+     * @return `true` if the data for that country is from the SWIFT IBAN Registry, `false` if not
+     *   or if the country code is unknown.
      */
     public fun isInSwiftRegistry(countryCode: CharSequence): Boolean =
         isInSwiftRegistryAt(indexOf(countryCode.toString()))
@@ -182,7 +191,7 @@ public object CountryCodes {
      * Returns whether the given string is a known country code.
      *
      * @param countryCode the string to evaluate.
-     * @return `true` if `aCountryCode` is a two-letter, uppercase String present in
+     * @return `true` if `countryCode` is a two-character, upper case code present in
      *   [knownCountryCodes].
      */
     public fun isKnownCountryCode(countryCode: CharSequence): Boolean {
@@ -190,7 +199,7 @@ public object CountryCodes {
     }
 
     /**
-     * Returns the date that the IBAN reference data was last updated.
+     * The date that the IBAN reference data was last updated.
      *
      * The SWIFT IBAN Registry dates its releases to the day, so the value carried here is a date,
      * not a moment: it is the [Instant] at midnight UTC on that date. That encoding is part of the
@@ -199,15 +208,9 @@ public object CountryCodes {
      * calendar date off it in a non-UTC zone. See docs/209-api-design-notes.md for why it is an
      * [Instant] and docs/144-instant-api-stability.md for the analysis behind freezing that into
      * the API.
-     *
-     * @return the last update date of the reference data in this library.
      */
     public val lastUpdateDate: Instant = Instant.parse("${LAST_UPDATE_DATE}T00:00:00Z")
 
-    /**
-     * Returns the version information of the SWIFT IBAN Registry used on [lastUpdateDate].
-     *
-     * @return revision information of the SWIFT IBAN Registry.
-     */
+    /** The revision of the SWIFT IBAN Registry the reference data was taken from. */
     public const val LAST_UPDATE_REVISION: String = LAST_UPDATE_REV
 }
