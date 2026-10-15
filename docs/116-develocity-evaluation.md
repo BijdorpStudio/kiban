@@ -158,7 +158,8 @@ Five tasks, and most of that wall-clock is Kotlin compiler and daemon startup ra
 cache could hand back. Against that, a remote cache has to win against three layers that already
 exist: `org.gradle.caching=true` (local cache), `setup-gradle`'s Gradle User Home cache — which
 `gradle.yml` already tunes with `cache-read-only` and an encryption key — and the dedicated
-`.github/actions/cache-konan` action added in #109.
+Kotlin/Native distribution cache added in #109 (today a step of
+`.github/actions/setup-build`).
 
 The structural point is worse for remote caching than the size one. `gradle.yml` fans out over 14
 matrix entries, but they are 14 *different targets* — `iosSimulatorArm64Test`, `macosArm64Test`,

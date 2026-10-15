@@ -1,0 +1,113 @@
+# The shared build prelude for every workflow that runs Gradle (#223).
+#
+# Before this action the same three steps -- '~/.konan' cache, 'setup-java',
+# 'setup-gradle' -- were copied into gradle.yml, both Gradle jobs in
+# publish.yml, registry-sync.yml and ios-interop-verify.yml, with the JDK
+# version and distribution as literals in each copy. A JDK bump meant five
+# edits, and the copies had already drifted.
+#
+# 'actions/checkout' is deliberately *not* part of this action, even though it
+# is the fourth step of the same prelude: a local 'uses: ./...' reference is
+# resolved out of the workspace, so the repository has to be checked out before
+# this action can be found at all. The call sites keep their own checkout step,
+# which is also where the two that need something non-default live --
+# registry-sync.yml checks out with the token that opens its pull request, and
+# publish.yml's 'docs' job checks out a second ref.
+name: Set up the Gradle build
+description: >-
+  Caches the Kotlin/Native distribution, installs the JDK this project builds
+  with, and configures Gradle.
+
+inputs:
+  cache-read-only:
+    description: >-
+      Whether Gradle's user-home cache is read-only. Only the branches whose
+      results are worth keeping should write to it, so this defaults to
+      read-only and the one workflow that writes passes an expression.
+    required: false
+    default: 'true'
+  cache-encryption-key:
+    description: >-
+      The 'GRADLE_ENCRYPTION_KEY' secret, without which setup-gradle cannot
+      restore or save configuration-cache entries. A composite action cannot
+      read secrets itself, so it has to be passed in; left empty it behaves
+      exactly as not setting the input at all.
+    required: false
+    default: ''
+  cache-konan:
+    description: >-
+      Whether to restore and save '~/.konan'. Every job that compiles a native
+      target or runs Dokka needs it; a job that only runs JVM tasks would pay
+      for a multi-hundred-megabyte restore it never reads, and passes 'false'.
+    required: false
+    default: 'true'
+  build-scan:
+    description: >-
+      Whether to publish a build scan per job to the public scans.gradle.com.
+      Off by default: only the high-frequency check matrix earns the payoff
+      (#116, docs/116-develocity-evaluation.md), and scans are PUBLIC.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # Every job that compiles a native target, and every job that runs Dokka,
+    # needs the Kotlin/Native distribution: Dokka runs the Kotlin analysis
+    # frontend rather than scraping comments, so it resolves
+    # 'nativeMain'/'appleMain' too and pulls the platform klibs in through
+    # ':kiban:downloadKotlinNativeDistribution'. Without this step that is a
+    # fresh 'download.jetbrains.com' fetch per job (#109).
+    #
+    # The cache key is keyed on 'gradle/libs.versions.toml' because the 'kotlin'
+    # version declared there is what decides which 'kotlin-native-prebuilt-*'
+    # bundle gets downloaded. The original key -- 'hashFiles(''**/.lock'')' --
+    # matched no tracked file, and 'hashFiles' returns an empty string when
+    # nothing matches, so it collapsed to a constant 'Linux-'/'macOS-' that was
+    # never invalidated: after a Kotlin bump the stale bundle was restored and
+    # the new one downloaded on top, growing the entry every time.
+    - name: Cache the Kotlin/Native distribution
+      if: inputs.cache-konan == 'true'
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.konan
+        key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
+        # A version bump should miss the exact key and still restore the most
+        # recent entry for this runner, so the new bundle downloads against a
+        # warm cache instead of an empty one.
+        restore-keys: ${{ runner.os }}-konan-
+
+    # The one place the JDK the build runs on is declared. This is the toolchain
+    # Gradle itself runs under, not the bytecode target: that is 'java-version'
+    # in 'gradle/libs.versions.toml', which the build script applies as a
+    # jvmToolchain and is a compatibility promise to consumers rather than a
+    # choice of compiler.
+    - name: Set up JDK 25
+      uses: actions/setup-java@v6
+      with:
+        java-version: '25'
+        distribution: 'zulu'
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-read-only: ${{ inputs.cache-read-only }}
+        cache-encryption-key: ${{ inputs.cache-encryption-key }}
+        # #116 (docs/116-develocity-evaluation.md) chose these action inputs
+        # over the 'com.gradle.develocity' settings plugin deliberately: the
+        # action injects the plugin via init script, so 'settings.gradle.kts',
+        # the version catalog and 'gradle.properties' stay untouched, and local
+        # plus cloud-sandbox builds (see CLAUDE.md) never load it, never attempt
+        # a publish and never leak a developer's machine details to a public
+        # dashboard.
+        #
+        # Everything a scan uploads originates on an ephemeral public runner
+        # building a public repo -- build structure, task/dependency/test data
+        # and console output, no source archives and no developer environment.
+        # Terms of use accepted for the project by the maintainer on #127. The
+        # two terms inputs are passed unconditionally because setup-gradle only
+        # reads them when 'build-scan-publish' is true.
+        build-scan-publish: ${{ inputs.build-scan }}
+        build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+        build-scan-terms-of-use-agree: 'yes'

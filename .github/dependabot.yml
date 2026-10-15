@@ -29,7 +29,7 @@ updates:
   - package-ecosystem: "github-actions"
     directories:
       - "/"
-      - "/.github/actions/cache-konan"
+      - "/.github/actions/setup-build"
     schedule:
       interval: "weekly"
     groups:

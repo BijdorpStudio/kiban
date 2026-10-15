@@ -343,7 +343,12 @@ run could neither publish nor upload SARIF, and the score is a property of `main
 proposed change. The `branch_protection_rule` trigger is there because the Branch-Protection check
 reads settings rather than files, so it can go stale without a commit.
 
-## `.github/actions/cache-konan`
+## `.github/actions/setup-build`
+
+The build prelude every Gradle job shares: the `~/.konan` cache, `setup-java` and `setup-gradle`,
+so the JDK version and cache policy are set in one place. `actions/checkout` stays at each call
+site, because a local `uses: ./...` reference is resolved out of the workspace and so needs the
+repository checked out first.
 
 Every job that compiles a native target, and every job that runs Dokka, needs the Kotlin/Native
 distribution: Dokka runs the Kotlin analysis frontend rather than scraping comments, so it resolves
