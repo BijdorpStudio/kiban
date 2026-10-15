@@ -217,6 +217,10 @@
   `kotlin.native.ignoreDisabledTargets` to `false` for the publish, which fails configuration on any
   target the publishing host cannot build — earlier than the task did, and on the target itself.
 
+* Every CI job declares a `timeout-minutes` (#221), instead of inheriting GitHub's six-hour default:
+  30 for the build matrix, 45 for the release and docs jobs, 15 or 20 for the rest. A hung job now
+  fails in minutes rather than holding a runner and, off `main`, the branch's concurrency group.
+
 ## 0.5.0
 
 **Breaking changes**
