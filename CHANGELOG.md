@@ -162,9 +162,10 @@
   has to be stated while it is written rather than caught in a dump afterwards. Mechanical: nothing
   became public or stopped being public.
 
-* CI runs the test suite on `mingwX64` and `linuxArm64` (#151), both published targets that had only
-  ever been compiled. `linuxArm64` runs under the `qemu-aarch64` emulator the Kotlin/Native
-  toolchain already ships, registered as a real test task so its results reach the `ci` roll-up.
+* CI runs the test suite on `mingwX64` (#151), a published target that had only ever been compiled.
+  `linuxArm64` stays compile-verified by `checkKotlinAbi` alone: the emulator-based test task added
+  for it is gone again (#218), because no machine can both build and run the target and the library
+  has no `linuxArm64`-specific source for `linuxX64Test` not to cover.
 
 * CI resolves the published artifact by coordinates from a build that has never heard of `:kiban`
   (#154), via `samples/consumption-probe` against `mavenLocal()` on `jvm`, `linuxX64` and `js`.

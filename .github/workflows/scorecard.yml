@@ -42,7 +42,9 @@ jobs:
           persist-credentials: false
 
       - name: Run analysis
-        uses: ossf/scorecard-action@v2
+        # A full version, not 'v2': unlike most actions, scorecard-action publishes only exact
+        # release tags and no moving major tag, so '@v2' fails to resolve before the job starts.
+        uses: ossf/scorecard-action@v2.5.0
         with:
           results_file: results.sarif
           results_format: sarif

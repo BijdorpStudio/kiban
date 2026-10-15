@@ -82,49 +82,6 @@ declared Kotlin target's toolchain is missing on the publishing host, `kotlin.na
 it without failing the build. The task diffs the declared targets against the publications the
 `maven-publish` plugin actually registered, and fails before any upload happens.
 
-## `linuxArm64Test` runs under the qemu emulator
-
-`linuxArm64` is published but has never run a test. Kotlin/Native has no Linux/ARM64 *host*
-compiler, so no machine can both build and run the target: an ARM64 runner cannot build it at all,
-and on the linux-x86_64 host that cross-compiles it the Kotlin Gradle plugin registers no test task,
-because that host cannot execute what it produces.
-
-The toolchain that cross-compiles the target ships what it takes to run it anyway.
-`konan.properties` declares a qemu-aarch64 user-mode emulator for the `linux_x64`-`linux_arm64`
-pair, and the aarch64 sysroot the binary is linked against comes down with the same toolchain, so
-emulator, sysroot and binary always match. Pointing a `KotlinNativeHostTest` at the emulator gives
-the target the same treatment as every other one: Gradle reads the results out of the binary's
-TeamCity service messages, writes the JUnit XML that CI reports from, and fails the build on a
-failing test. The binary's own exit code says nothing — KGP invokes it with `--ktest_no_exit_code`,
-and it exits 0 whatever the tests did.
-
-The details that are easy to get wrong when touching this block:
-
-* **Registration is guarded on the link task's existence.** `kotlin.native.ignoreDisabledTargets`
-  drops targets the host cannot build; where there is nothing to link there is nothing to run, and
-  this must not fail configuration for every other task on that host.
-* **`enabled` is guarded on the host.** `linux_x64` is the only host `konan.properties` declares an
-  emulator for. Elsewhere the task is disabled rather than failing, which is how KGP treats a test
-  task it cannot run.
-* **The report locations are set explicitly.** KGP puts these under the task name, but the helper
-  that applies that convention lives in an internal package.
-* **The test binary is declared as an input.** It reaches the emulator as an argument, which Gradle
-  does not track by itself; declaring it keeps a rebuilt binary from being reported as up to date.
-* **The emulator and sysroot are resolved while the task runs**, not while the build is configured:
-  the link task is what downloads them, so on a cold machine neither exists yet. Their directory
-  names carry the dependency's version, and a Kotlin upgrade can leave the previous version's
-  directory behind, so the highest name wins rather than whichever one `listFiles` returns last.
-  Existence is checked because `executable` is `@SkipWhenEmpty`: a path that does not exist would
-  skip the task silently instead of failing it. The lookup is a local function rather than a shared
-  one so that the lambda captures nothing from the build script, which is what keeps the provider
-  configuration-cacheable.
-* **`args` is set in `doFirst`**, because it takes no provider. The emulator passes everything after
-  the binary through to it, which is where KGP appends its own `--ktest_logger=TEAMCITY` and
-  friends: the arguments set in `doFirst` come first.
-
-#218 asks whether to keep this at all or move it into a tested build-logic module; until that is
-settled, the block above is the thing to read before changing it.
-
 ## `kotlin-version`: the consumer Kotlin floor
 
 `kotlin-version` in `gradle/libs.versions.toml` is the minimum Kotlin version a *consumer* needs,

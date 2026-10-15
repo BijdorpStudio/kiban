@@ -56,13 +56,10 @@ jobs:
           - target: mingwX64Test
             id: mingw-x64-test
             os: windows-latest
-          # Not a task KGP registers: ':kiban' registers it itself and runs the
-          # binary under the toolchain's emulator.
-          - target: linuxArm64Test
-            id: linux-arm64-test
-            os: ubuntu-latest
           # checkKotlinAbi builds a klib for every target the host supports, so
-          # it doubles as the compile check for the Apple targets.
+          # it doubles as the compile check for the targets no job above runs:
+          # the Apple ones, and 'linuxArm64', which no machine can both build
+          # and run (#218).
           - target: checkKotlinAbi
             id: api-check
             os: macos-latest

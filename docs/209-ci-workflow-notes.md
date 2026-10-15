@@ -37,12 +37,9 @@ once sanitised away.
 
 A few entries are not simply "run the target's test task":
 
-* **`linuxArm64Test`** is not a task KGP registers. `:kiban` registers it itself and runs the binary
-  under the emulator the toolchain ships — see
-  [209-build-script-notes.md](209-build-script-notes.md#linuxarm64test-runs-under-the-qemu-emulator).
-  It reports like any other test task from here.
 * **`checkKotlinAbi`** builds a klib for every target the host supports, so it doubles as the
-  compile check for the Apple targets.
+  compile check for the targets no other entry runs: the Apple ones, and `linuxArm64`, which no
+  machine can both build and run.
 * **`dokka`** is generation only, no deploy: it catches broken KDoc or `sourceLink` before a release
   tag is cut. The actual publish to GitHub Pages stays in `publish.yml`.
 * **`swift-console`** assembles the XCFramework the Swift sample consumes, and a later step compiles
