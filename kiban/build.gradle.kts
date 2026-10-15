@@ -98,15 +98,8 @@ kotlin {
     linuxX64()
     linuxArm64()
     mingwX64()
-    js {
-        nodejs()
-        browser { testTask { useKarma { useChromeHeadless() } } }
-    }
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        nodejs()
-        browser { testTask { useKarma { useChromeHeadless() } } }
-    }
+    js { nodejs() }
+    @OptIn(ExperimentalWasmDsl::class) wasmJs { nodejs() }
 
     sourceSets {
         commonTest.dependencies {

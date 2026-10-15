@@ -89,12 +89,16 @@ is worth installing the SDK to reproduce rather than deferring to CI.
 Don't claim untested changes pass. `jvmTest`, `ktfmtCheck` and the Linux-host
 Kotlin/Native tasks all run here and count as real verification, as do the full
 `checkKotlinAbi` and the Android-specific tasks once the SDK above is
-installed. Apple-target *tests*, the XCFramework and the Swift sample don't run
-here, and `jsTest`/`wasmJsTest` may not either: Kotlin's Karma setup resolves a
-dependency straight from a GitHub repository, which the sandbox's HTTPS proxy
-can break (`Parse Error: Data after 'Connection: close'`) — a proxy limitation,
-not a test failure. Say explicitly in
-the PR body which commands you ran and which targets were left unverified.
+installed. `jsTest` runs here too, since #219 dropped the Karma/Chrome browser
+runs. Apple-target *tests*, the XCFramework and the Swift sample don't run here,
+and neither does `wasmJsTest`: `:kotlinWasmToolingSetup` installs Kotlin's fixed
+npm tooling set, which resolves a Karma fork straight from a GitHub repository,
+and the sandbox's HTTPS proxy breaks that fetch (`403 Forbidden` from
+`codeload.github.com`, or `Parse Error: Data after 'Connection: close'`) — a
+proxy limitation, not a test failure. That task is in the `wasmJsTest` graph
+whether or not a browser environment is configured, so #219 did not change it.
+Say explicitly in the PR body which commands you ran and which targets were
+left unverified.
 `.github/workflows/gradle.yml` runs the full target matrix across Linux and
 macOS runners, `samples/swift-console` included — that's the actual
 verification once the PR is pushed, and `ios-interop-verify.yml` covers

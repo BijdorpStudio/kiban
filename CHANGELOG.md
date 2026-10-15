@@ -134,6 +134,12 @@
 
 **Infrastructure**
 
+* `js` and `wasmJs` tests run on Node only; the Karma and headless-Chrome browser runs are gone
+  (#219). The library touches no DOM or browser API, so `jsBrowserTest` and `wasmJsBrowserTest` ran
+  the same common suite a second time behind a Karma setup, and pulled Karma and its webpack bridge
+  into the `js` test workspace. Both targets still declare `nodejs()`; the published artifacts are
+  unchanged, so consuming `kiban` from browser code is unaffected.
+
 * The published coordinates are declared once, as `GROUP` and `VERSION_NAME` in the root
   `gradle.properties` (#215), so the release tag guard and `samples/consumption-probe` no longer
   parse the build script for the version. The published group, artifact and version are unchanged.
