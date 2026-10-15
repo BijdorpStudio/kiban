@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ktfmt)
@@ -6,12 +8,16 @@ plugins {
 ktfmt { kotlinLangStyle() }
 
 // Read rather than hardcoded, so the probe cannot drift off the version being published.
-// 'publish.yml' reads the same literal the same way.
+// 'publish.yml' reads the same property out of the same file. This is a build of its own, so the
+// library's 'gradle.properties' is not on this build's property lookup path and has to be loaded
+// by hand (#215).
 val kibanVersion: String =
-    Regex("""^version = "(.*)"$""", RegexOption.MULTILINE)
-        .find(rootDir.resolve("../../kiban/build.gradle.kts").readText())
-        ?.groupValues
-        ?.get(1) ?: error("Could not read 'version' from kiban/build.gradle.kts.")
+    rootDir
+        .resolve("../../gradle.properties")
+        .inputStream()
+        .use { Properties().apply { load(it) } }
+        .getProperty("VERSION_NAME")
+        ?: error("Could not read 'VERSION_NAME' from gradle.properties.")
 
 kotlin {
     // One target per compilation backend - the axis metadata resolution breaks along. Linux-only

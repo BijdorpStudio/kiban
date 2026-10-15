@@ -134,6 +134,10 @@
 
 **Infrastructure**
 
+* The published coordinates are declared once, as `GROUP` and `VERSION_NAME` in the root
+  `gradle.properties` (#215), so the release tag guard and `samples/consumption-probe` no longer
+  parse the build script for the version. The published group, artifact and version are unchanged.
+
 * The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
   inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
   No published API changes and the dumps are unaffected.

@@ -25,11 +25,11 @@ jobs:
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          # Read with sed rather than by booting Gradle, because this step exists to fail fast.
-          # The pattern anchors on the top-level 'version = "..."' assignment.
-          project_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' kiban/build.gradle.kts)"
+          # Read straight out of the properties file rather than by booting Gradle, because this
+          # step exists to fail fast.
+          project_version="$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
           if [ -z "$project_version" ]; then
-            echo "::error::Could not read the project version from kiban/build.gradle.kts."
+            echo "::error::Could not read VERSION_NAME from gradle.properties."
             exit 1
           fi
           # Release tags are 'vX.Y.Z'; the Gradle version is 'X.Y.Z'. Strip a single leading 'v'.
@@ -37,7 +37,7 @@ jobs:
           echo "Release tag:     $TAG_NAME (version $tag_version)"
           echo "Project version: $project_version"
           if [ "$tag_version" != "$project_version" ]; then
-            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in kiban/build.gradle.kts. Bump the version and re-tag (see RELEASING.md)."
+            echo "::error::Release tag '$TAG_NAME' does not match the project version '$project_version' in gradle.properties. Bump VERSION_NAME and re-tag (see RELEASING.md)."
             exit 1
           fi
           echo "Release tag and project version match."
