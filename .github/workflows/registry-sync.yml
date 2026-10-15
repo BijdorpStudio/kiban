@@ -39,8 +39,9 @@ jobs:
       REV: ${{ inputs.rev }}
     steps:
       # Checked out with the token that also opens the pull request, so the branch push and the
-      # pull request come from a single identity.
-      - uses: actions/checkout@v7
+      # pull request come from a single identity. The one checkout that keeps its credential in
+      # '.git/config': the push below is what the job exists for.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ secrets.REGISTRY_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 

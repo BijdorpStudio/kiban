@@ -231,6 +231,10 @@
   30 for the build matrix, 45 for the release and docs jobs, 15 or 20 for the rest. A hung job now
   fails in minutes rather than holding a runner and, off `main`, the branch's concurrency group.
 
+* Every workflow action is pinned to a commit SHA, and no checkout but the registry sync's leaves
+  the `GITHUB_TOKEN` in `.git/config` (#222) — including in the `publish` job that holds the signing
+  key. See [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+
 ## 0.5.0
 
 **Breaking changes**

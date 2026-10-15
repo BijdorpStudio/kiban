@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Scorecard only reads the tree. Leaving the token behind in '.git/config' would hand
           # every later step in the job a credential none of them need - and Scorecard would be
@@ -46,9 +46,7 @@ jobs:
           persist-credentials: false
 
       - name: Run analysis
-        # A full version, not 'v2': unlike most actions, scorecard-action publishes only exact
-        # release tags and no moving major tag, so '@v2' fails to resolve before the job starts.
-        uses: ossf/scorecard-action@v2.5.0
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
         with:
           results_file: results.sarif
           results_format: sarif
@@ -58,6 +56,6 @@ jobs:
       # maximum arrives as an alert with the reason and the remediation, instead of a number in a
       # log nobody opens.
       - name: Upload result to the Security tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: results.sarif
