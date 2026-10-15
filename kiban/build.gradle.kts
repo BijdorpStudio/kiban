@@ -15,9 +15,13 @@ plugins {
     alias(libs.plugins.testballoon)
 }
 
-group = "nl.bijdorpstudio.kiban"
+// The publication coordinates come from 'GROUP' and 'VERSION_NAME' in the root
+// 'gradle.properties', which the maven-publish plugin reads natively. These assignments are not
+// what publishes them: the plugin leaves 'project.group' and 'project.version' alone, and the klib
+// unique name and the Dokka version below are derived from those.
+group = providers.gradleProperty("GROUP").get()
 
-version = "0.6.0"
+version = providers.gradleProperty("VERSION_NAME").get()
 
 ktfmt { kotlinLangStyle() }
 
@@ -121,8 +125,6 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(group.toString(), "kiban", version.toString())
-
     // Without this, auto-detection ships the whole Dokka HTML site as -javadoc.jar.
     configure(
         KotlinMultiplatform(
@@ -167,35 +169,3 @@ mavenPublishing {
         }
     }
 }
-
-// Guards against a publish that silently ships a partial artifact set, by diffing the declared
-// Kotlin targets against the registered Maven publications. See docs/209-build-script-notes.md.
-val verifyPublicationTargets =
-    tasks.register("verifyPublicationTargets") {
-        group = "verification"
-        description = "Fails if declared Kotlin targets and registered Maven publications diverge."
-        doLast {
-            val expectedPublications =
-                kotlin.targets
-                    .map { target ->
-                        if (target.name == "metadata") "kotlinMultiplatform" else target.name
-                    }
-                    .toSortedSet()
-            val actualPublications = publishing.publications.names.toSortedSet()
-            check(expectedPublications == actualPublications) {
-                val missing = expectedPublications - actualPublications
-                val unexpected = actualPublications - expectedPublications
-                buildString {
-                    appendLine("Declared Kotlin targets and Maven publications are out of sync.")
-                    if (missing.isNotEmpty())
-                        appendLine(
-                            "Targets with no publication (likely skipped by kotlin.native.ignoreDisabledTargets): $missing"
-                        )
-                    if (unexpected.isNotEmpty())
-                        appendLine("Publications with no matching declared target: $unexpected")
-                }
-            }
-        }
-    }
-
-tasks.withType<PublishToMavenRepository>().configureEach { dependsOn(verifyPublicationTargets) }

@@ -140,6 +140,10 @@
   into the `js` test workspace. Both targets still declare `nodejs()`; the published artifacts are
   unchanged, so consuming `kiban` from browser code is unaffected.
 
+* The published coordinates are declared once, as `GROUP` and `VERSION_NAME` in the root
+  `gradle.properties` (#215), so the release tag guard and `samples/consumption-probe` no longer
+  parse the build script for the version. The published group, artifact and version are unchanged.
+
 * The generated `CountryCodesData` declares its members `internal` instead of a redundant `public`
   inside an `internal` object (#211), and the generator's `--self-check` asserts it stays that way.
   No published API changes and the dumps are unaffected.
@@ -208,6 +212,10 @@
 * TestBalloon moved from `1.1.0-RC` to the released `1.1.0` (#153), so the suite that gates
   `publish.yml` no longer runs on a release candidate. Binary compatible: no test, dump or build
   file changed with it.
+
+* The `verifyPublicationTargets` task is gone (#217). `publish.yml` already overrides
+  `kotlin.native.ignoreDisabledTargets` to `false` for the publish, which fails configuration on any
+  target the publishing host cannot build — earlier than the task did, and on the target itself.
 
 ## 0.5.0
 
