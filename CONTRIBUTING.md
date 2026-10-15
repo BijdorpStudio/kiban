@@ -27,6 +27,14 @@ CI runs the full target matrix — Linux, macOS and Windows runners, the Swift s
 every pull request (`.github/workflows/gradle.yml`). That is what verifies the targets your machine
 cannot build, so a green local run plus a green CI run is the complete picture.
 
+One published target is **compile-verified only**: `linuxArm64` runs no tests anywhere, not locally
+and not in CI. Kotlin/Native has no Linux/ARM64 *host* compiler, so no machine can both build and
+run it — an ARM64 runner cannot build the target at all, and the x86_64 host that cross-compiles it
+cannot execute the result. `checkKotlinAbi` compiles a klib for it, which is the whole of its
+verification (#218). The library has no `linuxArm64`-specific source: it is the same `commonMain`
+code `linuxX64Test` runs on the same architecture family, so a change that passes there is expected
+to hold.
+
 ## Before you push
 
 ```

@@ -44,7 +44,8 @@ jobs:
           # 'checkKotlinAbi' is here rather than on a macOS runner because a
           # klib needs no Xcode: a Linux host compiles every Apple target and
           # dumps its ABI (#182, see CLAUDE.md), so this entry is still the
-          # compile check for the Apple targets.
+          # compile check for the Apple targets, and for 'linuxArm64', which
+          # no machine can both build and run (#218).
           #
           # Dokka is generation only, no deploy: it catches broken KDoc or
           # sourceLink before a release tag is cut. The actual publish to GitHub
@@ -92,15 +93,6 @@ jobs:
           - target: mingwX64Test
             id: mingw-x64-test
             os: windows-latest
-          # Not a task KGP registers: Kotlin/Native has no Linux/ARM64 *host*
-          # compiler, so an 'ubuntu-24.04-arm' runner cannot build the target at
-          # all, and the x86_64 host that cross-compiles it cannot execute the
-          # result. ':kiban' registers 'linuxArm64Test' itself, running the
-          # binary under the emulator the toolchain ships (#151); it reports like
-          # any other test task from here.
-          - target: linuxArm64Test
-            id: linux-arm64-test
-            os: ubuntu-latest
           - target: assembleAndroidMain androidCompileLintChecks :kiban:testAndroidHostTest
             id: android
             os: ubuntu-latest
