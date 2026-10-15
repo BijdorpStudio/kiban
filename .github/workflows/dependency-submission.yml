@@ -37,6 +37,8 @@ jobs:
   dependency-submission:
     name: Submit resolved Gradle dependencies
     runs-on: ubuntu-latest
+    # Resolves dependencies and builds nothing; a few minutes at most.
+    timeout-minutes: 20
     permissions:
       # What the Dependency Submission API needs to record the snapshot against this repository.
       # It is the only permission this job holds beyond reading the tree, and the job runs no
