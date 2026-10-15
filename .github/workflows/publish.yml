@@ -81,20 +81,10 @@ jobs:
         uses: actions/checkout@v7
 
       # This job compiles every native target, so it needs the whole Kotlin/Native distribution.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
+      # Release-tag ref only, so the cache stays read-only (the action's default): a one-shot
+      # release build has nothing worth writing back.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          # Release-tag ref only, so the cache is read-only: a one-shot release build has nothing
-          # worth writing back.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Publish to MavenCentral
@@ -172,20 +162,9 @@ jobs:
           path: docs-archive
 
       # Dokka resolves 'nativeMain'/'appleMain' through the Kotlin analysis frontend, so this job
-      # needs the Kotlin/Native distribution too.
-      - uses: ./.github/actions/cache-konan
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v6
+      # needs the Kotlin/Native distribution too. Read-only cache, as in the publish job.
+      - uses: ./.github/actions/setup-build
         with:
-          distribution: 'zulu'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          # Release-tag ref only, so the cache is read-only here as well; see the publish job.
-          cache-read-only: true
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Generate Dokka HTML

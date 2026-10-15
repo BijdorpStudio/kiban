@@ -109,18 +109,12 @@ jobs:
     timeout-minutes: 30
 
     steps:
+    # Checkout stays here rather than inside the setup action: a local action is
+    # resolved out of the workspace, so it cannot be found before the checkout
+    # that creates it.
     - uses: actions/checkout@v7
 
-    - uses: ./.github/actions/cache-konan
-
-    - name: Set up JDK 25
-      uses: actions/setup-java@v6
-      with:
-        java-version: '25'
-        distribution: 'zulu'
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v6
+    - uses: ./.github/actions/setup-build
       with:
         # Only write to the cache for builds on 'main'; every other ref - pull request branches,
         # and the release tags this workflow sees through 'workflow_call' - reads the entries that
@@ -133,9 +127,7 @@ jobs:
         # Publishes a PUBLIC build scan per job to scans.gradle.com. Only this
         # workflow is scanned; see docs/209-ci-workflow-notes.md for what is
         # uploaded and why the action inputs rather than the settings plugin.
-        build-scan-publish: true
-        build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-        build-scan-terms-of-use-agree: 'yes'
+        build-scan: true
 
     - name: Build with Gradle
       # 'shell: bash' enables pipefail, so tee does not mask a Gradle failure.
