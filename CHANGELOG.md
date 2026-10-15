@@ -237,7 +237,7 @@
 
 * Every workflow action is pinned to a commit SHA, and no checkout but the registry sync's leaves
   the `GITHUB_TOKEN` in `.git/config` (#222) — including in the `publish` job that holds the signing
-  key. See [docs/160-supply-chain-posture.md](docs/160-supply-chain-posture.md).
+  key. See [docs/supply-chain-posture.md](docs/supply-chain-posture.md).
 
 ## 0.5.0
 
