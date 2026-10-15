@@ -46,9 +46,8 @@ swift run SwiftConsole
 
 The only thing here that consumes `kiban` the way a real dependant does — by coordinates, out of a
 repository, through the Gradle module metadata the publish flow produced. `jvm-cli` depends on
-`:kiban` as a project and never reads a published file, and `verifyPublicationTargets`
-(`kiban/build.gradle.kts`) counts publications rather than resolving one, so between them they
-could not tell a working publication from module metadata no consumer can resolve (#154).
+`:kiban` as a project and never reads a published file, so without this nothing in the build could
+tell a working publication from module metadata no consumer can resolve (#154).
 
 It is a separate build, deliberately not included from the root `settings.gradle.kts` and not wired
 up with `includeBuild` — either would let dependency substitution put `:kiban` back in place of

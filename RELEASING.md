@@ -82,9 +82,13 @@ Prepare all of these in one release-prep pull request and merge it to `main`:
 
 6. **Watch the publish workflow, and approve the publish.** Creating the release triggers
    `publish.yml`: `verify-version` → the full check matrix → `publishToMavenCentral` (every target,
-   on macOS) → the Dokka API docs deploy to GitHub Pages. The publish job pauses for the `release`
-   environment's required reviewers once the matrix is green — approve it from the run page to let
-   it upload (see [The publish approval gate](#the-publish-approval-gate)). If `verify-version`
+   on macOS) → the Dokka API docs deploy to GitHub Pages. The publish runs with
+   `-Pkotlin.native.ignoreDisabledTargets=false`, overriding the `true` that `gradle.properties`
+   keeps for local dev and PR CI, where no single host builds every target: a target the publishing
+   runner cannot build fails configuration instead of being skipped into a partial artifact set.
+   The publish job pauses for the `release` environment's required reviewers once the matrix is
+   green — approve it from the run page to let it upload (see
+   [The publish approval gate](#the-publish-approval-gate)). If `verify-version`
    fails, the tag and the project version disagree — fix the version on `main` (step 1), delete the
    release/tag, and start again from step 5.
 

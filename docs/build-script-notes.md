@@ -76,11 +76,9 @@ HTML site as `-javadoc.jar`.
 fails on "No configured signatory", and skipping the `Sign` tasks with `-x` fails on the missing
 `.asc` files instead. `publish.yml` never sets the property, so a release still signs or fails.
 
-`verifyPublicationTargets` guards against a publish that silently ships a partial artifact set. If a
-declared Kotlin target's toolchain is missing on the publishing host, `kotlin.native.ignoreDisabledTargets`
-— needed for local dev and PR CI, where no single host can build every target — would otherwise skip
-it without failing the build. The task diffs the declared targets against the publications the
-`maven-publish` plugin actually registered, and fails before any upload happens.
+A publish cannot silently ship a partial artifact set: `publish.yml` overrides
+`kotlin.native.ignoreDisabledTargets` to `false`, so the Kotlin Gradle plugin fails configuration on
+any target the publishing host cannot build instead of skipping it.
 
 ## `kotlin-version`: the consumer Kotlin floor
 
