@@ -26,6 +26,8 @@ updates:
 
   # '/' covers '.github/workflows'; the composite actions under
   # '.github/actions' are separate manifests and escape coverage unless listed.
+  # References are pinned to commit SHAs with the version as a trailing comment,
+  # and Dependabot updates the two together.
   - package-ecosystem: "github-actions"
     directories:
       - "/"

@@ -46,7 +46,7 @@ jobs:
       contents: write
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The submission authenticates to the API with GITHUB_TOKEN, not through git, so nothing
           # in this job needs the credential checkout would otherwise leave in '.git/config'.
@@ -60,7 +60,7 @@ jobs:
       # action whole, because the action also runs setup-gradle, which dependency-submission does
       # itself.
       - name: Cache the Kotlin/Native distribution
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.konan
@@ -68,13 +68,13 @@ jobs:
           restore-keys: ${{ runner.os }}-konan-
 
       - name: Set up JDK 25
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           java-version: '25'
           distribution: 'zulu'
 
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@v6
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           # The matrix build on 'main' owns cache writes. This job resolves dependencies and builds
           # nothing, so it has nothing worth writing back - the same reasoning as publish.yml.
