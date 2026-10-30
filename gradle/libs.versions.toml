@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 # @keep this version because it is not used in a dependency declaration
 android-compileSdk = "36"
 # @keep this version because it is not used in a dependency declaration
@@ -19,8 +19,8 @@ maven-publish-plugin = "0.37.0"
 tapmoc-plugin = "0.5.0"
 # Test-only. Keep this on a stable release, and on the unified 1.1.0+ line; see
 # docs/build-script-notes.md and docs/testballoon-evaluation.md.
-testballoon = "1.1.0"
-versions-catalogue-update-plugin = "1.1.1"
+testballoon = "1.2.0"
+versions-catalogue-update-plugin = "1.1.2"
 
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
